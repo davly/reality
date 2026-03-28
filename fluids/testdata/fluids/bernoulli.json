@@ -1,0 +1,29 @@
+{
+  "function": "Fluids.BernoulliPressure",
+  "cases": [
+    {
+      "description": "Horizontal pipe, velocity increase: rho=1000, v1=2, p1=200000, h1=0, v2=4, h2=0, g=9.80665",
+      "inputs": {"rho": 1000.0, "v1": 2.0, "p1": 200000.0, "h1": 0.0, "v2": 4.0, "h2": 0.0, "g": 9.80665},
+      "expected": 194000.0,
+      "tolerance": 1e-8
+    },
+    {
+      "description": "Elevation change only: rho=1000, v1=1, p1=100000, h1=10, v2=1, h2=0, g=9.80665",
+      "inputs": {"rho": 1000.0, "v1": 1.0, "p1": 100000.0, "h1": 10.0, "v2": 1.0, "h2": 0.0, "g": 9.80665},
+      "expected": 198066.5,
+      "tolerance": 1e-6
+    },
+    {
+      "description": "Same conditions: no pressure change",
+      "inputs": {"rho": 1000.0, "v1": 5.0, "p1": 101325.0, "h1": 5.0, "v2": 5.0, "h2": 5.0, "g": 9.80665},
+      "expected": 101325.0,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "Venturi effect: rho=1.225, v1=50, p1=101325, h1=0, v2=100, h2=0, g=9.80665",
+      "inputs": {"rho": 1.225, "v1": 50.0, "p1": 101325.0, "h1": 0.0, "v2": 100.0, "h2": 0.0, "g": 9.80665},
+      "expected": 96731.25,
+      "tolerance": 1e-6
+    }
+  ]
+}

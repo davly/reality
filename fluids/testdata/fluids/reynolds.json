@@ -1,0 +1,35 @@
+{
+  "function": "Fluids.ReynoldsNumber",
+  "cases": [
+    {
+      "description": "Water in pipe: rho=1000, v=1, L=0.05, mu=0.001",
+      "inputs": {"rho": 1000.0, "v": 1.0, "L": 0.05, "mu": 0.001},
+      "expected": 50000.0,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "Air flow: rho=1.225, v=10, L=1, mu=1.81e-5",
+      "inputs": {"rho": 1.225, "v": 10.0, "L": 1.0, "mu": 1.81e-5},
+      "expected": 676795.58011049723,
+      "tolerance": 1e-4
+    },
+    {
+      "description": "Laminar: rho=1000, v=0.01, L=0.01, mu=0.001",
+      "inputs": {"rho": 1000.0, "v": 0.01, "L": 0.01, "mu": 0.001},
+      "expected": 100.0,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "Unit values: rho=1, v=1, L=1, mu=1",
+      "inputs": {"rho": 1.0, "v": 1.0, "L": 1.0, "mu": 1.0},
+      "expected": 1.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "Oil flow: rho=900, v=0.5, L=0.1, mu=0.1",
+      "inputs": {"rho": 900.0, "v": 0.5, "L": 0.1, "mu": 0.1},
+      "expected": 450.0,
+      "tolerance": 1e-12
+    }
+  ]
+}

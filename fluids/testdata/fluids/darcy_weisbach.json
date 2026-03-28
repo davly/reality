@@ -1,0 +1,23 @@
+{
+  "function": "Fluids.DarcyWeisbach",
+  "cases": [
+    {
+      "description": "Standard pipe: f=0.02, L=100, D=0.1, rho=1000, v=2",
+      "inputs": {"f": 0.02, "L": 100.0, "D": 0.1, "rho": 1000.0, "v": 2.0},
+      "expected": 40000.0,
+      "tolerance": 1e-8
+    },
+    {
+      "description": "Zero velocity: no pressure drop",
+      "inputs": {"f": 0.03, "L": 50.0, "D": 0.05, "rho": 1000.0, "v": 0.0},
+      "expected": 0.0,
+      "tolerance": 0
+    },
+    {
+      "description": "Short pipe: f=0.015, L=1, D=0.5, rho=1.225, v=10",
+      "inputs": {"f": 0.015, "L": 1.0, "D": 0.5, "rho": 1.225, "v": 10.0},
+      "expected": 1.8375,
+      "tolerance": 1e-10
+    }
+  ]
+}

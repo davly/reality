@@ -1,0 +1,29 @@
+{
+  "function": "Fluids.DragForce",
+  "cases": [
+    {
+      "description": "Sphere in air: Cd=0.47, rho=1.225, v=30, A=0.01",
+      "inputs": {"Cd": 0.47, "rho": 1.225, "v": 30.0, "A": 0.01},
+      "expected": 2.590875,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "Car drag: Cd=0.3, rho=1.225, v=30, A=2.2",
+      "inputs": {"Cd": 0.3, "rho": 1.225, "v": 30.0, "A": 2.2},
+      "expected": 363.825,
+      "tolerance": 1e-8
+    },
+    {
+      "description": "Zero velocity: no drag",
+      "inputs": {"Cd": 0.5, "rho": 1000.0, "v": 0.0, "A": 1.0},
+      "expected": 0.0,
+      "tolerance": 0
+    },
+    {
+      "description": "Unit values: Cd=1, rho=1, v=1, A=1",
+      "inputs": {"Cd": 1.0, "rho": 1.0, "v": 1.0, "A": 1.0},
+      "expected": 0.5,
+      "tolerance": 1e-15
+    }
+  ]
+}

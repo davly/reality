@@ -1,0 +1,23 @@
+{
+  "function": "Fluids.TerminalVelocity",
+  "cases": [
+    {
+      "description": "Skydiver: m=80, g=9.80665, Cd=1.0, rho=1.225, A=0.7",
+      "inputs": {"m": 80.0, "g": 9.80665, "Cd": 1.0, "rho": 1.225, "A": 0.7},
+      "expected": 42.77630471298285,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "Baseball: m=0.145, g=9.80665, Cd=0.3, rho=1.225, A=0.004267",
+      "inputs": {"m": 0.145, "g": 9.80665, "Cd": 0.3, "rho": 1.225, "A": 0.004267},
+      "expected": 42.58624454133371,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "Unit case: m=1, g=10, Cd=1, rho=1, A=1 -> sqrt(20)",
+      "inputs": {"m": 1.0, "g": 10.0, "Cd": 1.0, "rho": 1.0, "A": 1.0},
+      "expected": 4.47213595499958,
+      "tolerance": 1e-12
+    }
+  ]
+}
