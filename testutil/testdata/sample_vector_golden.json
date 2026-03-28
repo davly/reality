@@ -1,0 +1,23 @@
+{
+  "function": "TestUtil.SampleVector",
+  "cases": [
+    {
+      "description": "simple vector scale [1,2,3] * 2 = [2,4,6]",
+      "inputs": {"vec": [1.0, 2.0, 3.0], "scale": 2.0},
+      "expected": [2.0, 4.0, 6.0],
+      "tolerance": 0.0
+    },
+    {
+      "description": "zero scale [5,10] * 0 = [0,0]",
+      "inputs": {"vec": [5.0, 10.0], "scale": 0.0},
+      "expected": [0.0, 0.0],
+      "tolerance": 0.0
+    },
+    {
+      "description": "fractional scale [1,1,1] * 0.333... ~ [0.333...,0.333...,0.333...]",
+      "inputs": {"vec": [1.0, 1.0, 1.0], "scale": 0.3333333333333333},
+      "expected": [0.3333333333333333, 0.3333333333333333, 0.3333333333333333],
+      "tolerance": 1e-15
+    }
+  ]
+}

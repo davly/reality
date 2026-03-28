@@ -7,7 +7,7 @@ Universal truth encoded in code. Pure math, physics, constants. Zero dependencie
 - **Go module:** `github.com/davly/reality`
 - **License:** MIT
 - **Port:** None (library, not a service)
-- **Status:** Design complete, implementation not yet started
+- **Status:** Phase 0 in progress (golden-file infra + constants)
 - **Design doc:** `C:/CrossPollinationAnalysis/architecture/UNIVERSAL_TRUTH_FOUNDATION.md`
 - **Review synthesis:** `C:/CrossPollinationAnalysis/reviews/reality-review/SYNTHESIS.md`
 - **Context:** `CONTEXT.md` in this repo (read this for full background)
@@ -43,14 +43,15 @@ aicore imports reality. reality imports nothing.
 
 ## Building / Testing
 
-Not yet implemented. When built:
-
 ```bash
-# Run all Go tests
+# Run all tests
 go test ./...
 
 # Run golden-file validation
 go test -run TestGolden ./...
+
+# Verbose output
+go test -v ./...
 ```
 
 ## v1.0 Scope

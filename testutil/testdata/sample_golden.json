@@ -1,0 +1,35 @@
+{
+  "function": "TestUtil.SampleAdd",
+  "cases": [
+    {
+      "description": "simple addition 1 + 2 = 3",
+      "inputs": {"a": 1.0, "b": 2.0},
+      "expected": 3.0,
+      "tolerance": 0.0
+    },
+    {
+      "description": "negative addition -5 + 3 = -2",
+      "inputs": {"a": -5.0, "b": 3.0},
+      "expected": -2.0,
+      "tolerance": 0.0
+    },
+    {
+      "description": "zero addition 0 + 0 = 0",
+      "inputs": {"a": 0.0, "b": 0.0},
+      "expected": 0.0,
+      "tolerance": 0.0
+    },
+    {
+      "description": "fractional addition 0.1 + 0.2 ~ 0.3",
+      "inputs": {"a": 0.1, "b": 0.2},
+      "expected": 0.3,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "large values 1e15 + 1e15 = 2e15",
+      "inputs": {"a": 1e15, "b": 1e15},
+      "expected": 2e15,
+      "tolerance": 0.0
+    }
+  ]
+}

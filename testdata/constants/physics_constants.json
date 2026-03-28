@@ -1,0 +1,83 @@
+{
+  "function": "Constants.Physics",
+  "cases": [
+    {
+      "description": "Speed of light in vacuum (SI 2019 exact)",
+      "inputs": {"constant": "SpeedOfLight"},
+      "expected": 299792458.0,
+      "tolerance": 0
+    },
+    {
+      "description": "Planck constant (SI 2019 exact)",
+      "inputs": {"constant": "Planck"},
+      "expected": 6.62607015e-34,
+      "tolerance": 0
+    },
+    {
+      "description": "Reduced Planck constant h-bar = h/(2*pi)",
+      "inputs": {"constant": "PlanckReduced"},
+      "expected": 1.0545718176461565e-34,
+      "tolerance": 1e-48
+    },
+    {
+      "description": "Boltzmann constant (SI 2019 exact)",
+      "inputs": {"constant": "Boltzmann"},
+      "expected": 1.380649e-23,
+      "tolerance": 0
+    },
+    {
+      "description": "Avogadro constant (SI 2019 exact)",
+      "inputs": {"constant": "Avogadro"},
+      "expected": 6.02214076e23,
+      "tolerance": 0
+    },
+    {
+      "description": "Elementary charge (SI 2019 exact)",
+      "inputs": {"constant": "ElementaryCharge"},
+      "expected": 1.602176634e-19,
+      "tolerance": 0
+    },
+    {
+      "description": "Gravitational constant (NIST CODATA 2018)",
+      "inputs": {"constant": "GravitationalConst"},
+      "expected": 6.67430e-11,
+      "tolerance": 0
+    },
+    {
+      "description": "Vacuum permittivity (NIST CODATA 2018)",
+      "inputs": {"constant": "VacuumPermittivity"},
+      "expected": 8.8541878128e-12,
+      "tolerance": 0
+    },
+    {
+      "description": "Vacuum permeability (NIST CODATA 2018)",
+      "inputs": {"constant": "VacuumPermeability"},
+      "expected": 1.25663706212e-6,
+      "tolerance": 0
+    },
+    {
+      "description": "Stefan-Boltzmann constant (derived from SI 2019 exact values)",
+      "inputs": {"constant": "StefanBoltzmann"},
+      "expected": 5.670374419e-8,
+      "tolerance": 0
+    },
+    {
+      "description": "Molar gas constant R = N_A * k_B",
+      "inputs": {"constant": "GasConstant"},
+      "expected": 8.314462618153242,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "Standard acceleration of gravity (ISO 80000-3 exact)",
+      "inputs": {"constant": "StandardGravity"},
+      "expected": 9.80665,
+      "tolerance": 0
+    },
+    {
+      "description": "Standard atmosphere (ISO 80000-3 exact)",
+      "inputs": {"constant": "AtmPressure"},
+      "expected": 101325.0,
+      "tolerance": 0
+    }
+  ]
+}
