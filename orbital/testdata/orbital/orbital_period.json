@@ -1,0 +1,35 @@
+{
+  "function": "Orbital.OrbitalPeriod",
+  "cases": [
+    {
+      "description": "ISS-like orbit: a=6771000m, mu_Earth=3.986004418e14",
+      "inputs": {"a": 6771000.0, "mu": 3.986004418e14},
+      "expected": 5544.855,
+      "tolerance": 1.0
+    },
+    {
+      "description": "GEO orbit: a=42164000m, mu_Earth=3.986004418e14 -> ~86164s (sidereal day)",
+      "inputs": {"a": 42164000.0, "mu": 3.986004418e14},
+      "expected": 86164.1,
+      "tolerance": 1.0
+    },
+    {
+      "description": "Earth around Sun: a=1.496e11m, mu_Sun=1.32712440018e20 -> ~3.156e7s (1 year)",
+      "inputs": {"a": 1.496e11, "mu": 1.32712440018e20},
+      "expected": 31558118.4,
+      "tolerance": 1000.0
+    },
+    {
+      "description": "Unit test: a=1, mu=4pi^2 -> T=1 exactly",
+      "inputs": {"a": 1.0, "mu": 39.47841760435743},
+      "expected": 1.0,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "Moon around Earth: a=384400000m, mu=3.986004418e14 -> ~2.37e6s",
+      "inputs": {"a": 384400000.0, "mu": 3.986004418e14},
+      "expected": 2371843.6,
+      "tolerance": 100.0
+    }
+  ]
+}

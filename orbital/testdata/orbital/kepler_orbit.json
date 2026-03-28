@@ -1,0 +1,53 @@
+{
+  "function": "Orbital.KeplerOrbit",
+  "cases": [
+    {
+      "description": "Circular equatorial orbit (e=0, i=0), nu=0 -> on x-axis",
+      "inputs": {"a": 7000000.0, "e": 0.0, "i": 0.0, "omega": 0.0, "capOmega": 0.0, "nu": 0.0},
+      "expected": [7000000.0, 0.0, 0.0],
+      "tolerance": 1e-6
+    },
+    {
+      "description": "Circular equatorial orbit, nu=pi/2 -> on y-axis",
+      "inputs": {"a": 7000000.0, "e": 0.0, "i": 0.0, "omega": 0.0, "capOmega": 0.0, "nu": 1.5707963267948966},
+      "expected": [0.0, 7000000.0, 0.0],
+      "tolerance": 1e-6
+    },
+    {
+      "description": "Circular polar orbit (i=pi/2), nu=pi/2 -> on z-axis",
+      "inputs": {"a": 7000000.0, "e": 0.0, "i": 1.5707963267948966, "omega": 0.0, "capOmega": 0.0, "nu": 1.5707963267948966},
+      "expected": [0.0, 0.0, 7000000.0],
+      "tolerance": 1e-6
+    },
+    {
+      "description": "Elliptical orbit e=0.5, periapsis (nu=0)",
+      "inputs": {"a": 10000000.0, "e": 0.5, "i": 0.0, "omega": 0.0, "capOmega": 0.0, "nu": 0.0},
+      "expected": [5000000.0, 0.0, 0.0],
+      "tolerance": 1e-6
+    },
+    {
+      "description": "Elliptical orbit e=0.5, apoapsis (nu=pi)",
+      "inputs": {"a": 10000000.0, "e": 0.5, "i": 0.0, "omega": 0.0, "capOmega": 0.0, "nu": 3.141592653589793},
+      "expected": [-15000000.0, 0.0, 0.0],
+      "tolerance": 1e-6
+    },
+    {
+      "description": "Inclined orbit i=45°, circular, nu=0",
+      "inputs": {"a": 8000000.0, "e": 0.0, "i": 0.7853981633974483, "omega": 0.0, "capOmega": 0.0, "nu": 0.0},
+      "expected": [8000000.0, 0.0, 0.0],
+      "tolerance": 1e-6
+    },
+    {
+      "description": "RAAN=90°, circular equatorial, nu=0",
+      "inputs": {"a": 7000000.0, "e": 0.0, "i": 0.0, "omega": 0.0, "capOmega": 1.5707963267948966, "nu": 0.0},
+      "expected": [0.0, 7000000.0, 0.0],
+      "tolerance": 1e-6
+    },
+    {
+      "description": "omega=90°, circular equatorial, nu=0 -> on y-axis (rotation shifts position)",
+      "inputs": {"a": 7000000.0, "e": 0.0, "i": 0.0, "omega": 1.5707963267948966, "capOmega": 0.0, "nu": 0.0},
+      "expected": [0.0, 7000000.0, 0.0],
+      "tolerance": 1e-3
+    }
+  ]
+}

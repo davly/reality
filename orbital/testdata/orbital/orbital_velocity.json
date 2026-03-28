@@ -1,0 +1,29 @@
+{
+  "function": "Orbital.OrbitalVelocity",
+  "cases": [
+    {
+      "description": "Circular orbit: r=a=6771000, mu_Earth -> v=sqrt(mu/r)",
+      "inputs": {"mu": 3.986004418e14, "r": 6771000.0, "a": 6771000.0},
+      "expected": 7672.27,
+      "tolerance": 1.0
+    },
+    {
+      "description": "Elliptical orbit at periapsis: a=10000000, r=5000000 (e=0.5)",
+      "inputs": {"mu": 3.986004418e14, "r": 5000000.0, "a": 10000000.0},
+      "expected": 10935.27,
+      "tolerance": 1.0
+    },
+    {
+      "description": "Elliptical orbit at apoapsis: a=10000000, r=15000000 (e=0.5)",
+      "inputs": {"mu": 3.986004418e14, "r": 15000000.0, "a": 15000000.0},
+      "expected": 5155.25,
+      "tolerance": 1.0
+    },
+    {
+      "description": "Unit circular orbit: mu=1, r=1, a=1 -> v=1",
+      "inputs": {"mu": 1.0, "r": 1.0, "a": 1.0},
+      "expected": 1.0,
+      "tolerance": 1e-15
+    }
+  ]
+}

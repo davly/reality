@@ -1,0 +1,47 @@
+{
+  "function": "Orbital.TrueAnomalyFromMean",
+  "cases": [
+    {
+      "description": "Circular orbit (e=0): M=1.0 -> nu=1.0",
+      "inputs": {"M": 1.0, "e": 0.0, "maxIter": 30},
+      "expected": 1.0,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "Circular orbit (e=0): M=pi -> nu=pi",
+      "inputs": {"M": 3.141592653589793, "e": 0.0, "maxIter": 30},
+      "expected": 3.141592653589793,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "Low eccentricity e=0.1, M=1.0",
+      "inputs": {"M": 1.0, "e": 0.1, "maxIter": 30},
+      "expected": 1.1794692626997687,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "Moderate eccentricity e=0.5, M=pi/2",
+      "inputs": {"M": 1.5707963267948966, "e": 0.5, "maxIter": 30},
+      "expected": 2.4465608779686727,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "High eccentricity e=0.9, M=1.0",
+      "inputs": {"M": 1.0, "e": 0.9, "maxIter": 50},
+      "expected": 2.8034090671742340,
+      "tolerance": 1e-8
+    },
+    {
+      "description": "e=0, M=0 -> nu=0",
+      "inputs": {"M": 0.0, "e": 0.0, "maxIter": 30},
+      "expected": 0.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "e=0.2, M=pi -> nu=pi (symmetry at apoapsis)",
+      "inputs": {"M": 3.141592653589793, "e": 0.2, "maxIter": 30},
+      "expected": 3.141592653589793,
+      "tolerance": 1e-10
+    }
+  ]
+}

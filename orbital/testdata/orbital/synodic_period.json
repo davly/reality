@@ -1,0 +1,35 @@
+{
+  "function": "Orbital.SynodicPeriod",
+  "cases": [
+    {
+      "description": "Earth-Mars: T_Earth=365.256, T_Mars=686.980 -> ~779.94 days",
+      "inputs": {"T1": 365.256, "T2": 686.980},
+      "expected": 779.94,
+      "tolerance": 0.1
+    },
+    {
+      "description": "Earth-Venus: T_Earth=365.256, T_Venus=224.701 -> ~583.93 days",
+      "inputs": {"T1": 365.256, "T2": 224.701},
+      "expected": 583.93,
+      "tolerance": 0.1
+    },
+    {
+      "description": "Co-orbital: T1=T2=100 -> +Inf",
+      "inputs": {"T1": 100.0, "T2": 100.0},
+      "expected": "Infinity",
+      "tolerance": 0
+    },
+    {
+      "description": "Simple: T1=1, T2=2 -> 2.0",
+      "inputs": {"T1": 1.0, "T2": 2.0},
+      "expected": 2.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "Earth-Jupiter: T_Earth=365.256, T_Jupiter=4332.59 -> ~398.88 days",
+      "inputs": {"T1": 365.256, "T2": 4332.59},
+      "expected": 398.88,
+      "tolerance": 0.1
+    }
+  ]
+}

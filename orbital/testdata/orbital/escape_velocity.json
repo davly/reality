@@ -1,0 +1,29 @@
+{
+  "function": "Orbital.EscapeVelocity",
+  "cases": [
+    {
+      "description": "Earth surface: M=5.972e24, r=6.371e6 -> ~11186 m/s",
+      "inputs": {"M": 5.972e24, "r": 6371000.0},
+      "expected": 11186.4,
+      "tolerance": 5.0
+    },
+    {
+      "description": "Moon surface: M=7.342e22, r=1.7374e6 -> ~2375 m/s",
+      "inputs": {"M": 7.342e22, "r": 1737400.0},
+      "expected": 2375.4,
+      "tolerance": 5.0
+    },
+    {
+      "description": "Sun surface: M=1.989e30, r=6.957e8 -> ~617500 m/s",
+      "inputs": {"M": 1.989e30, "r": 6.957e8},
+      "expected": 617632.0,
+      "tolerance": 500.0
+    },
+    {
+      "description": "Unit mass at unit distance: M=1/(2G), r=1 -> v=1",
+      "inputs": {"M": 7.4921e9, "r": 1.0},
+      "expected": 1.0,
+      "tolerance": 0.01
+    }
+  ]
+}

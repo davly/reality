@@ -1,0 +1,23 @@
+{
+  "function": "Orbital.HohmannTransfer",
+  "cases": [
+    {
+      "description": "LEO to GEO: r1=6571000, r2=42164000, mu_Earth",
+      "inputs": {"r1": 6571000.0, "r2": 42164000.0, "mu": 3.986004418e14},
+      "expected": [2457.5, 1478.0],
+      "tolerance": 10.0
+    },
+    {
+      "description": "Unit orbit doubling: r1=1, r2=2, mu=1",
+      "inputs": {"r1": 1.0, "r2": 2.0, "mu": 1.0},
+      "expected": [0.15470053837925146, 0.12975651199692176],
+      "tolerance": 1e-10
+    },
+    {
+      "description": "Equal radii: r1=r2=10000000 -> dv1=0, dv2=0",
+      "inputs": {"r1": 10000000.0, "r2": 10000000.0, "mu": 3.986004418e14},
+      "expected": [0.0, 0.0],
+      "tolerance": 1e-10
+    }
+  ]
+}
