@@ -1,0 +1,29 @@
+{
+  "function": "EM.PowerElectric",
+  "cases": [
+    {
+      "description": "120V at 10A -> 1200W",
+      "inputs": {"V": 120.0, "I": 10.0},
+      "expected": 1200.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "5V at 0.5A -> 2.5W",
+      "inputs": {"V": 5.0, "I": 0.5},
+      "expected": 2.5,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "Zero: V=0, I=5 -> 0W",
+      "inputs": {"V": 0.0, "I": 5.0},
+      "expected": 0.0,
+      "tolerance": 0
+    },
+    {
+      "description": "240V at 13A (UK kettle) -> 3120W",
+      "inputs": {"V": 240.0, "I": 13.0},
+      "expected": 3120.0,
+      "tolerance": 1e-15
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "function": "EM.OhmsLaw",
+  "cases": [
+    {
+      "description": "12V across 4 ohms -> 3A",
+      "inputs": {"V": 12.0, "R": 4.0},
+      "expected": 3.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "5V across 1000 ohms -> 5mA",
+      "inputs": {"V": 5.0, "R": 1000.0},
+      "expected": 0.005,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "Negative voltage: -9V across 3 ohms -> -3A",
+      "inputs": {"V": -9.0, "R": 3.0},
+      "expected": -3.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "Zero voltage: 0V across 10 ohms -> 0A",
+      "inputs": {"V": 0.0, "R": 10.0},
+      "expected": 0.0,
+      "tolerance": 0
+    }
+  ]
+}

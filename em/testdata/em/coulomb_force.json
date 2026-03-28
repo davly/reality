@@ -1,0 +1,35 @@
+{
+  "function": "EM.CoulombForce",
+  "cases": [
+    {
+      "description": "Two protons at 1m: q1=q2=1.602176634e-19 C",
+      "inputs": {"q1": 1.602176634e-19, "q2": 1.602176634e-19, "r": 1.0},
+      "expected": 2.30708e-28,
+      "tolerance": 1e-32
+    },
+    {
+      "description": "Unit charges at 1m: q1=q2=1C",
+      "inputs": {"q1": 1.0, "q2": 1.0, "r": 1.0},
+      "expected": 8987551792.3,
+      "tolerance": 1.0
+    },
+    {
+      "description": "Opposite charges: q1=1C, q2=-1C, r=1m -> negative (attractive)",
+      "inputs": {"q1": 1.0, "q2": -1.0, "r": 1.0},
+      "expected": -8987551792.3,
+      "tolerance": 1.0
+    },
+    {
+      "description": "Inverse square: q1=q2=1C, r=2m -> F/4",
+      "inputs": {"q1": 1.0, "q2": 1.0, "r": 2.0},
+      "expected": 2246887948.1,
+      "tolerance": 1.0
+    },
+    {
+      "description": "q1=2C, q2=3C, r=0.5m -> F=k*6/0.25",
+      "inputs": {"q1": 2.0, "q2": 3.0, "r": 0.5},
+      "expected": 215701243015.0,
+      "tolerance": 100.0
+    }
+  ]
+}

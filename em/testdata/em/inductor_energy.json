@@ -1,0 +1,29 @@
+{
+  "function": "EM.InductorEnergy",
+  "cases": [
+    {
+      "description": "1H at 1A -> 0.5J",
+      "inputs": {"L": 1.0, "I": 1.0},
+      "expected": 0.5,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "10mH at 5A -> 0.125J",
+      "inputs": {"L": 0.01, "I": 5.0},
+      "expected": 0.125,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "100uH at 2A -> 0.0002J",
+      "inputs": {"L": 0.0001, "I": 2.0},
+      "expected": 0.0002,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "Zero inductance -> 0J",
+      "inputs": {"L": 0.0, "I": 10.0},
+      "expected": 0.0,
+      "tolerance": 0
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "function": "EM.ElectricField",
+  "cases": [
+    {
+      "description": "Unit charge at 1m",
+      "inputs": {"q": 1.0, "r": 1.0},
+      "expected": 8987551792.3,
+      "tolerance": 1.0
+    },
+    {
+      "description": "Electron charge at 0.053nm (Bohr radius) -> ~5.14e11 V/m",
+      "inputs": {"q": 1.602176634e-19, "r": 5.29177e-11},
+      "expected": 5.14e11,
+      "tolerance": 1e9
+    },
+    {
+      "description": "Negative charge: q=-1C, r=1m -> negative field",
+      "inputs": {"q": -1.0, "r": 1.0},
+      "expected": -8987551792.3,
+      "tolerance": 1.0
+    },
+    {
+      "description": "Inverse square: q=1C, r=3m -> k/9",
+      "inputs": {"q": 1.0, "r": 3.0},
+      "expected": 998616865.8,
+      "tolerance": 1.0
+    }
+  ]
+}

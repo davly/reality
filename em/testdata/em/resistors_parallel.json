@@ -1,0 +1,41 @@
+{
+  "function": "EM.ResistorsInParallel",
+  "cases": [
+    {
+      "description": "Two equal 100 ohm resistors -> 50",
+      "inputs": {"resistances": [100.0, 100.0]},
+      "expected": 50.0,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "Three equal 30 ohm resistors -> 10",
+      "inputs": {"resistances": [30.0, 30.0, 30.0]},
+      "expected": 10.0,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "Mixed: 10, 20 -> 6.666...",
+      "inputs": {"resistances": [10.0, 20.0]},
+      "expected": 6.666666666666667,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "Short circuit: one resistor is 0 -> 0",
+      "inputs": {"resistances": [100.0, 0.0, 50.0]},
+      "expected": 0.0,
+      "tolerance": 0
+    },
+    {
+      "description": "Single resistor: 47 ohms",
+      "inputs": {"resistances": [47.0]},
+      "expected": 47.0,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "Empty -> 0",
+      "inputs": {"resistances": []},
+      "expected": 0.0,
+      "tolerance": 0
+    }
+  ]
+}
