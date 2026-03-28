@@ -1,0 +1,83 @@
+{
+  "function": "Linalg.CosineSimilarity",
+  "cases": [
+    {
+      "description": "identical unit vectors",
+      "inputs": {"a": [1, 0, 0], "b": [1, 0, 0]},
+      "expected": 1.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "parallel vectors (same direction, different magnitude)",
+      "inputs": {"a": [2, 0, 0], "b": [5, 0, 0]},
+      "expected": 1.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "anti-parallel vectors (opposite direction)",
+      "inputs": {"a": [1, 0, 0], "b": [-1, 0, 0]},
+      "expected": -1.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "orthogonal vectors",
+      "inputs": {"a": [1, 0, 0], "b": [0, 1, 0]},
+      "expected": 0.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "45-degree angle in 2D",
+      "inputs": {"a": [1, 0], "b": [1, 1]},
+      "expected": 0.7071067811865476,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "negative components",
+      "inputs": {"a": [-1, -2, -3], "b": [-1, -2, -3]},
+      "expected": 1.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "zero vector a",
+      "inputs": {"a": [0, 0, 0], "b": [1, 2, 3]},
+      "expected": 0.0,
+      "tolerance": 0.0
+    },
+    {
+      "description": "zero vector b",
+      "inputs": {"a": [1, 2, 3], "b": [0, 0, 0]},
+      "expected": 0.0,
+      "tolerance": 0.0
+    },
+    {
+      "description": "both zero vectors",
+      "inputs": {"a": [0, 0], "b": [0, 0]},
+      "expected": 0.0,
+      "tolerance": 0.0
+    },
+    {
+      "description": "known value: (1,2,3) vs (4,-5,6)",
+      "inputs": {"a": [1, 2, 3], "b": [4, -5, 6]},
+      "expected": 0.3654869423239036,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "high-dimensional (5D) similar vectors",
+      "inputs": {"a": [1, 2, 3, 4, 5], "b": [1.1, 2.1, 3.1, 4.1, 5.1]},
+      "expected": 0.9999216945302428,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "single-element vectors",
+      "inputs": {"a": [3.0], "b": [7.0]},
+      "expected": 1.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "single-element negative vs positive",
+      "inputs": {"a": [-3.0], "b": [7.0]},
+      "expected": -1.0,
+      "tolerance": 1e-15
+    }
+  ]
+}

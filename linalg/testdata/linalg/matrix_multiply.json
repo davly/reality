@@ -1,0 +1,115 @@
+{
+  "function": "Linalg.MatMul",
+  "cases": [
+    {
+      "description": "2x2 identity * 2x2 matrix",
+      "inputs": {
+        "A": [1, 0, 0, 1],
+        "aRows": 2, "aCols": 2,
+        "B": [5, 6, 7, 8],
+        "bCols": 2
+      },
+      "expected": [5, 6, 7, 8],
+      "tolerance": 1e-15
+    },
+    {
+      "description": "2x2 * 2x2 known result",
+      "inputs": {
+        "A": [1, 2, 3, 4],
+        "aRows": 2, "aCols": 2,
+        "B": [5, 6, 7, 8],
+        "bCols": 2
+      },
+      "expected": [19, 22, 43, 50],
+      "tolerance": 1e-15
+    },
+    {
+      "description": "3x3 identity * 3x3 matrix",
+      "inputs": {
+        "A": [1, 0, 0, 0, 1, 0, 0, 0, 1],
+        "aRows": 3, "aCols": 3,
+        "B": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        "bCols": 3
+      },
+      "expected": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+      "tolerance": 1e-15
+    },
+    {
+      "description": "3x3 * 3x3 known result",
+      "inputs": {
+        "A": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        "aRows": 3, "aCols": 3,
+        "B": [9, 8, 7, 6, 5, 4, 3, 2, 1],
+        "bCols": 3
+      },
+      "expected": [30, 24, 18, 84, 69, 54, 138, 114, 90],
+      "tolerance": 1e-15
+    },
+    {
+      "description": "2x3 * 3x2 non-square",
+      "inputs": {
+        "A": [1, 2, 3, 4, 5, 6],
+        "aRows": 2, "aCols": 3,
+        "B": [7, 8, 9, 10, 11, 12],
+        "bCols": 2
+      },
+      "expected": [58, 64, 139, 154],
+      "tolerance": 1e-15
+    },
+    {
+      "description": "3x2 * 2x3 non-square",
+      "inputs": {
+        "A": [1, 4, 2, 5, 3, 6],
+        "aRows": 3, "aCols": 2,
+        "B": [7, 9, 11, 8, 10, 12],
+        "bCols": 3
+      },
+      "expected": [39, 49, 59, 54, 68, 82, 69, 87, 105],
+      "tolerance": 1e-15
+    },
+    {
+      "description": "1x1 scalar multiply",
+      "inputs": {
+        "A": [3],
+        "aRows": 1, "aCols": 1,
+        "B": [7],
+        "bCols": 1
+      },
+      "expected": [21],
+      "tolerance": 1e-15
+    },
+    {
+      "description": "row vector * column vector (1x3 * 3x1 = 1x1)",
+      "inputs": {
+        "A": [1, 2, 3],
+        "aRows": 1, "aCols": 3,
+        "B": [4, 5, 6],
+        "bCols": 1
+      },
+      "expected": [32],
+      "tolerance": 1e-15
+    },
+    {
+      "description": "column vector * row vector (3x1 * 1x3 = 3x3 outer product)",
+      "inputs": {
+        "A": [1, 2, 3],
+        "aRows": 3, "aCols": 1,
+        "B": [4, 5, 6],
+        "bCols": 3
+      },
+      "expected": [4, 5, 6, 8, 10, 12, 12, 15, 18],
+      "tolerance": 1e-15
+    },
+    {
+      "description": "2x2 zero matrix",
+      "inputs": {
+        "A": [1, 2, 3, 4],
+        "aRows": 2, "aCols": 2,
+        "B": [0, 0, 0, 0],
+        "bCols": 2
+      },
+      "expected": [0, 0, 0, 0],
+      "tolerance": 0.0
+    }
+  ]
+}
