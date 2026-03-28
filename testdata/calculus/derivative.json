@@ -1,0 +1,65 @@
+{
+  "function": "Calculus.NumericalDerivative",
+  "cases": [
+    {
+      "description": "derivative of x^2 at x=3 (expect 6)",
+      "inputs": {"function": "x^2", "x": 3.0, "h": 1e-5},
+      "expected": 6.0,
+      "tolerance": 1e-5
+    },
+    {
+      "description": "derivative of x^2 at x=0 (expect 0)",
+      "inputs": {"function": "x^2", "x": 0.0, "h": 1e-5},
+      "expected": 0.0,
+      "tolerance": 1e-5
+    },
+    {
+      "description": "derivative of sin(x) at x=0 (expect 1)",
+      "inputs": {"function": "sin", "x": 0.0, "h": 1e-5},
+      "expected": 1.0,
+      "tolerance": 1e-5
+    },
+    {
+      "description": "derivative of sin(x) at x=pi/2 (expect 0)",
+      "inputs": {"function": "sin", "x": 1.5707963267948966, "h": 1e-5},
+      "expected": 0.0,
+      "tolerance": 1e-4
+    },
+    {
+      "description": "derivative of exp(x) at x=0 (expect 1)",
+      "inputs": {"function": "exp", "x": 0.0, "h": 1e-5},
+      "expected": 1.0,
+      "tolerance": 1e-5
+    },
+    {
+      "description": "derivative of exp(x) at x=1 (expect e)",
+      "inputs": {"function": "exp", "x": 1.0, "h": 1e-5},
+      "expected": 2.718281828459045,
+      "tolerance": 1e-4
+    },
+    {
+      "description": "derivative of cos(x) at x=0 (expect 0)",
+      "inputs": {"function": "cos", "x": 0.0, "h": 1e-5},
+      "expected": 0.0,
+      "tolerance": 1e-5
+    },
+    {
+      "description": "derivative of x^3 at x=2 (expect 12)",
+      "inputs": {"function": "x^3", "x": 2.0, "h": 1e-5},
+      "expected": 12.0,
+      "tolerance": 1e-4
+    },
+    {
+      "description": "derivative of ln(x) at x=1 (expect 1)",
+      "inputs": {"function": "ln", "x": 1.0, "h": 1e-5},
+      "expected": 1.0,
+      "tolerance": 1e-5
+    },
+    {
+      "description": "derivative of ln(x) at x=e (expect 1/e)",
+      "inputs": {"function": "ln", "x": 2.718281828459045, "h": 1e-5},
+      "expected": 0.36787944117144233,
+      "tolerance": 1e-5
+    }
+  ]
+}

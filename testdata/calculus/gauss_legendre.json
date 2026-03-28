@@ -1,0 +1,53 @@
+{
+  "function": "Calculus.GaussLegendre",
+  "cases": [
+    {
+      "description": "GL-2 integral of x from 0 to 1 (expect 0.5)",
+      "inputs": {"function": "x", "a": 0.0, "b": 1.0, "points": 2},
+      "expected": 0.5,
+      "tolerance": 1e-14
+    },
+    {
+      "description": "GL-2 integral of x^2 from 0 to 1 (expect 1/3)",
+      "inputs": {"function": "x^2", "a": 0.0, "b": 1.0, "points": 2},
+      "expected": 0.3333333333333333,
+      "tolerance": 1e-14
+    },
+    {
+      "description": "GL-3 integral of x^4 from 0 to 1 (expect 0.2)",
+      "inputs": {"function": "x^4", "a": 0.0, "b": 1.0, "points": 3},
+      "expected": 0.2,
+      "tolerance": 1e-14
+    },
+    {
+      "description": "GL-5 integral of sin(x) from 0 to pi (expect 2)",
+      "inputs": {"function": "sin", "a": 0.0, "b": 3.141592653589793, "points": 5},
+      "expected": 2.0,
+      "tolerance": 1e-6
+    },
+    {
+      "description": "GL-5 integral of exp(x) from 0 to 1 (expect e-1)",
+      "inputs": {"function": "exp", "a": 0.0, "b": 1.0, "points": 5},
+      "expected": 1.718281828459045,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "GL-3 integral of constant 7 from 2 to 5 (expect 21)",
+      "inputs": {"function": "7", "a": 2.0, "b": 5.0, "points": 3},
+      "expected": 21.0,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "GL-4 integral of x^3 from -1 to 1 (expect 0)",
+      "inputs": {"function": "x^3", "a": -1.0, "b": 1.0, "points": 4},
+      "expected": 0.0,
+      "tolerance": 1e-14
+    },
+    {
+      "description": "GL-5 integral of cos(x) from 0 to pi/2 (expect 1)",
+      "inputs": {"function": "cos", "a": 0.0, "b": 1.5707963267948966, "points": 5},
+      "expected": 1.0,
+      "tolerance": 1e-8
+    }
+  ]
+}
