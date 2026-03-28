@@ -1,0 +1,65 @@
+{
+  "function": "prob.BetaPDF",
+  "cases": [
+    {
+      "description": "Beta(1,1) is uniform: PDF = 1.0 everywhere",
+      "inputs": {"x": 0.5, "alpha": 1.0, "beta": 1.0},
+      "expected": 1.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "Beta(2,2) at x=0.5 (symmetric peak)",
+      "inputs": {"x": 0.5, "alpha": 2.0, "beta": 2.0},
+      "expected": 1.5,
+      "tolerance": 1e-14
+    },
+    {
+      "description": "Beta(2,5) at x=0.2",
+      "inputs": {"x": 0.2, "alpha": 2.0, "beta": 5.0},
+      "expected": 2.4576,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "Beta(5,1) at x=0.8 (skewed right)",
+      "inputs": {"x": 0.8, "alpha": 5.0, "beta": 1.0},
+      "expected": 2.048,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "Beta(0.5,0.5) at x=0.5 (arcsine-like, U-shaped)",
+      "inputs": {"x": 0.5, "alpha": 0.5, "beta": 0.5},
+      "expected": 0.6366197723675814,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "Beta(2,2) at x=0.0 boundary",
+      "inputs": {"x": 0.0, "alpha": 2.0, "beta": 2.0},
+      "expected": 0.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "Beta(2,2) at x=1.0 boundary",
+      "inputs": {"x": 1.0, "alpha": 2.0, "beta": 2.0},
+      "expected": 0.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "Beta(1,1) at x=0.0 boundary (uniform, alpha=1)",
+      "inputs": {"x": 0.0, "alpha": 1.0, "beta": 1.0},
+      "expected": 1.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "Beta(1,1) at x=1.0 boundary (uniform, beta=1)",
+      "inputs": {"x": 1.0, "alpha": 1.0, "beta": 1.0},
+      "expected": 1.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "Beta(10,10) at x=0.5 (sharply peaked)",
+      "inputs": {"x": 0.5, "alpha": 10.0, "beta": 10.0},
+      "expected": 3.523941040039057,
+      "tolerance": 1e-10
+    }
+  ]
+}

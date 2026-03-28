@@ -1,0 +1,77 @@
+{
+  "function": "prob.NormalPDF_and_NormalCDF",
+  "cases": [
+    {
+      "description": "standard normal PDF at x=0 (peak)",
+      "inputs": {"x": 0.0, "mu": 0.0, "sigma": 1.0, "fn": "pdf"},
+      "expected": 0.3989422804014327,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "standard normal PDF at x=1",
+      "inputs": {"x": 1.0, "mu": 0.0, "sigma": 1.0, "fn": "pdf"},
+      "expected": 0.24197072451914337,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "standard normal PDF at x=-1 (symmetry)",
+      "inputs": {"x": -1.0, "mu": 0.0, "sigma": 1.0, "fn": "pdf"},
+      "expected": 0.24197072451914337,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "standard normal PDF at x=2",
+      "inputs": {"x": 2.0, "mu": 0.0, "sigma": 1.0, "fn": "pdf"},
+      "expected": 0.05399096651318806,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "standard normal PDF at x=3 (tail)",
+      "inputs": {"x": 3.0, "mu": 0.0, "sigma": 1.0, "fn": "pdf"},
+      "expected": 0.0044318484119380075,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "normal PDF mu=5, sigma=2 at x=5 (peak)",
+      "inputs": {"x": 5.0, "mu": 5.0, "sigma": 2.0, "fn": "pdf"},
+      "expected": 0.19947114020071635,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "standard normal CDF at x=0 (median)",
+      "inputs": {"x": 0.0, "mu": 0.0, "sigma": 1.0, "fn": "cdf"},
+      "expected": 0.5,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "standard normal CDF at x=1 (mu+sigma)",
+      "inputs": {"x": 1.0, "mu": 0.0, "sigma": 1.0, "fn": "cdf"},
+      "expected": 0.8413447460685429,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "standard normal CDF at x=-1",
+      "inputs": {"x": -1.0, "mu": 0.0, "sigma": 1.0, "fn": "cdf"},
+      "expected": 0.15865525393145707,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "standard normal CDF at x=2 (mu+2*sigma)",
+      "inputs": {"x": 2.0, "mu": 0.0, "sigma": 1.0, "fn": "cdf"},
+      "expected": 0.9772498680518208,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "standard normal CDF at x=-2",
+      "inputs": {"x": -2.0, "mu": 0.0, "sigma": 1.0, "fn": "cdf"},
+      "expected": 0.02275013194817921,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "standard normal CDF at x=3 (mu+3*sigma)",
+      "inputs": {"x": 3.0, "mu": 0.0, "sigma": 1.0, "fn": "cdf"},
+      "expected": 0.9986501019683699,
+      "tolerance": 1e-12
+    }
+  ]
+}

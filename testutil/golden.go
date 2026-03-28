@@ -199,6 +199,33 @@ func InputFloat64Slice(t *testing.T, tc TestCase, key string) []float64 {
 	return s
 }
 
+// InputInt extracts a named integer input from a test case's Inputs map.
+// JSON numbers are decoded as float64, so this converts to int after checking
+// that the value is an integer (no fractional part). Fails the test if the
+// key is missing, the value is not numeric, or has a fractional part.
+func InputInt(t *testing.T, tc TestCase, key string) int {
+	t.Helper()
+
+	val, exists := tc.Inputs[key]
+	if !exists {
+		t.Fatalf("[%s] missing input key %q", tc.Description, key)
+	}
+
+	f, ok := toFloat64(val)
+	if !ok {
+		t.Fatalf("[%s] input %q is not numeric: %v (type %T)",
+			tc.Description, key, val, val)
+	}
+
+	i := int(f)
+	if float64(i) != f {
+		t.Fatalf("[%s] input %q is not an integer: %v",
+			tc.Description, key, f)
+	}
+
+	return i
+}
+
 // toFloat64 converts a JSON-decoded value to float64.
 // JSON numbers decode as float64, so this handles the common case.
 func toFloat64(v any) (float64, bool) {
