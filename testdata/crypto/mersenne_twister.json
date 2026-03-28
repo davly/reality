@@ -1,0 +1,95 @@
+{
+  "function": "Crypto.MersenneTwister",
+  "cases": [
+    {
+      "description": "MT19937-64 seed=42 output[0]",
+      "inputs": {
+        "index": 0,
+        "seed": 42
+      },
+      "expected": "13930160852258120406",
+      "tolerance": 0
+    },
+    {
+      "description": "MT19937-64 seed=42 output[1]",
+      "inputs": {
+        "index": 1,
+        "seed": 42
+      },
+      "expected": "11788048577503494824",
+      "tolerance": 0
+    },
+    {
+      "description": "MT19937-64 seed=42 output[2]",
+      "inputs": {
+        "index": 2,
+        "seed": 42
+      },
+      "expected": "13874630024467741450",
+      "tolerance": 0
+    },
+    {
+      "description": "MT19937-64 seed=42 output[3]",
+      "inputs": {
+        "index": 3,
+        "seed": 42
+      },
+      "expected": "2513787319205155662",
+      "tolerance": 0
+    },
+    {
+      "description": "MT19937-64 seed=42 output[4]",
+      "inputs": {
+        "index": 4,
+        "seed": 42
+      },
+      "expected": "16662371453428439381",
+      "tolerance": 0
+    },
+    {
+      "description": "MT19937-64 seed=42 output[5]",
+      "inputs": {
+        "index": 5,
+        "seed": 42
+      },
+      "expected": "1735254072534978428",
+      "tolerance": 0
+    },
+    {
+      "description": "MT19937-64 seed=42 output[6]",
+      "inputs": {
+        "index": 6,
+        "seed": 42
+      },
+      "expected": "10598951352238613536",
+      "tolerance": 0
+    },
+    {
+      "description": "MT19937-64 seed=42 output[7]",
+      "inputs": {
+        "index": 7,
+        "seed": 42
+      },
+      "expected": "6878563960102566144",
+      "tolerance": 0
+    },
+    {
+      "description": "MT19937-64 seed=42 output[8]",
+      "inputs": {
+        "index": 8,
+        "seed": 42
+      },
+      "expected": "5052085463162682550",
+      "tolerance": 0
+    },
+    {
+      "description": "MT19937-64 seed=42 output[9]",
+      "inputs": {
+        "index": 9,
+        "seed": 42
+      },
+      "expected": "7199227068870524257",
+      "tolerance": 0
+    }
+  ]
+}

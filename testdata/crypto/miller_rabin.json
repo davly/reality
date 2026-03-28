@@ -1,0 +1,95 @@
+{
+  "function": "Crypto.MillerRabin",
+  "cases": [
+    {
+      "description": "smallest prime",
+      "inputs": {
+        "k": 5,
+        "n": 2
+      },
+      "expected": true,
+      "tolerance": 0
+    },
+    {
+      "description": "small prime",
+      "inputs": {
+        "k": 5,
+        "n": 3
+      },
+      "expected": true,
+      "tolerance": 0
+    },
+    {
+      "description": "medium prime",
+      "inputs": {
+        "k": 5,
+        "n": 997
+      },
+      "expected": true,
+      "tolerance": 0
+    },
+    {
+      "description": "prime 7919",
+      "inputs": {
+        "k": 5,
+        "n": 7919
+      },
+      "expected": true,
+      "tolerance": 0
+    },
+    {
+      "description": "five-digit prime",
+      "inputs": {
+        "k": 5,
+        "n": 104729
+      },
+      "expected": true,
+      "tolerance": 0
+    },
+    {
+      "description": "Carmichael number 561 with k=1 (may fool single witness)",
+      "inputs": {
+        "k": 1,
+        "n": 561
+      },
+      "expected": false,
+      "tolerance": 0
+    },
+    {
+      "description": "Carmichael number 561 with k=3",
+      "inputs": {
+        "k": 3,
+        "n": 561
+      },
+      "expected": false,
+      "tolerance": 0
+    },
+    {
+      "description": "Carmichael number 1105 with k=3",
+      "inputs": {
+        "k": 3,
+        "n": 1105
+      },
+      "expected": false,
+      "tolerance": 0
+    },
+    {
+      "description": "Carmichael number 1729 (Hardy-Ramanujan) with k=3",
+      "inputs": {
+        "k": 3,
+        "n": 1729
+      },
+      "expected": false,
+      "tolerance": 0
+    },
+    {
+      "description": "composite 15",
+      "inputs": {
+        "k": 5,
+        "n": 15
+      },
+      "expected": false,
+      "tolerance": 0
+    }
+  ]
+}
