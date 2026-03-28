@@ -1,0 +1,50 @@
+{
+  "function": "graph.DAGDepth",
+  "cases": [
+    {
+      "description": "linear chain A->B->C->D (depth 3)",
+      "inputs": {
+        "edges": [["A", "B"], ["B", "C"], ["C", "D"]],
+        "expected_depth": 3
+      },
+      "expected": 3,
+      "tolerance": 0
+    },
+    {
+      "description": "single edge A->B (depth 1)",
+      "inputs": {
+        "edges": [["A", "B"]],
+        "expected_depth": 1
+      },
+      "expected": 1,
+      "tolerance": 0
+    },
+    {
+      "description": "diamond A->B->D, A->C->D (depth 2)",
+      "inputs": {
+        "edges": [["A", "B"], ["A", "C"], ["B", "D"], ["C", "D"]],
+        "expected_depth": 2
+      },
+      "expected": 2,
+      "tolerance": 0
+    },
+    {
+      "description": "wide tree A->B, A->C, A->D (depth 1)",
+      "inputs": {
+        "edges": [["A", "B"], ["A", "C"], ["A", "D"]],
+        "expected_depth": 1
+      },
+      "expected": 1,
+      "tolerance": 0
+    },
+    {
+      "description": "asymmetric: long path plus short path (depth 4)",
+      "inputs": {
+        "edges": [["A", "B"], ["B", "C"], ["C", "D"], ["D", "E"], ["A", "X"]],
+        "expected_depth": 4
+      },
+      "expected": 4,
+      "tolerance": 0
+    }
+  ]
+}

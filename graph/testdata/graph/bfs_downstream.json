@@ -1,0 +1,50 @@
+{
+  "function": "graph.BFSDownstream",
+  "cases": [
+    {
+      "description": "linear chain from root",
+      "inputs": {
+        "edges": [["A", "B"], ["B", "C"], ["C", "D"]],
+        "start": "A"
+      },
+      "expected": ["B", "C", "D"],
+      "tolerance": 0
+    },
+    {
+      "description": "linear chain from middle",
+      "inputs": {
+        "edges": [["A", "B"], ["B", "C"], ["C", "D"]],
+        "start": "B"
+      },
+      "expected": ["C", "D"],
+      "tolerance": 0
+    },
+    {
+      "description": "leaf node (no downstream)",
+      "inputs": {
+        "edges": [["A", "B"], ["B", "C"]],
+        "start": "C"
+      },
+      "expected": [],
+      "tolerance": 0
+    },
+    {
+      "description": "diamond graph from root",
+      "inputs": {
+        "edges": [["A", "B"], ["A", "C"], ["B", "D"], ["C", "D"]],
+        "start": "A"
+      },
+      "expected": ["B", "C", "D"],
+      "tolerance": 0
+    },
+    {
+      "description": "non-existent start node",
+      "inputs": {
+        "edges": [["A", "B"], ["B", "C"]],
+        "start": "Z"
+      },
+      "expected": [],
+      "tolerance": 0
+    }
+  ]
+}

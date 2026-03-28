@@ -28,6 +28,29 @@ func ClampProbability(p float64) float64 {
 	return math.Max(MinProb, math.Min(MaxProb, p))
 }
 
+// ConfidenceFromPValue converts a statistical p-value to a confidence score.
+// The confidence is defined as 1 - p, clamped to [0, 1].
+//
+// This is the standard frequentist interpretation: a p-value of 0.05
+// corresponds to 95% confidence (0.95).
+//
+// Formula: confidence = clamp(1 - pValue, 0, 1)
+// Valid range: any float64 p-value; result is always in [0, 1]
+// Precision: exact (single subtraction + clamp)
+// Reference: standard frequentist statistics
+//
+// Source: extracted from aicore/parallaxmath.ConfidenceFromPValue.
+func ConfidenceFromPValue(pValue float64) float64 {
+	c := 1.0 - pValue
+	if c < 0 {
+		return 0
+	}
+	if c > 1 {
+		return 1
+	}
+	return c
+}
+
 // ProbToLogOdds converts a probability to log-odds (logit function).
 //
 // Formula: log(p / (1 - p))

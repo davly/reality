@@ -1,0 +1,53 @@
+{
+  "function": "prob.ConfidenceFromPValue",
+  "cases": [
+    {
+      "description": "standard p=0.05 gives 95% confidence",
+      "inputs": {"pValue": 0.05},
+      "expected": 0.95,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "p=0.01 gives 99% confidence",
+      "inputs": {"pValue": 0.01},
+      "expected": 0.99,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "p=0.5 gives 50% confidence",
+      "inputs": {"pValue": 0.5},
+      "expected": 0.5,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "p=0.0 gives 100% confidence (clamped to 1)",
+      "inputs": {"pValue": 0.0},
+      "expected": 1.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "p=1.0 gives 0% confidence",
+      "inputs": {"pValue": 1.0},
+      "expected": 0.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "negative p-value clamped to confidence 1",
+      "inputs": {"pValue": -0.5},
+      "expected": 1.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "p > 1 clamped to confidence 0",
+      "inputs": {"pValue": 1.5},
+      "expected": 0.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "p=0.001 gives 99.9% confidence",
+      "inputs": {"pValue": 0.001},
+      "expected": 0.999,
+      "tolerance": 1e-15
+    }
+  ]
+}

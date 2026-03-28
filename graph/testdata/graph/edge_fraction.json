@@ -1,0 +1,50 @@
+{
+  "function": "graph.EdgeFraction",
+  "cases": [
+    {
+      "description": "central node in 3/3 edges",
+      "inputs": {
+        "edges": [["A", "B"], ["B", "C"], ["B", "D"]],
+        "node": "B"
+      },
+      "expected": 1.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "leaf node in 1/3 edges",
+      "inputs": {
+        "edges": [["A", "B"], ["B", "C"], ["B", "D"]],
+        "node": "D"
+      },
+      "expected": 0.3333333333333333,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "root node in 1/3 edges",
+      "inputs": {
+        "edges": [["A", "B"], ["B", "C"], ["B", "D"]],
+        "node": "A"
+      },
+      "expected": 0.3333333333333333,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "non-existent node",
+      "inputs": {
+        "edges": [["A", "B"], ["B", "C"]],
+        "node": "Z"
+      },
+      "expected": 0.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "node in 2/4 edges",
+      "inputs": {
+        "edges": [["A", "B"], ["A", "C"], ["B", "D"], ["C", "D"]],
+        "node": "A"
+      },
+      "expected": 0.5,
+      "tolerance": 1e-15
+    }
+  ]
+}

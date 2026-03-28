@@ -650,3 +650,45 @@ func TestGoldenBrierScore(t *testing.T) {
 		})
 	}
 }
+
+// ---------------------------------------------------------------------------
+// ConfidenceFromPValue
+// ---------------------------------------------------------------------------
+
+func TestConfidenceFromPValue(t *testing.T) {
+	tests := []struct {
+		name   string
+		pValue float64
+		want   float64
+	}{
+		{"standard p=0.05", 0.05, 0.95},
+		{"p=0.01", 0.01, 0.99},
+		{"p=0.5", 0.5, 0.5},
+		{"p=0.0 (full confidence)", 0.0, 1.0},
+		{"p=1.0 (no confidence)", 1.0, 0.0},
+		{"negative p-value clamped", -0.5, 1.0},
+		{"p > 1 clamped", 1.5, 0.0},
+		{"p=0.001", 0.001, 0.999},
+		{"p=0.1", 0.1, 0.9},
+		{"p=0.999", 0.999, 0.001},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ConfidenceFromPValue(tt.pValue)
+			if math.Abs(got-tt.want) > 1e-15 {
+				t.Errorf("ConfidenceFromPValue(%v) = %v, want %v", tt.pValue, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGoldenConfidenceFromPValue(t *testing.T) {
+	gf := testutil.LoadGolden(t, "testdata/prob/confidence_from_pvalue.json")
+	for _, tc := range gf.Cases {
+		t.Run(tc.Description, func(t *testing.T) {
+			pValue := testutil.InputFloat64(t, tc, "pValue")
+			got := ConfidenceFromPValue(pValue)
+			testutil.AssertFloat64(t, tc, got)
+		})
+	}
+}
