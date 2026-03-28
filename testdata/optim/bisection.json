@@ -1,0 +1,85 @@
+{
+  "function": "Optim.BisectionMethod",
+  "cases": [
+    {
+      "description": "sqrt(2) via x^2-2=0 on [1,2]",
+      "inputs": {
+        "a": 1.0,
+        "b": 2.0,
+        "function": "x^2-2"
+      },
+      "expected": 1.4142135623730951,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "sqrt(3) via x^2-3=0 on [1,2]",
+      "inputs": {
+        "a": 1.0,
+        "b": 2.0,
+        "function": "x^2-3"
+      },
+      "expected": 1.7320508075688772,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "sin(x)=0 finding pi on [3,4]",
+      "inputs": {
+        "a": 3.0,
+        "b": 4.0,
+        "function": "sin(x)"
+      },
+      "expected": 3.141592653589793,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "cos(x)=0 finding pi/2 on [1,2]",
+      "inputs": {
+        "a": 1.0,
+        "b": 2.0,
+        "function": "cos(x)"
+      },
+      "expected": 1.5707963267948966,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "x^3-x-2=0 on [1,2]",
+      "inputs": {
+        "a": 1.0,
+        "b": 2.0,
+        "function": "x^3-x-2"
+      },
+      "expected": 1.5213797068045676,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "exp(x)-3=0 on [0,2] (ln(3))",
+      "inputs": {
+        "a": 0.0,
+        "b": 2.0,
+        "function": "exp(x)-3"
+      },
+      "expected": 1.0986122886681098,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "x-1=0 trivial root on [0,2]",
+      "inputs": {
+        "a": 0.0,
+        "b": 2.0,
+        "function": "x-1"
+      },
+      "expected": 1.0,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "x^5-x-1=0 on [1,2]",
+      "inputs": {
+        "a": 1.0,
+        "b": 2.0,
+        "function": "x^5-x-1"
+      },
+      "expected": 1.1673039782614187,
+      "tolerance": 1e-9
+    }
+  ]
+}
