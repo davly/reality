@@ -1,0 +1,95 @@
+{
+  "function": "prob.BayesianUpdate",
+  "cases": [
+    {
+      "description": "uniform prior, LR=1 (no evidence, no change)",
+      "inputs": {"prior": 0.5, "likelihoodRatio": 1.0},
+      "expected": 0.5,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "uniform prior, LR=2 (moderate evidence for hypothesis)",
+      "inputs": {"prior": 0.5, "likelihoodRatio": 2.0},
+      "expected": 0.6666666666666666,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "uniform prior, LR=0.5 (moderate evidence against hypothesis)",
+      "inputs": {"prior": 0.5, "likelihoodRatio": 0.5},
+      "expected": 0.3333333333333333,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "high prior, LR=2 (strong becomes stronger)",
+      "inputs": {"prior": 0.8, "likelihoodRatio": 2.0},
+      "expected": 0.8888888888888888,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "low prior, LR=3 (weak becomes moderate)",
+      "inputs": {"prior": 0.2, "likelihoodRatio": 3.0},
+      "expected": 0.42857142857142855,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "prior near MinProb, LR=2 (clamped boundary behavior)",
+      "inputs": {"prior": 0.01, "likelihoodRatio": 2.0},
+      "expected": 0.01980198019801982,
+      "tolerance": 1e-6
+    },
+    {
+      "description": "prior near MaxProb, LR=0.5 (clamped boundary behavior)",
+      "inputs": {"prior": 0.99, "likelihoodRatio": 0.5},
+      "expected": 0.980198019801980,
+      "tolerance": 1e-6
+    },
+    {
+      "description": "zero LR returns prior unchanged",
+      "inputs": {"prior": 0.5, "likelihoodRatio": 0.0},
+      "expected": 0.5,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "negative LR returns prior unchanged",
+      "inputs": {"prior": 0.7, "likelihoodRatio": -1.0},
+      "expected": 0.7,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "very large LR saturates to MaxProb",
+      "inputs": {"prior": 0.5, "likelihoodRatio": 10000.0},
+      "expected": 0.99,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "very small LR saturates to MinProb",
+      "inputs": {"prior": 0.5, "likelihoodRatio": 0.0001},
+      "expected": 0.01,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "LR=1 with non-uniform prior preserves prior",
+      "inputs": {"prior": 0.3, "likelihoodRatio": 1.0},
+      "expected": 0.3,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "symmetric update: prior=0.25, LR=3 -> 0.5",
+      "inputs": {"prior": 0.25, "likelihoodRatio": 3.0},
+      "expected": 0.5,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "prior=0.6, LR=1.5",
+      "inputs": {"prior": 0.6, "likelihoodRatio": 1.5},
+      "expected": 0.6923076923076923,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "prior=0.1, LR=9 (evidence shifts belief from 10% to 50%)",
+      "inputs": {"prior": 0.1, "likelihoodRatio": 9.0},
+      "expected": 0.5,
+      "tolerance": 1e-12
+    }
+  ]
+}

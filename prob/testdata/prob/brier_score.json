@@ -1,0 +1,95 @@
+{
+  "function": "prob.BrierScore",
+  "cases": [
+    {
+      "description": "perfect prediction: predicted 1.0, actual 1.0",
+      "inputs": {"predicted": 1.0, "actual": 1.0},
+      "expected": 0.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "perfect prediction: predicted 0.0, actual 0.0",
+      "inputs": {"predicted": 0.0, "actual": 0.0},
+      "expected": 0.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "maximally wrong: predicted 0.0, actual 1.0",
+      "inputs": {"predicted": 0.0, "actual": 1.0},
+      "expected": 1.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "maximally wrong: predicted 1.0, actual 0.0",
+      "inputs": {"predicted": 1.0, "actual": 0.0},
+      "expected": 1.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "coin flip on true outcome: predicted 0.5, actual 1.0",
+      "inputs": {"predicted": 0.5, "actual": 1.0},
+      "expected": 0.25,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "coin flip on false outcome: predicted 0.5, actual 0.0",
+      "inputs": {"predicted": 0.5, "actual": 0.0},
+      "expected": 0.25,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "good prediction: predicted 0.9, actual 1.0",
+      "inputs": {"predicted": 0.9, "actual": 1.0},
+      "expected": 0.010000000000000002,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "good prediction: predicted 0.1, actual 0.0",
+      "inputs": {"predicted": 0.1, "actual": 0.0},
+      "expected": 0.010000000000000002,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "moderate miss: predicted 0.3, actual 1.0",
+      "inputs": {"predicted": 0.3, "actual": 1.0},
+      "expected": 0.48999999999999994,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "slight overconfidence: predicted 0.7, actual 0.0",
+      "inputs": {"predicted": 0.7, "actual": 0.0},
+      "expected": 0.48999999999999994,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "predicted 0.25, actual 1.0",
+      "inputs": {"predicted": 0.25, "actual": 1.0},
+      "expected": 0.5625,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "predicted 0.75, actual 1.0",
+      "inputs": {"predicted": 0.75, "actual": 1.0},
+      "expected": 0.0625,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "predicted 0.99, actual 1.0 (near perfect)",
+      "inputs": {"predicted": 0.99, "actual": 1.0},
+      "expected": 0.00010000000000000002,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "predicted 0.01, actual 0.0 (near perfect negative)",
+      "inputs": {"predicted": 0.01, "actual": 0.0},
+      "expected": 0.00010000000000000002,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "predicted 0.6, actual 0.0 (overconfident wrong)",
+      "inputs": {"predicted": 0.6, "actual": 0.0},
+      "expected": 0.36,
+      "tolerance": 1e-15
+    }
+  ]
+}
