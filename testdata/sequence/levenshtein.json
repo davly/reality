@@ -1,0 +1,65 @@
+{
+  "function": "Sequence.LevenshteinDistance",
+  "cases": [
+    {
+      "description": "kitten → sitting (classic example, distance 3)",
+      "inputs": {"a": "kitten", "b": "sitting"},
+      "expected": 3.0,
+      "tolerance": 0
+    },
+    {
+      "description": "empty → empty (both empty, distance 0)",
+      "inputs": {"a": "", "b": ""},
+      "expected": 0.0,
+      "tolerance": 0
+    },
+    {
+      "description": "empty → abc (insert all, distance 3)",
+      "inputs": {"a": "", "b": "abc"},
+      "expected": 3.0,
+      "tolerance": 0
+    },
+    {
+      "description": "abc → empty (delete all, distance 3)",
+      "inputs": {"a": "abc", "b": ""},
+      "expected": 3.0,
+      "tolerance": 0
+    },
+    {
+      "description": "identical strings (distance 0)",
+      "inputs": {"a": "algorithm", "b": "algorithm"},
+      "expected": 0.0,
+      "tolerance": 0
+    },
+    {
+      "description": "saturday → sunday (classic, distance 3)",
+      "inputs": {"a": "saturday", "b": "sunday"},
+      "expected": 3.0,
+      "tolerance": 0
+    },
+    {
+      "description": "flaw → lawn (distance 2)",
+      "inputs": {"a": "flaw", "b": "lawn"},
+      "expected": 2.0,
+      "tolerance": 0
+    },
+    {
+      "description": "gumbo → gambol (distance 2)",
+      "inputs": {"a": "gumbo", "b": "gambol"},
+      "expected": 2.0,
+      "tolerance": 0
+    },
+    {
+      "description": "single character difference (distance 1)",
+      "inputs": {"a": "cat", "b": "car"},
+      "expected": 1.0,
+      "tolerance": 0
+    },
+    {
+      "description": "completely different strings of same length",
+      "inputs": {"a": "abc", "b": "xyz"},
+      "expected": 3.0,
+      "tolerance": 0
+    }
+  ]
+}
