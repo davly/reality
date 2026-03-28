@@ -84,35 +84,34 @@ Open source from v1.0. The strategic value is credibility signal, not acquisitio
 
 ---
 
-## 3. The Domains
+## 3. The Packages (22)
 
-Reality contains 16 sub-packages spanning 8 original domains plus 6 domains added from the universal knowledge review.
-
-### Original 8 domains (from design doc)
+Reality contains 22 sub-packages. The original design called for 16; six additional domains were added during implementation as the physics scope was decomposed into focused packages and new applied-math areas were identified.
 
 | Package | Domain | Description |
 |---------|--------|-------------|
-| `reality/linalg` | Linear Algebra | Vectors, matrices, decompositions (LU, QR, Cholesky, SVD, eigen), sparse matrices, PCA |
-| `reality/calculus` | Calculus & Analysis | Differentiation, integration, ODE solvers, root finding, optimization, interpolation |
-| `reality/stats` | Probability & Statistics | 16+ distributions, Bayesian inference, hypothesis testing, regression, time series, information theory, Markov models, scoring |
-| `reality/physics` | Physics | Classical mechanics, fluid dynamics, thermodynamics, electromagnetism, acoustics, optics |
-| `reality/graph` | Graph Theory | Dijkstra, A*, topological sort, network analysis, TDA, metric spaces |
-| `reality/crypto` | Number Theory & Crypto | Primality, factorization, modular arithmetic, PRNGs, hash functions |
-| `reality/geometry` | Geometry | Computational geometry, SDF primitives, curves, quaternions, projective geometry |
-| `reality/signal` | Signal Processing | FFT/IFFT, convolution, filters, wavelets, Hilbert transform, window functions |
-
-### Additional packages
-
-| Package | Domain | Description |
-|---------|--------|-------------|
-| `reality/constants` | Constants | Mathematical constants, CODATA 2022 physical constants (exact as `const`, measured as `var` with uncertainty), CIE illuminants, unit conversions |
-| `reality/bio` | Biology (partial) | Lotka-Volterra, logistic growth, SIR/SEIR, Hardy-Weinberg. Pure ODEs with biological labels. |
-| `reality/color` | Color Theory | 8 color spaces (sRGB, linear RGB, HSL, HSV, LAB, LCH, oklch, XYZ), conversions, CIEDE2000 perceptual distance, WCAG contrast ratios, color blindness simulation |
-| `reality/game` | Game Theory | Nash equilibrium, Shapley value, minimax, mechanism design, replicator dynamics |
-| `reality/decision` | Decision Theory | Expected utility, Kelly criterion, MCDM, value of information, regret minimization |
-| `reality/queuing` | Queuing Theory | M/M/1, M/M/c, M/G/1, Little's law, Erlang B/C, Jackson networks |
-| `reality/geodesic` | Geodesy | Haversine, Vincenty, UTM projection, ECEF conversions, WGS84 |
-| `reality/sequence` | Sequence Operations | Edit distances (Levenshtein, Damerau-Levenshtein, Jaro-Winkler), LCS, n-grams, TF-IDF, Smith-Waterman alignment |
+| `reality/linalg` | Linear Algebra | Vectors, matrices, decompositions (LU, QR, Cholesky), PCA, sparse matrices |
+| `reality/calculus` | Calculus & Analysis | Differentiation, integration (Simpson, trapezoidal), RK4, root finding |
+| `reality/prob` | Probability & Statistics | Distributions (Normal, Beta, Poisson, Binomial), Bayesian inference, hypothesis testing (t-test, chi-squared), information theory |
+| `reality/physics` | Classical Physics | Mechanics, thermodynamics, material properties, stress/strain analysis |
+| `reality/graph` | Graph Theory | Dijkstra, A*, topological sort, BFS/DFS, network analysis |
+| `reality/crypto` | Number Theory & Crypto | Primality, modular arithmetic, PRNGs, hash functions |
+| `reality/geometry` | Geometry | Quaternions, SDF primitives, curves, convex hull, projective geometry |
+| `reality/signal` | Signal Processing | FFT/IFFT, convolution, filters, window functions, Hilbert transform |
+| `reality/constants` | Constants | Mathematical constants, CODATA 2018 physical constants (exact as `const`, measured as `var` with uncertainty), unit conversions |
+| `reality/color` | Color Science | 8 color spaces, CIEDE2000 perceptual distance, WCAG contrast, Bradford chromatic adaptation, blackbody |
+| `reality/gametheory` | Game Theory | Nash equilibrium, Shapley value, minimax, replicator dynamics |
+| `reality/queue` | Queueing Theory | M/M/1, M/M/c, M/G/1, Little's law, Erlang B/C |
+| `reality/combinatorics` | Combinatorics | Permutations, combinations, Catalan, Stirling, Bell numbers, integer partitions |
+| `reality/optim` | Optimization | Bisection, Newton, L-BFGS, simulated annealing, genetic algorithm, simplex method |
+| `reality/compression` | Compression | Entropy, RLE, delta encoding, Huffman, LZ77 |
+| `reality/control` | Control Theory | PID controllers, transfer functions, Bode analysis, stability margins |
+| `reality/chaos` | Dynamical Systems | ODE solvers, Lorenz attractor, Van der Pol oscillator, Lyapunov exponents |
+| `reality/fluids` | Fluid Mechanics | Reynolds number, Bernoulli, Darcy-Weisbach, drag, lift, terminal velocity, Stokes |
+| `reality/em` | Electromagnetism | Coulomb force, electric field, Ohm's law, power, RC/LC circuits, resonance |
+| `reality/acoustics` | Acoustics | Speed of sound, dB SPL, Sabine RT60, Doppler effect, A-weighting |
+| `reality/orbital` | Astrodynamics | Kepler orbits, vis-viva, Hohmann transfer, escape velocity, Hill sphere |
+| `reality/testutil` | Test Infrastructure | Golden-file test framework for cross-language validation (JSON vectors) |
 
 ### Dependency DAG
 

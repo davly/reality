@@ -4,13 +4,41 @@ Universal truth encoded in code. Pure math, physics, constants. Zero dependencie
 
 ## Quick Reference
 
+- **Version:** v0.10.0
 - **Go module:** `github.com/davly/reality`
 - **License:** MIT
 - **Port:** None (library, not a service)
-- **Status:** Phase 0 in progress (golden-file infra + constants)
+- **Tests:** 1,965 (22 packages, all passing, zero failures)
 - **Design doc:** `C:/CrossPollinationAnalysis/architecture/UNIVERSAL_TRUTH_FOUNDATION.md`
 - **Review synthesis:** `C:/CrossPollinationAnalysis/reviews/reality-review/SYNTHESIS.md`
 - **Context:** `CONTEXT.md` in this repo (read this for full background)
+
+## Packages (22)
+
+| Package | Description |
+|---------|-------------|
+| `acoustics` | Sound and wave propagation: speed of sound, dB SPL, Sabine RT60, Doppler, A-weighting |
+| `calculus` | Numerical differentiation and integration: Simpson, trapezoidal, RK4, root finding |
+| `chaos` | Dynamical systems: ODE solvers, Lorenz attractor, Van der Pol, Lyapunov exponents |
+| `color` | Color science: 8 color spaces, CIEDE2000 perceptual distance, WCAG contrast, Bradford adaptation |
+| `combinatorics` | Classical combinatorics: permutations, combinations, Catalan, Stirling, Bell numbers, partitions |
+| `compression` | Lossless/lossy compression primitives: entropy, RLE, delta encoding, Huffman, LZ77 |
+| `constants` | Mathematical, physical, and unit conversion constants (SI 2019, NIST CODATA 2018) |
+| `control` | Classical control theory: PID controllers, transfer functions, Bode analysis, stability margins |
+| `crypto` | Number theory and cryptographic primitives: primality, modular arithmetic, PRNGs, hash functions |
+| `em` | Electromagnetism: Coulomb force, electric field, Ohm's law, RC/LC circuits, series/parallel |
+| `fluids` | Classical fluid mechanics: Reynolds, Bernoulli, Darcy-Weisbach, drag, lift, terminal velocity |
+| `gametheory` | Classical game theory: Nash equilibrium, Shapley value, minimax, replicator dynamics |
+| `geometry` | Computational geometry: quaternions, SDF primitives, curves, convex hull, projective geometry |
+| `graph` | Pure graph algorithms: Dijkstra, A*, topological sort, BFS/DFS, network analysis |
+| `linalg` | Linear algebra: vectors, matrices, LU/QR/Cholesky decomposition, PCA, sparse matrices |
+| `optim` | Optimization: bisection, Newton, L-BFGS, simulated annealing, genetic algorithm, simplex |
+| `orbital` | Astrodynamics: Kepler orbits, vis-viva, Hohmann transfer, escape velocity, Hill sphere |
+| `physics` | Classical mechanics, thermodynamics, material properties, stress/strain |
+| `prob` | Probability and statistics: distributions, Bayesian inference, hypothesis testing, information theory |
+| `queue` | Queueing theory: M/M/1, M/M/c, M/G/1, Little's law, Erlang B/C |
+| `signal` | Signal processing: FFT/IFFT, convolution, filters, window functions, Hilbert transform |
+| `testutil` | Golden-file test infrastructure for cross-language validation (JSON test vectors) |
 
 ## Architecture
 
@@ -18,10 +46,12 @@ One repo. Sub-packages. Single Go module. Go is canonical; Python/C++/C# validat
 
 ```
 reality/
-  linalg/       calculus/     stats/        physics/
-  graph/        crypto/       geometry/     signal/
-  constants/    bio/          color/        game/
-  decision/     queuing/      geodesic/     sequence/
+  acoustics/    calculus/     chaos/        color/
+  combinatorics/ compression/ constants/    control/
+  crypto/       em/           fluids/       gametheory/
+  geometry/     graph/        linalg/       optim/
+  orbital/      physics/      prob/         queue/
+  signal/       testutil/
 ```
 
 ## Dependency Position
@@ -32,40 +62,28 @@ Consumer Apps -> Services -> AI (aicore) -> reality -> math stdlib
 
 aicore imports reality. reality imports nothing.
 
+## Golden-File Testing Infrastructure
+
+The single most important design decision. Every function has golden-file test vectors (JSON) shared across 4 languages (Go, Python, C++, C#).
+
+- Minimum 20 vectors per function, target 30
+- Per-function tolerance (not global): exact constants use 0, transcendentals use 1e-11, accumulating ops use 1e-9
+- IEEE 754 edge cases mandatory: +Inf, -Inf, NaN, -0.0, subnormals
+- Go generates golden files via `math/big` at 256-bit precision; all other languages validate against them
+
 ## Key Design Rules
 
-1. **Golden files are the proof.** Every function has golden-file test vectors (JSON, shared across 4 languages). Minimum 20 vectors per function, target 30. Per-function tolerance, not global.
-2. **Zero dependencies.** Only the language's standard math library. No gonum, no numpy in the core path.
+1. **Golden files are the proof.** Every function has golden-file test vectors.
+2. **Zero dependencies.** Only the language's standard math library.
 3. **No allocations in hot paths.** Functions accept output buffers. Pistachio calls these at 60 FPS.
-4. **Every function cites its source.** Mathematical provenance as queryable metadata, not buried comments.
-5. **Precision documented, not assumed.** Every function states valid input range, numerical precision, and failure modes.
-6. **Reimplement from first principles.** Do not wrap existing libraries. Provide optional adapters separately.
+4. **Every function cites its source.** Mathematical provenance as queryable metadata.
+5. **Precision documented, not assumed.** Every function states valid input range, precision, and failure modes.
+6. **Reimplement from first principles.** Do not wrap existing libraries.
 
 ## Building / Testing
 
 ```bash
-# Run all tests
-go test ./...
-
-# Run golden-file validation
-go test -run TestGolden ./...
-
-# Verbose output
-go test -v ./...
+go test ./...              # Run all tests (1,965)
+go test -run TestGolden ./...  # Run golden-file validation only
+go test -v ./...           # Verbose output
 ```
-
-## v1.0 Scope
-
-~397 functions across 16 sub-packages. ~8,990 golden-file test vectors. 5 phases over ~20 weeks.
-
-**Phase 0:** Golden-file infrastructure (weeks 1-2)
-**Phase 1:** Extract existing aicore math (weeks 3-6)
-**Phase 2:** Fill gaps across all domains (weeks 7-14)
-**Phase 3:** Pistachio + RubberDuck integration (weeks 15-18)
-**Phase 4:** Open source preparation (weeks 19-20)
-
-## What This Is Not
-
-- Not an AI library (no models, no tokens, no routing)
-- Not a physics engine (no scene graph, no collision system, no GPU dispatch)
-- Not a framework (pure functions -- numbers in, numbers out)

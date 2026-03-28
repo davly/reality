@@ -6,16 +6,38 @@ Universal truth encoded in code. Pure math, physics, and constants with zero ext
 
 Reality is the foundational math and science library for the Limitless ecosystem. It provides deterministic, pure functions validated against cross-language golden-file test vectors (JSON).
 
+**Version:** v0.10.0
 **Module:** `github.com/davly/reality`
 **License:** MIT
 **Go version:** 1.24+
 **External dependencies:** None
+**Tests:** 1,965 across 22 packages (all passing)
 
-## Packages
+## Packages (22)
 
 | Package | Description |
 |---------|-------------|
+| `acoustics` | Sound and wave propagation: speed of sound, dB SPL, Sabine RT60, Doppler, A-weighting |
+| `calculus` | Numerical differentiation and integration: Simpson, trapezoidal, RK4, root finding |
+| `chaos` | Dynamical systems: ODE solvers, Lorenz attractor, Van der Pol, Lyapunov exponents |
+| `color` | Color science: 8 color spaces, CIEDE2000, WCAG contrast, Bradford adaptation, blackbody |
+| `combinatorics` | Classical combinatorics: permutations, combinations, Catalan, Stirling, Bell, partitions |
+| `compression` | Lossless/lossy compression primitives: entropy, RLE, delta, Huffman, LZ77 |
 | `constants` | Mathematical, physical, and unit conversion constants (SI 2019, NIST CODATA 2018) |
+| `control` | Classical control theory: PID controllers, transfer functions, Bode analysis, stability |
+| `crypto` | Number theory and cryptographic primitives: primality, modular arithmetic, PRNGs, hashing |
+| `em` | Electromagnetism: Coulomb force, electric field, Ohm's law, RC/LC circuits, resonance |
+| `fluids` | Fluid mechanics: Reynolds, Bernoulli, Darcy-Weisbach, drag, lift, terminal velocity |
+| `gametheory` | Game theory: Nash equilibrium, Shapley value, minimax, replicator dynamics |
+| `geometry` | Computational geometry: quaternions, SDF primitives, curves, convex hull, projective |
+| `graph` | Graph algorithms: Dijkstra, A*, topological sort, BFS/DFS, network analysis |
+| `linalg` | Linear algebra: vectors, matrices, LU/QR/Cholesky decomposition, PCA, sparse matrices |
+| `optim` | Optimization: bisection, Newton, L-BFGS, simulated annealing, genetic algorithm, simplex |
+| `orbital` | Astrodynamics: Kepler orbits, vis-viva, Hohmann transfer, escape velocity, Hill sphere |
+| `physics` | Classical mechanics, thermodynamics, material properties, stress/strain |
+| `prob` | Probability and statistics: distributions, Bayesian inference, hypothesis tests, info theory |
+| `queue` | Queueing theory: M/M/1, M/M/c, M/G/1, Little's law, Erlang B/C |
+| `signal` | Signal processing: FFT/IFFT, convolution, filters, window functions, Hilbert transform |
 | `testutil` | Golden-file test infrastructure for cross-language validation |
 
 ## Building
@@ -28,7 +50,7 @@ go build ./...
 ## Testing
 
 ```bash
-# Run all tests
+# Run all tests (1,965)
 go test ./...
 
 # Run with verbose output
@@ -38,8 +60,9 @@ go test -v ./...
 go test -run TestGolden ./...
 
 # Run tests for a specific package
-go test ./constants/
-go test ./testutil/
+go test ./linalg/
+go test ./prob/
+go test ./physics/
 ```
 
 ## Golden-File Test Vectors
@@ -61,18 +84,15 @@ Format:
 }
 ```
 
-Tolerance is per-case, not global. Exact constants use tolerance 0. Iterative algorithms may use wider tolerances.
+Tolerance is per-case, not global. Exact constants use tolerance 0. Iterative algorithms may use wider tolerances. Golden vectors are generated from Go using `math/big` at 256-bit precision, then rounded to `float64`.
 
-## Constants Reference
+## Dependency Position
 
-### Mathematical Constants
-Pi, E, Phi (golden ratio), Sqrt2, Sqrt3, Ln2, Ln10, Log2E, Log10E, EulerGamma
+```
+Consumer Apps -> Services -> AI (aicore) -> reality -> math stdlib
+```
 
-### Physical Constants (SI 2019 / NIST CODATA 2018)
-SpeedOfLight, Planck, PlanckReduced, Boltzmann, Avogadro, ElementaryCharge, GravitationalConst, VacuumPermittivity, VacuumPermeability, StefanBoltzmann, GasConstant, StandardGravity, AtmPressure
-
-### Unit Conversions
-Length (meters per mile/foot/inch/yard/nautical mile), mass (kg per pound/ounce), temperature (Celsius/Fahrenheit to Kelvin), angle (radians/degrees), time (seconds per minute/hour/day), pressure (pascals per atm/bar/PSI)
+aicore imports reality. reality imports nothing.
 
 ## Design Rules
 
@@ -80,3 +100,6 @@ Length (meters per mile/foot/inch/yard/nautical mile), mass (kg per pound/ounce)
 2. **Golden files are the proof.** Every function has cross-language test vectors.
 3. **Every constant cites its source.** SI 2019, NIST CODATA 2018, or ISO standards.
 4. **Pure functions only.** No global state, no goroutines, numbers in / numbers out.
+5. **No allocations in hot paths.** Functions accept output buffers. Pistachio calls these at 60 FPS.
+6. **Every function cites its mathematical origin.** Three sentences of provenance per function.
+7. **Precision documented, not assumed.** Valid input range, numerical precision, and failure modes stated per function.
