@@ -1,0 +1,53 @@
+{
+  "function": "Queue.ErlangC",
+  "cases": [
+    {
+      "description": "A=1 N=2: light load",
+      "inputs": {"A": 1.0, "N": 2},
+      "expected": 0.333333333333333,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "A=2 N=3: moderate load",
+      "inputs": {"A": 2.0, "N": 3},
+      "expected": 0.444444444444444,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "A=5 N=6: moderate load",
+      "inputs": {"A": 5.0, "N": 6},
+      "expected": 0.587516450460613,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "A=10 N=15: telecom example",
+      "inputs": {"A": 10.0, "N": 15},
+      "expected": 0.102042367007988,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "A=0.5 N=1: half load single server",
+      "inputs": {"A": 0.5, "N": 1},
+      "expected": 0.5,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "A=3 N=4: call center scenario",
+      "inputs": {"A": 3.0, "N": 4},
+      "expected": 0.509433962264151,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "A=8 N=10: high volume",
+      "inputs": {"A": 8.0, "N": 10},
+      "expected": 0.409180150796444,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "A=0.1 N=1: very light load",
+      "inputs": {"A": 0.1, "N": 1},
+      "expected": 0.1,
+      "tolerance": 1e-12
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "function": "Queue.MM1",
+  "cases": [
+    {
+      "description": "rho=0.5: lambda=1 mu=2",
+      "inputs": {"lambda": 1.0, "mu": 2.0},
+      "expected": [0.5, 0.5, 1.0, 1.0, 0.5],
+      "tolerance": 1e-12
+    },
+    {
+      "description": "rho=0.8: lambda=4 mu=5",
+      "inputs": {"lambda": 4.0, "mu": 5.0},
+      "expected": [3.2, 0.8, 4.0, 1.0, 0.8],
+      "tolerance": 1e-12
+    },
+    {
+      "description": "rho=0.2: lambda=2 mu=10",
+      "inputs": {"lambda": 2.0, "mu": 10.0},
+      "expected": [0.05, 0.025, 0.25, 0.125, 0.2],
+      "tolerance": 1e-12
+    },
+    {
+      "description": "rho=0.9: lambda=9 mu=10",
+      "inputs": {"lambda": 9.0, "mu": 10.0},
+      "expected": [8.1, 0.9, 9.0, 1.0, 0.9],
+      "tolerance": 1e-10
+    },
+    {
+      "description": "rho=0.1: lambda=1 mu=10",
+      "inputs": {"lambda": 1.0, "mu": 10.0},
+      "expected": [0.011111111111111112, 0.011111111111111112, 0.11111111111111111, 0.11111111111111111, 0.1],
+      "tolerance": 1e-12
+    },
+    {
+      "description": "rho=0.99: lambda=99 mu=100",
+      "inputs": {"lambda": 99.0, "mu": 100.0},
+      "expected": [98.01, 0.99, 99.0, 1.0, 0.99],
+      "tolerance": 1e-8
+    },
+    {
+      "description": "rho=0.5: lambda=5 mu=10",
+      "inputs": {"lambda": 5.0, "mu": 10.0},
+      "expected": [0.5, 0.1, 1.0, 0.2, 0.5],
+      "tolerance": 1e-12
+    },
+    {
+      "description": "rho=0.75: lambda=3 mu=4",
+      "inputs": {"lambda": 3.0, "mu": 4.0},
+      "expected": [2.25, 0.75, 3.0, 1.0, 0.75],
+      "tolerance": 1e-12
+    },
+    {
+      "description": "small load: lambda=0.01 mu=1",
+      "inputs": {"lambda": 0.01, "mu": 1.0},
+      "expected": [0.00010101010101010102, 0.010101010101010102, 0.010101010101010102, 1.0101010101010102, 0.01],
+      "tolerance": 1e-12
+    },
+    {
+      "description": "rho=0.6: lambda=6 mu=10",
+      "inputs": {"lambda": 6.0, "mu": 10.0},
+      "expected": [0.9, 0.15, 1.5, 0.25, 0.6],
+      "tolerance": 1e-12
+    }
+  ]
+}
