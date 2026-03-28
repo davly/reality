@@ -1,0 +1,65 @@
+{
+  "function": "Combinatorics.BinomialCoeff",
+  "cases": [
+    {
+      "description": "C(0,0) = 1",
+      "inputs": {"n": 0, "k": 0},
+      "expected": 1.0,
+      "tolerance": 0
+    },
+    {
+      "description": "C(1,0) = 1",
+      "inputs": {"n": 1, "k": 0},
+      "expected": 1.0,
+      "tolerance": 0
+    },
+    {
+      "description": "C(5,2) = 10",
+      "inputs": {"n": 5, "k": 2},
+      "expected": 10.0,
+      "tolerance": 0
+    },
+    {
+      "description": "C(10,5) = 252",
+      "inputs": {"n": 10, "k": 5},
+      "expected": 252.0,
+      "tolerance": 0
+    },
+    {
+      "description": "C(20,10) = 184756",
+      "inputs": {"n": 20, "k": 10},
+      "expected": 184756.0,
+      "tolerance": 0
+    },
+    {
+      "description": "C(52,5) = 2598960 (poker hands)",
+      "inputs": {"n": 52, "k": 5},
+      "expected": 2598960.0,
+      "tolerance": 0
+    },
+    {
+      "description": "C(100,50) large central binomial",
+      "inputs": {"n": 100, "k": 50},
+      "expected": 1.00891344545564e+29,
+      "tolerance": 1e16
+    },
+    {
+      "description": "C(10,0) = 1",
+      "inputs": {"n": 10, "k": 0},
+      "expected": 1.0,
+      "tolerance": 0
+    },
+    {
+      "description": "C(10,10) = 1",
+      "inputs": {"n": 10, "k": 10},
+      "expected": 1.0,
+      "tolerance": 0
+    },
+    {
+      "description": "C(7,3) = 35",
+      "inputs": {"n": 7, "k": 3},
+      "expected": 35.0,
+      "tolerance": 0
+    }
+  ]
+}

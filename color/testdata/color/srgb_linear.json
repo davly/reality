@@ -1,0 +1,65 @@
+{
+  "function": "Color.SRGBToLinear",
+  "cases": [
+    {
+      "description": "sRGB 0.0 -> linear 0.0",
+      "inputs": {"srgb": 0.0},
+      "expected": 0.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "sRGB 1.0 -> linear 1.0",
+      "inputs": {"srgb": 1.0},
+      "expected": 1.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "sRGB 0.5 -> linear ~0.214",
+      "inputs": {"srgb": 0.5},
+      "expected": 0.21404114048223255,
+      "tolerance": 1e-14
+    },
+    {
+      "description": "sRGB at cutoff 0.04045",
+      "inputs": {"srgb": 0.04045},
+      "expected": 0.00313080495356037,
+      "tolerance": 1e-14
+    },
+    {
+      "description": "sRGB below cutoff 0.02",
+      "inputs": {"srgb": 0.02},
+      "expected": 0.00154798761609907,
+      "tolerance": 1e-14
+    },
+    {
+      "description": "sRGB 0.1",
+      "inputs": {"srgb": 0.1},
+      "expected": 0.01002282557486904,
+      "tolerance": 1e-14
+    },
+    {
+      "description": "sRGB 0.25",
+      "inputs": {"srgb": 0.25},
+      "expected": 0.05087608817155679,
+      "tolerance": 1e-14
+    },
+    {
+      "description": "sRGB 0.75",
+      "inputs": {"srgb": 0.75},
+      "expected": 0.52252155396839195,
+      "tolerance": 1e-14
+    },
+    {
+      "description": "sRGB 0.9",
+      "inputs": {"srgb": 0.9},
+      "expected": 0.78741228939561736,
+      "tolerance": 1e-14
+    },
+    {
+      "description": "sRGB 0.04 (just below cutoff)",
+      "inputs": {"srgb": 0.04},
+      "expected": 0.00309597523219814,
+      "tolerance": 1e-14
+    }
+  ]
+}

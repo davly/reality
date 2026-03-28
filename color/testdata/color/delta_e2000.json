@@ -1,0 +1,65 @@
+{
+  "function": "Color.DeltaE2000",
+  "cases": [
+    {
+      "description": "Sharma pair 1: near-neutral low chroma",
+      "inputs": {"L1": 50.0000, "a1": 2.6772, "b1": -79.7751, "L2": 50.0000, "a2": 0.0000, "b2": -82.7485},
+      "expected": 2.0425,
+      "tolerance": 0.0001
+    },
+    {
+      "description": "Sharma pair 2: near-neutral low chroma",
+      "inputs": {"L1": 50.0000, "a1": 3.1571, "b1": -77.2803, "L2": 50.0000, "a2": 0.0000, "b2": -82.7485},
+      "expected": 2.8615,
+      "tolerance": 0.0001
+    },
+    {
+      "description": "Sharma pair 3: near-neutral low chroma",
+      "inputs": {"L1": 50.0000, "a1": 2.8361, "b1": -74.0200, "L2": 50.0000, "a2": 0.0000, "b2": -82.7485},
+      "expected": 3.4412,
+      "tolerance": 0.0001
+    },
+    {
+      "description": "Sharma pair 7: achromatic vs chromatic",
+      "inputs": {"L1": 50.0000, "a1": 0.0000, "b1": 0.0000, "L2": 50.0000, "a2": -1.0000, "b2": 2.0000},
+      "expected": 2.3669,
+      "tolerance": 0.0001
+    },
+    {
+      "description": "Sharma pair 18: bright colors large diff",
+      "inputs": {"L1": 50.0000, "a1": 2.5000, "b1": 0.0000, "L2": 56.0000, "a2": -27.0000, "b2": -3.0000},
+      "expected": 31.9030,
+      "tolerance": 0.0001
+    },
+    {
+      "description": "Sharma pair 24: greens",
+      "inputs": {"L1": 60.2574, "a1": -34.0099, "b1": 36.2677, "L2": 60.4626, "a2": -34.1751, "b2": 39.4387},
+      "expected": 1.2644,
+      "tolerance": 0.0001
+    },
+    {
+      "description": "Sharma pair 28: blues",
+      "inputs": {"L1": 22.7233, "a1": 20.0904, "b1": -46.6940, "L2": 23.0331, "a2": 14.9730, "b2": -42.5619},
+      "expected": 2.0373,
+      "tolerance": 0.0001
+    },
+    {
+      "description": "Sharma pair 34: identical black",
+      "inputs": {"L1": 50.0, "a1": 0.0, "b1": 0.0, "L2": 50.0, "a2": 0.0, "b2": 0.0},
+      "expected": 0.0,
+      "tolerance": 0.0001
+    },
+    {
+      "description": "Sharma pair 30: near-white low chroma",
+      "inputs": {"L1": 90.8027, "a1": -2.0831, "b1": 1.4410, "L2": 91.1528, "a2": -1.6435, "b2": 0.0447},
+      "expected": 1.4441,
+      "tolerance": 0.0001
+    },
+    {
+      "description": "Sharma pair 32: near-black",
+      "inputs": {"L1": 6.7747, "a1": -0.2908, "b1": -2.4247, "L2": 5.8714, "a2": -0.0985, "b2": -2.2286},
+      "expected": 0.6377,
+      "tolerance": 0.0001
+    }
+  ]
+}
