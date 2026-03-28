@@ -1,0 +1,85 @@
+{
+  "function": "GameTheory.GaleShapley",
+  "cases": [
+    {
+      "description": "trivial 1x1 matching",
+      "inputs": {
+        "n": 1,
+        "proposerPrefs": [[0]],
+        "receiverPrefs": [[0]]
+      },
+      "expected": [0],
+      "tolerance": 0
+    },
+    {
+      "description": "2x2 both agree on preference order",
+      "inputs": {
+        "n": 2,
+        "proposerPrefs": [[0, 1], [1, 0]],
+        "receiverPrefs": [[0, 1], [1, 0]]
+      },
+      "expected": [0, 1],
+      "tolerance": 0
+    },
+    {
+      "description": "2x2 competing preferences — proposer-optimal",
+      "inputs": {
+        "n": 2,
+        "proposerPrefs": [[0, 1], [0, 1]],
+        "receiverPrefs": [[0, 1], [0, 1]]
+      },
+      "expected": [0, 1],
+      "tolerance": 0
+    },
+    {
+      "description": "3x3 classic stable matching example",
+      "inputs": {
+        "n": 3,
+        "proposerPrefs": [[1, 0, 2], [0, 1, 2], [0, 1, 2]],
+        "receiverPrefs": [[0, 1, 2], [0, 1, 2], [0, 1, 2]]
+      },
+      "expected": [1, 0, 2],
+      "tolerance": 0
+    },
+    {
+      "description": "3x3 all proposers prefer same receiver",
+      "inputs": {
+        "n": 3,
+        "proposerPrefs": [[0, 1, 2], [0, 1, 2], [0, 1, 2]],
+        "receiverPrefs": [[2, 1, 0], [2, 1, 0], [2, 1, 0]]
+      },
+      "expected": [2, 1, 0],
+      "tolerance": 0
+    },
+    {
+      "description": "4x4 identity matching when prefs align",
+      "inputs": {
+        "n": 4,
+        "proposerPrefs": [[0, 1, 2, 3], [1, 0, 2, 3], [2, 0, 1, 3], [3, 0, 1, 2]],
+        "receiverPrefs": [[0, 1, 2, 3], [1, 0, 2, 3], [2, 0, 1, 3], [3, 0, 1, 2]]
+      },
+      "expected": [0, 1, 2, 3],
+      "tolerance": 0
+    },
+    {
+      "description": "4x4 reverse preferences",
+      "inputs": {
+        "n": 4,
+        "proposerPrefs": [[3, 2, 1, 0], [3, 2, 1, 0], [3, 2, 1, 0], [3, 2, 1, 0]],
+        "receiverPrefs": [[0, 1, 2, 3], [0, 1, 2, 3], [0, 1, 2, 3], [0, 1, 2, 3]]
+      },
+      "expected": [3, 2, 1, 0],
+      "tolerance": 0
+    },
+    {
+      "description": "3x3 cyclic preferences",
+      "inputs": {
+        "n": 3,
+        "proposerPrefs": [[0, 1, 2], [1, 2, 0], [2, 0, 1]],
+        "receiverPrefs": [[1, 2, 0], [2, 0, 1], [0, 1, 2]]
+      },
+      "expected": [0, 1, 2],
+      "tolerance": 0
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "function": "GameTheory.NashEquilibrium2x2",
+  "cases": [
+    {
+      "description": "matching pennies — fully mixed (0.5, 0.5)",
+      "inputs": {
+        "payoffA": [[1, -1], [-1, 1]],
+        "payoffB": [[-1, 1], [1, -1]]
+      },
+      "expected": [0.5, 0.5, 0.5, 0.5, 0.0],
+      "tolerance": 1e-12
+    },
+    {
+      "description": "prisoner's dilemma — both defect (pure NE)",
+      "inputs": {
+        "payoffA": [[3, 0], [5, 1]],
+        "payoffB": [[3, 5], [0, 1]]
+      },
+      "expected": [0.0, 1.0, 0.0, 1.0, 1.0],
+      "tolerance": 1e-12
+    },
+    {
+      "description": "battle of sexes — mixed equilibrium",
+      "inputs": {
+        "payoffA": [[3, 0], [0, 2]],
+        "payoffB": [[2, 0], [0, 3]]
+      },
+      "expected": [0.6, 0.4, 0.4, 0.6, 1.2],
+      "tolerance": 1e-12
+    },
+    {
+      "description": "dominant strategy game — row 0 dominates",
+      "inputs": {
+        "payoffA": [[4, 3], [1, 2]],
+        "payoffB": [[1, 2], [3, 4]]
+      },
+      "expected": [1.0, 0.0, 0.0, 1.0, 3.0],
+      "tolerance": 1e-12
+    },
+    {
+      "description": "coordination game — mixed equilibrium",
+      "inputs": {
+        "payoffA": [[2, 0], [0, 1]],
+        "payoffB": [[1, 0], [0, 2]]
+      },
+      "expected": [0.6666666666666666, 0.3333333333333333, 0.3333333333333333, 0.6666666666666666, 0.6666666666666666],
+      "tolerance": 1e-10
+    },
+    {
+      "description": "hawk-dove game — mixed equilibrium",
+      "inputs": {
+        "payoffA": [[0, 3], [1, 2]],
+        "payoffB": [[0, 1], [3, 2]]
+      },
+      "expected": [0.5, 0.5, 0.5, 0.5, 1.5],
+      "tolerance": 1e-12
+    },
+    {
+      "description": "zero-sum 2x2 — saddle point at (0,1)",
+      "inputs": {
+        "payoffA": [[3, 1], [4, 2]],
+        "payoffB": [[-3, -1], [-4, -2]]
+      },
+      "expected": [0.0, 1.0, 0.0, 1.0, 2.0],
+      "tolerance": 1e-10
+    },
+    {
+      "description": "all equal payoffs — any strategy is NE",
+      "inputs": {
+        "payoffA": [[5, 5], [5, 5]],
+        "payoffB": [[5, 5], [5, 5]]
+      },
+      "expected": [1.0, 0.0, 1.0, 0.0, 5.0],
+      "tolerance": 1e-10
+    },
+    {
+      "description": "asymmetric game — mixed",
+      "inputs": {
+        "payoffA": [[2, 0], [0, 4]],
+        "payoffB": [[4, 0], [0, 2]]
+      },
+      "expected": [0.333333333333333, 0.666666666666667, 0.666666666666667, 0.333333333333333, 1.333333333333333],
+      "tolerance": 1e-10
+    },
+    {
+      "description": "stag hunt — mixed equilibrium",
+      "inputs": {
+        "payoffA": [[4, 0], [3, 2]],
+        "payoffB": [[4, 3], [0, 2]]
+      },
+      "expected": [0.666666666666667, 0.333333333333333, 0.666666666666667, 0.333333333333333, 2.666666666666667],
+      "tolerance": 1e-10
+    }
+  ]
+}
