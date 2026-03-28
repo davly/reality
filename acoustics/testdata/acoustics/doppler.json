@@ -1,0 +1,29 @@
+{
+  "function": "Acoustics.DopplerShift",
+  "cases": [
+    {
+      "description": "Ambulance approaching: f0=700, vs=-30, vr=0, c=343",
+      "inputs": {"f0": 700.0, "vs": -30.0, "vr": 0.0, "c": 343.0},
+      "expected": 767.0926517571885,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "Ambulance receding: f0=700, vs=30, vr=0, c=343",
+      "inputs": {"f0": 700.0, "vs": 30.0, "vr": 0.0, "c": 343.0},
+      "expected": 643.6997319034853,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "Both at rest: f0=1000, no shift",
+      "inputs": {"f0": 1000.0, "vs": 0.0, "vr": 0.0, "c": 343.0},
+      "expected": 1000.0,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "Receiver approaching: f0=500, vs=0, vr=20, c=343",
+      "inputs": {"f0": 500.0, "vs": 0.0, "vr": 20.0, "c": 343.0},
+      "expected": 529.15451895043736,
+      "tolerance": 1e-8
+    }
+  ]
+}

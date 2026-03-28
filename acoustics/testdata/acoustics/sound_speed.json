@@ -1,0 +1,29 @@
+{
+  "function": "Acoustics.SoundSpeed",
+  "cases": [
+    {
+      "description": "Dry air at 20°C: gamma=1.4, R=8.314462618, T=293.15, M=0.02896",
+      "inputs": {"gamma": 1.4, "R": 8.314462618, "T": 293.15, "M": 0.02896},
+      "expected": 343.26283173742496,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "Helium at 300K: gamma=1.66, R=8.314462618, T=300, M=0.004003",
+      "inputs": {"gamma": 1.66, "R": 8.314462618, "T": 300.0, "M": 0.004003},
+      "expected": 1017.0421893067552,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "Absolute zero: T=0 -> c=0",
+      "inputs": {"gamma": 1.4, "R": 8.314462618, "T": 0.0, "M": 0.02896},
+      "expected": 0.0,
+      "tolerance": 0
+    },
+    {
+      "description": "Unit values: gamma=1, R=1, T=1, M=1 -> 1",
+      "inputs": {"gamma": 1.0, "R": 1.0, "T": 1.0, "M": 1.0},
+      "expected": 1.0,
+      "tolerance": 1e-15
+    }
+  ]
+}

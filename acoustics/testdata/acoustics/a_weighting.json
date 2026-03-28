@@ -1,0 +1,29 @@
+{
+  "function": "Acoustics.AWeighting",
+  "cases": [
+    {
+      "description": "1 kHz: approximately 0 dB (reference frequency)",
+      "inputs": {"f": 1000.0},
+      "expected": 0.00014152769487818517,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "100 Hz: strong attenuation (~-19 dB)",
+      "inputs": {"f": 100.0},
+      "expected": -19.144954291317546,
+      "tolerance": 1e-8
+    },
+    {
+      "description": "4 kHz: slight boost (~+1 dB)",
+      "inputs": {"f": 4000.0},
+      "expected": 0.9635979052450729,
+      "tolerance": 1e-8
+    },
+    {
+      "description": "50 Hz: heavy attenuation (~-30 dB)",
+      "inputs": {"f": 50.0},
+      "expected": -30.274979580572094,
+      "tolerance": 1e-8
+    }
+  ]
+}
