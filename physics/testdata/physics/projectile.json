@@ -1,0 +1,65 @@
+{
+  "function": "Physics.ProjectilePosition",
+  "cases": [
+    {
+      "description": "45° launch at 10 m/s, t=0 (origin)",
+      "inputs": {"v0": 10.0, "theta": 0.7853981633974483, "t": 0.0, "g": 9.80665},
+      "expected": [0.0, 0.0],
+      "tolerance": 1e-15
+    },
+    {
+      "description": "45° launch at 10 m/s, t=0.5s",
+      "inputs": {"v0": 10.0, "theta": 0.7853981633974483, "t": 0.5, "g": 9.80665},
+      "expected": [3.5355339059327378, 2.3097026559327372],
+      "tolerance": 1e-10
+    },
+    {
+      "description": "45° launch at 10 m/s, apex time t=0.72104824908256",
+      "inputs": {"v0": 10.0, "theta": 0.7853981633974483, "t": 0.72104824908256, "g": 9.80665},
+      "expected": [5.098581064889641, 2.549290532444820],
+      "tolerance": 1e-6
+    },
+    {
+      "description": "Horizontal launch (theta=0), t=1s",
+      "inputs": {"v0": 20.0, "theta": 0.0, "t": 1.0, "g": 9.80665},
+      "expected": [20.0, -4.903325],
+      "tolerance": 1e-10
+    },
+    {
+      "description": "Vertical launch (theta=pi/2), t=1s",
+      "inputs": {"v0": 50.0, "theta": 1.5707963267948966, "t": 1.0, "g": 9.80665},
+      "expected": [0.0, 45.096675],
+      "tolerance": 1e-6
+    },
+    {
+      "description": "30° launch at 100 m/s, t=2s",
+      "inputs": {"v0": 100.0, "theta": 0.5235987755982988, "t": 2.0, "g": 9.80665},
+      "expected": [173.20508075688772, 80.38670000000000],
+      "tolerance": 1e-8
+    },
+    {
+      "description": "60° launch at 100 m/s, t=2s",
+      "inputs": {"v0": 100.0, "theta": 1.0471975511965976, "t": 2.0, "g": 9.80665},
+      "expected": [100.0, 153.59178075688774],
+      "tolerance": 1e-8
+    },
+    {
+      "description": "Zero velocity, t=1s (free fall from origin)",
+      "inputs": {"v0": 0.0, "theta": 0.7853981633974483, "t": 1.0, "g": 9.80665},
+      "expected": [0.0, -4.903325],
+      "tolerance": 1e-10
+    },
+    {
+      "description": "45° at 10 m/s, lunar gravity (1.625 m/s^2), t=1s",
+      "inputs": {"v0": 10.0, "theta": 0.7853981633974483, "t": 1.0, "g": 1.625},
+      "expected": [7.071067811865476, 6.258567811865475],
+      "tolerance": 1e-10
+    },
+    {
+      "description": "Very small angle (1°) at 500 m/s, t=0.1s",
+      "inputs": {"v0": 500.0, "theta": 0.017453292519943295, "t": 0.1, "g": 9.80665},
+      "expected": [49.99238475781956, 0.82358707186418],
+      "tolerance": 1e-8
+    }
+  ]
+}

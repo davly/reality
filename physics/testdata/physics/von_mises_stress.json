@@ -1,0 +1,53 @@
+{
+  "function": "Physics.VonMisesStress",
+  "cases": [
+    {
+      "description": "Uniaxial tension (100, 0, 0) — von Mises equals applied stress",
+      "inputs": {"s1": 100.0, "s2": 0.0, "s3": 0.0},
+      "expected": 100.0,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "Pure shear (50, -50, 0)",
+      "inputs": {"s1": 50.0, "s2": -50.0, "s3": 0.0},
+      "expected": 86.60254037844386,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "Hydrostatic (100, 100, 100) — zero deviatoric stress",
+      "inputs": {"s1": 100.0, "s2": 100.0, "s3": 100.0},
+      "expected": 0.0,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "Biaxial (200, 100, 0)",
+      "inputs": {"s1": 200.0, "s2": 100.0, "s3": 0.0},
+      "expected": 173.20508075688772,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "General stress state (300, 100, -50)",
+      "inputs": {"s1": 300.0, "s2": 100.0, "s3": -50.0},
+      "expected": 304.138126514911,
+      "tolerance": 1e-8
+    },
+    {
+      "description": "Equal biaxial (100, 100, 0)",
+      "inputs": {"s1": 100.0, "s2": 100.0, "s3": 0.0},
+      "expected": 100.0,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "Triaxial (150, 100, 50) — equal spacing",
+      "inputs": {"s1": 150.0, "s2": 100.0, "s3": 50.0},
+      "expected": 86.60254037844386,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "All negative (-200, -100, 0)",
+      "inputs": {"s1": -200.0, "s2": -100.0, "s3": 0.0},
+      "expected": 173.20508075688772,
+      "tolerance": 1e-10
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "function": "Physics.HookesLaw",
+  "cases": [
+    {
+      "description": "Steel (E=200 GPa), strain 0.001 (elastic)",
+      "inputs": {"E": 200e9, "epsilon": 0.001},
+      "expected": 200000000.0,
+      "tolerance": 1e-6
+    },
+    {
+      "description": "Steel (E=200 GPa), strain 0.002 (yield boundary)",
+      "inputs": {"E": 200e9, "epsilon": 0.002},
+      "expected": 400000000.0,
+      "tolerance": 1e-6
+    },
+    {
+      "description": "Steel (E=200 GPa), compressive strain -0.001",
+      "inputs": {"E": 200e9, "epsilon": -0.001},
+      "expected": -200000000.0,
+      "tolerance": 1e-6
+    },
+    {
+      "description": "Aluminum (E=70 GPa), strain 0.005",
+      "inputs": {"E": 70e9, "epsilon": 0.005},
+      "expected": 350000000.0,
+      "tolerance": 1e-6
+    },
+    {
+      "description": "Copper (E=117 GPa), strain 0.003",
+      "inputs": {"E": 117e9, "epsilon": 0.003},
+      "expected": 351000000.0,
+      "tolerance": 1e-6
+    },
+    {
+      "description": "Zero strain returns zero stress",
+      "inputs": {"E": 200e9, "epsilon": 0.0},
+      "expected": 0.0,
+      "tolerance": 0
+    },
+    {
+      "description": "Rubber (E=0.01 GPa), strain 0.5",
+      "inputs": {"E": 0.01e9, "epsilon": 0.5},
+      "expected": 5000000.0,
+      "tolerance": 1e-6
+    },
+    {
+      "description": "Titanium (E=116 GPa), strain 0.001",
+      "inputs": {"E": 116e9, "epsilon": 0.001},
+      "expected": 116000000.0,
+      "tolerance": 1e-6
+    }
+  ]
+}
