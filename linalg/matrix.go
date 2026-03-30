@@ -139,3 +139,70 @@ func MatScale(A []float64, rows, cols int, s float64, out []float64) {
 		out[i] = A[i] * s
 	}
 }
+
+// MatSub computes element-wise matrix subtraction: out = A - B.
+// A, B, and out are all rows x cols (stored row-major, pre-allocated).
+// Zero heap allocations.
+//
+// Panics if slice lengths are inconsistent with the given dimensions.
+func MatSub(A, B []float64, rows, cols int, out []float64) {
+	n := rows * cols
+	if len(A) != n {
+		panic("linalg.MatSub: len(A) != rows*cols")
+	}
+	if len(B) != n {
+		panic("linalg.MatSub: len(B) != rows*cols")
+	}
+	if len(out) != n {
+		panic("linalg.MatSub: len(out) != rows*cols")
+	}
+	for i := 0; i < n; i++ {
+		out[i] = A[i] - B[i]
+	}
+}
+
+// Trace computes the trace of an n x n matrix A (sum of diagonal elements).
+// A is n x n row-major (stored as a flat slice of length n*n).
+//
+// Definition: tr(A) = sum(A[i][i]) for i = 0..n-1
+// Valid input range: n >= 0
+// Precision: exact (accumulated float64 summation error for large n)
+// Reference: fundamental matrix operation; see Golub & Van Loan,
+// "Matrix Computations", Ch. 1
+//
+// Panics if len(A) != n*n.
+func Trace(A []float64, n int) float64 {
+	if len(A) != n*n {
+		panic("linalg.Trace: len(A) != n*n")
+	}
+	var sum float64
+	for i := 0; i < n; i++ {
+		sum += A[i*n+i]
+	}
+	return sum
+}
+
+// CrossProduct computes the cross product of two 3D vectors: out = a x b.
+// a, b, and out must each have length 3. The caller must pre-allocate out.
+// Zero heap allocations.
+//
+// Definition:
+//
+//	out[0] = a[1]*b[2] - a[2]*b[1]
+//	out[1] = a[2]*b[0] - a[0]*b[2]
+//	out[2] = a[0]*b[1] - a[1]*b[0]
+//
+// The result is perpendicular to both a and b (right-hand rule).
+// Precision: exact for IEEE 754 float64.
+// Reference: fundamental vector algebra; see Arfken, Weber & Harris,
+// "Mathematical Methods for Physicists", Ch. 1
+//
+// Panics if any slice does not have length 3.
+func CrossProduct(a, b, out []float64) {
+	if len(a) != 3 || len(b) != 3 || len(out) != 3 {
+		panic("linalg.CrossProduct: all slices must have length 3")
+	}
+	out[0] = a[1]*b[2] - a[2]*b[1]
+	out[1] = a[2]*b[0] - a[0]*b[2]
+	out[2] = a[0]*b[1] - a[1]*b[0]
+}

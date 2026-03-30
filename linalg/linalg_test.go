@@ -597,3 +597,164 @@ func assertSliceClose(t *testing.T, label string, got, want []float64, tol float
 		}
 	}
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MatSub
+// ═══════════════════════════════════════════════════════════════════════════
+
+func TestMatSub_2x2(t *testing.T) {
+	A := []float64{5, 3, 2, 1}
+	B := []float64{1, 2, 3, 4}
+	out := make([]float64, 4)
+	MatSub(A, B, 2, 2, out)
+	assertSliceClose(t, "matsub-2x2", out, []float64{4, 1, -1, -3}, 0)
+}
+
+func TestMatSub_Identity(t *testing.T) {
+	A := []float64{1, 0, 0, 1}
+	out := make([]float64, 4)
+	MatSub(A, A, 2, 2, out)
+	assertSliceClose(t, "matsub-identity", out, []float64{0, 0, 0, 0}, 0)
+}
+
+func TestMatSub_3x3(t *testing.T) {
+	A := []float64{9, 8, 7, 6, 5, 4, 3, 2, 1}
+	B := []float64{1, 2, 3, 4, 5, 6, 7, 8, 9}
+	out := make([]float64, 9)
+	MatSub(A, B, 3, 3, out)
+	assertSliceClose(t, "matsub-3x3", out, []float64{8, 6, 4, 2, 0, -2, -4, -6, -8}, 0)
+}
+
+func TestMatSub_Rectangular(t *testing.T) {
+	A := []float64{1, 2, 3, 4, 5, 6}
+	B := []float64{6, 5, 4, 3, 2, 1}
+	out := make([]float64, 6)
+	MatSub(A, B, 2, 3, out)
+	assertSliceClose(t, "matsub-rect", out, []float64{-5, -3, -1, 1, 3, 5}, 0)
+}
+
+func TestMatSub_PanicMismatch(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("expected panic for mismatched A")
+		}
+	}()
+	MatSub([]float64{1}, []float64{1, 2}, 1, 2, make([]float64, 2))
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Trace
+// ═══════════════════════════════════════════════════════════════════════════
+
+func TestTrace_2x2(t *testing.T) {
+	A := []float64{1, 2, 3, 4}
+	assertClose(t, "trace-2x2", Trace(A, 2), 5, 0)
+}
+
+func TestTrace_3x3_Identity(t *testing.T) {
+	I := make([]float64, 9)
+	Identity(3, I)
+	assertClose(t, "trace-3x3-id", Trace(I, 3), 3, 0)
+}
+
+func TestTrace_1x1(t *testing.T) {
+	assertClose(t, "trace-1x1", Trace([]float64{42}, 1), 42, 0)
+}
+
+func TestTrace_4x4(t *testing.T) {
+	A := []float64{
+		1, 0, 0, 0,
+		0, 2, 0, 0,
+		0, 0, 3, 0,
+		0, 0, 0, 4,
+	}
+	assertClose(t, "trace-4x4-diag", Trace(A, 4), 10, 0)
+}
+
+func TestTrace_NegativeElements(t *testing.T) {
+	A := []float64{-5, 3, 7, 8, -2, 1, 0, 0, 3}
+	assertClose(t, "trace-neg", Trace(A, 3), -4, 0)
+}
+
+func TestTrace_PanicWrongLen(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("expected panic for wrong length")
+		}
+	}()
+	Trace([]float64{1, 2, 3}, 2) // len(3) != 2*2=4
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CrossProduct
+// ═══════════════════════════════════════════════════════════════════════════
+
+func TestCrossProduct_StandardBasis(t *testing.T) {
+	// i x j = k
+	out := make([]float64, 3)
+	CrossProduct([]float64{1, 0, 0}, []float64{0, 1, 0}, out)
+	assertSliceClose(t, "cross-ij", out, []float64{0, 0, 1}, 0)
+}
+
+func TestCrossProduct_JxK(t *testing.T) {
+	// j x k = i
+	out := make([]float64, 3)
+	CrossProduct([]float64{0, 1, 0}, []float64{0, 0, 1}, out)
+	assertSliceClose(t, "cross-jk", out, []float64{1, 0, 0}, 0)
+}
+
+func TestCrossProduct_KxI(t *testing.T) {
+	// k x i = j
+	out := make([]float64, 3)
+	CrossProduct([]float64{0, 0, 1}, []float64{1, 0, 0}, out)
+	assertSliceClose(t, "cross-ki", out, []float64{0, 1, 0}, 0)
+}
+
+func TestCrossProduct_Anticommutative(t *testing.T) {
+	// a x b = -(b x a)
+	a := []float64{1, 2, 3}
+	b := []float64{4, 5, 6}
+	ab := make([]float64, 3)
+	ba := make([]float64, 3)
+	CrossProduct(a, b, ab)
+	CrossProduct(b, a, ba)
+	for i := 0; i < 3; i++ {
+		assertClose(t, "cross-anticomm", ab[i], -ba[i], 0)
+	}
+}
+
+func TestCrossProduct_SelfIsZero(t *testing.T) {
+	// a x a = 0
+	a := []float64{3, -7, 2}
+	out := make([]float64, 3)
+	CrossProduct(a, a, out)
+	assertSliceClose(t, "cross-self", out, []float64{0, 0, 0}, 0)
+}
+
+func TestCrossProduct_General(t *testing.T) {
+	// (1,2,3) x (4,5,6) = (2*6-3*5, 3*4-1*6, 1*5-2*4) = (-3, 6, -3)
+	out := make([]float64, 3)
+	CrossProduct([]float64{1, 2, 3}, []float64{4, 5, 6}, out)
+	assertSliceClose(t, "cross-general", out, []float64{-3, 6, -3}, 0)
+}
+
+func TestCrossProduct_PerpendiculartoBothInputs(t *testing.T) {
+	a := []float64{1, 2, 3}
+	b := []float64{4, 5, 6}
+	out := make([]float64, 3)
+	CrossProduct(a, b, out)
+	// out . a == 0, out . b == 0
+	dotA := DotProduct(out, a)
+	dotB := DotProduct(out, b)
+	assertClose(t, "cross-perp-a", dotA, 0, 1e-15)
+	assertClose(t, "cross-perp-b", dotB, 0, 1e-15)
+}
+
+func TestCrossProduct_PanicWrongLen(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("expected panic for wrong length")
+		}
+	}()
+	CrossProduct([]float64{1, 2}, []float64{3, 4, 5}, make([]float64, 3))
+}
