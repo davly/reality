@@ -510,3 +510,166 @@ func TestRandomSubset_FullN(t *testing.T) {
 		}
 	}
 }
+
+// ---------------------------------------------------------------------------
+// StirlingFirst (unsigned Stirling numbers of the first kind)
+// ---------------------------------------------------------------------------
+
+func TestStirlingFirst_BaseCases(t *testing.T) {
+	// |s(0,0)| = 1
+	assertCloseF(t, "s(0,0)", StirlingFirst(0, 0), 1, 0)
+	// |s(n,0)| = 0 for n > 0
+	assertCloseF(t, "s(1,0)", StirlingFirst(1, 0), 0, 0)
+	assertCloseF(t, "s(5,0)", StirlingFirst(5, 0), 0, 0)
+	// |s(0,k)| = 0 for k > 0
+	assertCloseF(t, "s(0,1)", StirlingFirst(0, 1), 0, 0)
+}
+
+func TestStirlingFirst_KnownValues(t *testing.T) {
+	// |s(1,1)| = 1
+	assertCloseF(t, "s(1,1)", StirlingFirst(1, 1), 1, 0)
+	// |s(3,1)| = 2 (number of permutations of 3 with 1 cycle = (3-1)! = 2)
+	assertCloseF(t, "s(3,1)", StirlingFirst(3, 1), 2, 0)
+	// |s(3,2)| = 3
+	assertCloseF(t, "s(3,2)", StirlingFirst(3, 2), 3, 0)
+	// |s(3,3)| = 1
+	assertCloseF(t, "s(3,3)", StirlingFirst(3, 3), 1, 0)
+	// |s(4,1)| = 6
+	assertCloseF(t, "s(4,1)", StirlingFirst(4, 1), 6, 0)
+	// |s(4,2)| = 11
+	assertCloseF(t, "s(4,2)", StirlingFirst(4, 2), 11, 0)
+	// |s(4,3)| = 6
+	assertCloseF(t, "s(4,3)", StirlingFirst(4, 3), 6, 0)
+	// |s(4,4)| = 1
+	assertCloseF(t, "s(4,4)", StirlingFirst(4, 4), 1, 0)
+	// |s(5,2)| = 50
+	assertCloseF(t, "s(5,2)", StirlingFirst(5, 2), 50, 0)
+}
+
+func TestStirlingFirst_SumEqualsFactorial(t *testing.T) {
+	// sum_{k=0}^{n} |s(n,k)| = n!
+	for n := 0; n <= 7; n++ {
+		sum := 0.0
+		for k := 0; k <= n; k++ {
+			sum += StirlingFirst(n, k)
+		}
+		if math.Abs(sum-Factorial(n)) > 1e-6 {
+			t.Errorf("sum |s(%d,k)| = %v, want %v (n!)", n, sum, Factorial(n))
+		}
+	}
+}
+
+func TestStirlingFirst_InvalidArgs(t *testing.T) {
+	assertCloseF(t, "s(-1,0)", StirlingFirst(-1, 0), 0, 0)
+	assertCloseF(t, "s(3,-1)", StirlingFirst(3, -1), 0, 0)
+	assertCloseF(t, "s(2,5)", StirlingFirst(2, 5), 0, 0)
+}
+
+// ---------------------------------------------------------------------------
+// StirlingSecond (Stirling numbers of the second kind)
+// ---------------------------------------------------------------------------
+
+func TestStirlingSecond_BaseCases(t *testing.T) {
+	assertCloseF(t, "S(0,0)", StirlingSecond(0, 0), 1, 0)
+	assertCloseF(t, "S(1,0)", StirlingSecond(1, 0), 0, 0)
+	assertCloseF(t, "S(0,1)", StirlingSecond(0, 1), 0, 0)
+}
+
+func TestStirlingSecond_KnownValues(t *testing.T) {
+	// S(n, 1) = 1 for all n >= 1 (one partition: the whole set)
+	for n := 1; n <= 8; n++ {
+		assertCloseF(t, "S(n,1)", StirlingSecond(n, 1), 1, 0)
+	}
+	// S(n, n) = 1 for all n >= 0 (each element is its own subset)
+	for n := 0; n <= 8; n++ {
+		assertCloseF(t, "S(n,n)", StirlingSecond(n, n), 1, 0)
+	}
+	// S(n, n-1) = C(n, 2) for n >= 2
+	for n := 2; n <= 8; n++ {
+		assertCloseF(t, "S(n,n-1)", StirlingSecond(n, n-1), BinomialCoeff(n, 2), 0)
+	}
+	// Known table values
+	assertCloseF(t, "S(3,2)", StirlingSecond(3, 2), 3, 0)
+	assertCloseF(t, "S(4,2)", StirlingSecond(4, 2), 7, 0)
+	assertCloseF(t, "S(4,3)", StirlingSecond(4, 3), 6, 0)
+	assertCloseF(t, "S(5,2)", StirlingSecond(5, 2), 15, 0)
+	assertCloseF(t, "S(5,3)", StirlingSecond(5, 3), 25, 0)
+	assertCloseF(t, "S(5,4)", StirlingSecond(5, 4), 10, 0)
+}
+
+func TestStirlingSecond_InvalidArgs(t *testing.T) {
+	assertCloseF(t, "S(-1,0)", StirlingSecond(-1, 0), 0, 0)
+	assertCloseF(t, "S(3,-1)", StirlingSecond(3, -1), 0, 0)
+	assertCloseF(t, "S(2,5)", StirlingSecond(2, 5), 0, 0)
+}
+
+// ---------------------------------------------------------------------------
+// BellNumber
+// ---------------------------------------------------------------------------
+
+func TestBellNumber_KnownValues(t *testing.T) {
+	// B_0 = 1, B_1 = 1, B_2 = 2, B_3 = 5, B_4 = 15, B_5 = 52,
+	// B_6 = 203, B_7 = 877, B_8 = 4140, B_9 = 21147, B_10 = 115975
+	expected := []float64{1, 1, 2, 5, 15, 52, 203, 877, 4140, 21147, 115975}
+	for n, want := range expected {
+		got := BellNumber(n)
+		if math.Abs(got-want) > 0.5 {
+			t.Errorf("BellNumber(%d) = %v, want %v", n, got, want)
+		}
+	}
+}
+
+func TestBellNumber_EqualsStirlingSum(t *testing.T) {
+	// B_n = sum_{k=0}^{n} S(n, k)
+	for n := 0; n <= 8; n++ {
+		sum := 0.0
+		for k := 0; k <= n; k++ {
+			sum += StirlingSecond(n, k)
+		}
+		got := BellNumber(n)
+		if math.Abs(got-sum) > 0.5 {
+			t.Errorf("BellNumber(%d) = %v, but sum S(%d,k) = %v", n, got, n, sum)
+		}
+	}
+}
+
+func TestBellNumber_Negative(t *testing.T) {
+	assertCloseF(t, "B(-1)", BellNumber(-1), 1, 0) // convention: B_0 = 1
+}
+
+// ---------------------------------------------------------------------------
+// IntegerPartitions
+// ---------------------------------------------------------------------------
+
+func TestIntegerPartitions_KnownValues(t *testing.T) {
+	// p(0) = 1, p(1) = 1, p(2) = 2, p(3) = 3, p(4) = 5, p(5) = 7,
+	// p(6) = 11, p(7) = 15, p(8) = 22, p(9) = 30, p(10) = 42
+	expected := []float64{1, 1, 2, 3, 5, 7, 11, 15, 22, 30, 42}
+	for n, want := range expected {
+		got := IntegerPartitions(n)
+		if got != want {
+			t.Errorf("IntegerPartitions(%d) = %v, want %v", n, got, want)
+		}
+	}
+}
+
+func TestIntegerPartitions_Larger(t *testing.T) {
+	// p(20) = 627, p(50) = 204226
+	assertCloseF(t, "p(20)", IntegerPartitions(20), 627, 0)
+	assertCloseF(t, "p(50)", IntegerPartitions(50), 204226, 0)
+}
+
+func TestIntegerPartitions_Negative(t *testing.T) {
+	assertCloseF(t, "p(-1)", IntegerPartitions(-1), 0, 0)
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+func assertCloseF(t *testing.T, label string, got, want, tol float64) {
+	t.Helper()
+	if math.Abs(got-want) > tol {
+		t.Errorf("%s: got %v, want %v (tol %v)", label, got, want, tol)
+	}
+}

@@ -146,6 +146,145 @@ func FibonacciNumber(n int) uint64 {
 	return rb // F_n is in position (0,1) of the result matrix
 }
 
+// StirlingFirst returns the (unsigned) Stirling number of the first kind,
+// |s(n, k)|, which counts the number of permutations of n elements with
+// exactly k disjoint cycles.
+//
+// Recurrence: |s(n, k)| = (n-1) * |s(n-1, k)| + |s(n-1, k-1)|
+// Base cases: |s(0, 0)| = 1, |s(n, 0)| = 0 for n > 0, |s(0, k)| = 0 for k > 0
+// Valid range: n >= 0, k >= 0; returns 0 if k > n or k < 0 or n < 0
+// Precision: exact for small n (float64 mantissa limits for large n)
+// Reference: Knuth, TAOCP vol. 1, Section 1.2.6; Graham, Knuth & Patashnik,
+// "Concrete Mathematics", Chapter 6
+func StirlingFirst(n, k int) float64 {
+	if k < 0 || n < 0 || k > n {
+		return 0
+	}
+	if n == 0 && k == 0 {
+		return 1
+	}
+	if n == 0 || k == 0 {
+		return 0
+	}
+	// Use iterative DP to avoid stack depth issues.
+	// We only need the previous row.
+	prev := make([]float64, k+1)
+	prev[0] = 1 // |s(0, 0)| = 1
+
+	for i := 1; i <= n; i++ {
+		curr := make([]float64, k+1)
+		for j := 1; j <= k && j <= i; j++ {
+			curr[j] = float64(i-1)*prev[j] + prev[j-1]
+		}
+		prev = curr
+	}
+	return prev[k]
+}
+
+// StirlingSecond returns the Stirling number of the second kind, S(n, k),
+// which counts the number of ways to partition a set of n elements into
+// exactly k non-empty subsets.
+//
+// Recurrence: S(n, k) = k * S(n-1, k) + S(n-1, k-1)
+// Base cases: S(0, 0) = 1, S(n, 0) = 0 for n > 0, S(0, k) = 0 for k > 0
+// Valid range: n >= 0, k >= 0; returns 0 if k > n or k < 0 or n < 0
+// Precision: exact for small n (float64 mantissa limits for large n)
+// Reference: Knuth, TAOCP vol. 1, Section 1.2.6; Stanley, "Enumerative
+// Combinatorics", Vol. 1
+func StirlingSecond(n, k int) float64 {
+	if k < 0 || n < 0 || k > n {
+		return 0
+	}
+	if n == 0 && k == 0 {
+		return 1
+	}
+	if n == 0 || k == 0 {
+		return 0
+	}
+	// Iterative DP.
+	prev := make([]float64, k+1)
+	prev[0] = 1 // S(0, 0) = 1
+
+	for i := 1; i <= n; i++ {
+		curr := make([]float64, k+1)
+		for j := 1; j <= k && j <= i; j++ {
+			curr[j] = float64(j)*prev[j] + prev[j-1]
+		}
+		prev = curr
+	}
+	return prev[k]
+}
+
+// BellNumber returns B_n, the nth Bell number, which counts the total
+// number of ways to partition a set of n elements into non-empty subsets.
+//
+// B_n = sum_{k=0}^{n} S(n, k), where S(n, k) are Stirling numbers of
+// the second kind.
+//
+// Equivalently, computed via the Bell triangle for efficiency:
+//
+//	B[0] = 1
+//	B[i][0] = B[i-1][i-1]    (wrap from end of previous row)
+//	B[i][j] = B[i][j-1] + B[i-1][j-1]
+//
+// Valid range: n >= 0; returns 1 for n <= 0 (B_0 = 1)
+// Precision: exact for small n (float64 mantissa limits for large n)
+// Reference: Bell, E.T. (1934) "Exponential Numbers"; Rota, G.-C. (1964)
+// "The Number of Partitions of a Set"
+func BellNumber(n int) float64 {
+	if n <= 0 {
+		return 1
+	}
+	// Bell triangle computation.
+	// Row i has i+1 entries. We only need two rows at a time.
+	prev := []float64{1} // Row 0: [1]
+
+	for i := 1; i <= n; i++ {
+		curr := make([]float64, i+1)
+		curr[0] = prev[len(prev)-1] // wrap from end of previous row
+		for j := 1; j <= i; j++ {
+			curr[j] = curr[j-1] + prev[j-1]
+		}
+		prev = curr
+	}
+	return prev[0] // B_n is the first element of row n (which is wrapped from end)
+}
+
+// IntegerPartitions returns the number of ways to write n as a sum of
+// positive integers, disregarding order. For example, 4 = 4 = 3+1 = 2+2
+// = 2+1+1 = 1+1+1+1, so IntegerPartitions(4) = 5.
+//
+// Uses dynamic programming with the recurrence:
+//
+//	p(n, k) = p(n, k-1) + p(n-k, k)
+//
+// where p(n, k) is the number of partitions of n using parts of size at most k.
+//
+// Valid range: n >= 0; returns 1 for n == 0 (empty partition), 0 for n < 0
+// Precision: exact for moderate n (float64 mantissa limits for large n)
+// Time complexity: O(n^2).
+// Reference: Hardy, G.H. & Ramanujan, S. (1918) "Asymptotic Formulae in
+// Combinatory Analysis"; Andrews, G.E. (1976) "The Theory of Partitions"
+func IntegerPartitions(n int) float64 {
+	if n < 0 {
+		return 0
+	}
+	if n == 0 {
+		return 1
+	}
+
+	// dp[j] = number of partitions of j using parts 1..i
+	dp := make([]float64, n+1)
+	dp[0] = 1
+
+	for i := 1; i <= n; i++ {
+		for j := i; j <= n; j++ {
+			dp[j] += dp[j-i]
+		}
+	}
+	return dp[n]
+}
+
 // DerangementCount returns !n, the number of derangements (permutations with
 // no fixed points) of n elements. Returns 1 for n == 0, 0 for n == 1.
 //
