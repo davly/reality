@@ -340,6 +340,79 @@ func PoissonCDF(k int, lambda float64) float64 {
 }
 
 // ---------------------------------------------------------------------------
+// Gamma distribution
+// ---------------------------------------------------------------------------
+
+// GammaPDF returns the probability density function of the Gamma distribution
+// at x, with shape parameter k (alpha) and rate parameter theta (inverse scale).
+//
+// Formula: (1 / (Gamma(k) * theta^k)) * x^{k-1} * exp(-x/theta)
+// Computed in log-space as: exp((k-1)*ln(x) - x/theta - k*ln(theta) - lgamma(k))
+//
+// Valid range: k > 0, theta > 0, x >= 0
+// Returns NaN if k <= 0 or theta <= 0
+// Returns 0 if x < 0
+// Special: at x = 0, returns +Inf when k < 1, 1/theta when k == 1, 0 when k > 1
+// Precision: ~15 significant digits (float64)
+// Reference: Johnson, Kotz, Balakrishnan (1994) "Continuous Univariate
+// Distributions", Vol. 1, Chapter 17
+func GammaPDF(x, k, theta float64) float64 {
+	if k <= 0 || theta <= 0 {
+		return math.NaN()
+	}
+	if x < 0 {
+		return 0
+	}
+	if x == 0 {
+		if k < 1 {
+			return math.Inf(1)
+		}
+		if k == 1 {
+			return 1.0 / theta
+		}
+		return 0
+	}
+	logPDF := (k-1)*math.Log(x) - x/theta - k*math.Log(theta) - LogGamma(k)
+	return math.Exp(logPDF)
+}
+
+// GammaCDF returns the cumulative distribution function of the Gamma
+// distribution at x, with shape parameter k and scale parameter theta.
+//
+// Formula: P(k, x/theta) where P is the lower regularized incomplete
+// gamma function.
+//
+// Valid range: k > 0, theta > 0, x >= 0
+// Returns NaN if k <= 0 or theta <= 0
+// Returns 0 if x <= 0
+// Precision: ~1e-14 (via regularizedGammaLowerSeries)
+// Reference: Abramowitz & Stegun, Chapter 6; DLMF 8.2
+func GammaCDF(x, k, theta float64) float64 {
+	if k <= 0 || theta <= 0 {
+		return math.NaN()
+	}
+	if x <= 0 {
+		return 0
+	}
+	return regularizedGammaLowerSeries(k, x/theta)
+}
+
+// ExponentialQuantile returns the inverse CDF (quantile function) of the
+// exponential distribution for probability p, with rate parameter lambda.
+//
+// Formula: -ln(1-p) / lambda
+// Valid range: p in (0, 1), lambda > 0
+// Returns NaN if p <= 0, p >= 1, or lambda <= 0
+// Precision: ~15 significant digits (float64, via math.Log)
+// Reference: standard exponential quantile function
+func ExponentialQuantile(p, lambda float64) float64 {
+	if lambda <= 0 || p <= 0 || p >= 1 {
+		return math.NaN()
+	}
+	return -math.Log(1-p) / lambda
+}
+
+// ---------------------------------------------------------------------------
 // Binomial distribution
 // ---------------------------------------------------------------------------
 

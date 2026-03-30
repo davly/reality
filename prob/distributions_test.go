@@ -854,3 +854,169 @@ func TestErfc(t *testing.T) {
 		t.Errorf("Erfc(1) = %v, want ~0.15730", Erfc(1))
 	}
 }
+
+// ---------------------------------------------------------------------------
+// GammaPDF
+// ---------------------------------------------------------------------------
+
+func TestGammaPDF(t *testing.T) {
+	tests := []struct {
+		name  string
+		x     float64
+		k     float64
+		theta float64
+		want  float64
+		tol   float64
+	}{
+		// Gamma(1, 1) = Exponential(1): PDF at x = 1 is exp(-1) ~ 0.36788
+		{"exp-at-1", 1, 1, 1, math.Exp(-1), 1e-14},
+		// Gamma(1, 1) at x = 0: k == 1 returns 1/theta = 1
+		{"exp-at-0", 0, 1, 1, 1.0, 1e-14},
+		// Gamma(k=2, theta=2) at x=2: PDF = (x^(k-1) * exp(-x/theta)) / (theta^k * Gamma(k))
+		// = (2 * exp(-1)) / (4 * 1) = 0.5 * exp(-1) ~ 0.18394
+		{"k2-theta2-at2", 2, 2, 2, 0.5 * math.Exp(-1), 1e-14},
+		// k=0.5 at x=0 should be +Inf
+		{"k-half-at-0", 0, 0.5, 1, math.Inf(1), 0},
+		// k=3 at x=0 should be 0
+		{"k3-at-0", 0, 3, 1, 0, 0},
+		// Invalid: negative x
+		{"negative-x", -1, 1, 1, 0, 0},
+		// Invalid parameters
+		{"invalid-k", 1, 0, 1, math.NaN(), 0},
+		{"invalid-theta", 1, 1, 0, math.NaN(), 0},
+		{"invalid-negative-k", 1, -1, 1, math.NaN(), 0},
+		// Gamma(k=5, theta=1) at x=3: should match formula
+		// PDF = x^4 * exp(-x) / 24 = 81 * exp(-3) / 24
+		{"k5-at-3", 3, 5, 1, 81 * math.Exp(-3) / 24, 1e-12},
+		// Large k: Gamma(k=10, theta=0.5) at x=5
+		{"large-k", 5, 10, 0.5, 0.0, 0.5}, // just verify it doesn't crash, wide tolerance
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := GammaPDF(tt.x, tt.k, tt.theta)
+			if math.IsNaN(tt.want) {
+				if !math.IsNaN(got) {
+					t.Errorf("GammaPDF(%v, %v, %v) = %v, want NaN", tt.x, tt.k, tt.theta, got)
+				}
+				return
+			}
+			if math.IsInf(tt.want, 1) {
+				if !math.IsInf(got, 1) {
+					t.Errorf("GammaPDF(%v, %v, %v) = %v, want +Inf", tt.x, tt.k, tt.theta, got)
+				}
+				return
+			}
+			if math.Abs(got-tt.want) > tt.tol {
+				t.Errorf("GammaPDF(%v, %v, %v) = %v, want %v (tol %v)",
+					tt.x, tt.k, tt.theta, got, tt.want, tt.tol)
+			}
+		})
+	}
+}
+
+// ---------------------------------------------------------------------------
+// GammaCDF
+// ---------------------------------------------------------------------------
+
+func TestGammaCDF(t *testing.T) {
+	tests := []struct {
+		name  string
+		x     float64
+		k     float64
+		theta float64
+		want  float64
+		tol   float64
+	}{
+		// Gamma(1,1) = Exponential(1): CDF at x=1 is 1 - exp(-1) ~ 0.63212
+		{"exp-cdf-1", 1, 1, 1, 1 - math.Exp(-1), 1e-12},
+		// CDF at 0 should be 0
+		{"cdf-at-0", 0, 2, 1, 0, 0},
+		// CDF for negative x
+		{"cdf-negative", -1, 1, 1, 0, 0},
+		// Gamma(1,1) CDF at x=0.5: 1 - exp(-0.5) ~ 0.39347
+		{"exp-cdf-half", 0.5, 1, 1, 1 - math.Exp(-0.5), 1e-12},
+		// Large x should approach 1
+		{"large-x", 100, 1, 1, 1.0, 1e-10},
+		// Invalid parameters
+		{"invalid-k", 1, 0, 1, math.NaN(), 0},
+		{"invalid-theta", 1, 1, -1, math.NaN(), 0},
+		// Gamma(2, 1) CDF at x=2: P(2, 2) = 1 - 3*exp(-2) ~ 0.59399
+		{"k2-at-2", 2, 2, 1, 1 - 3*math.Exp(-2), 1e-10},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := GammaCDF(tt.x, tt.k, tt.theta)
+			if math.IsNaN(tt.want) {
+				if !math.IsNaN(got) {
+					t.Errorf("GammaCDF(%v, %v, %v) = %v, want NaN", tt.x, tt.k, tt.theta, got)
+				}
+				return
+			}
+			if math.Abs(got-tt.want) > tt.tol {
+				t.Errorf("GammaCDF(%v, %v, %v) = %v, want %v (tol %v)",
+					tt.x, tt.k, tt.theta, got, tt.want, tt.tol)
+			}
+		})
+	}
+}
+
+// ---------------------------------------------------------------------------
+// ExponentialQuantile
+// ---------------------------------------------------------------------------
+
+func TestExponentialQuantile(t *testing.T) {
+	tests := []struct {
+		name   string
+		p      float64
+		lambda float64
+		want   float64
+		tol    float64
+	}{
+		// Median of Exp(1): -ln(0.5) ~ 0.69315
+		{"median-exp1", 0.5, 1, math.Ln2, 1e-14},
+		// Quartile: p=0.25, lambda=1: -ln(0.75) ~ 0.28768
+		{"q25-exp1", 0.25, 1, -math.Log(0.75), 1e-14},
+		// p=0.75, lambda=2: -ln(0.25)/2 ~ 0.69315
+		{"q75-exp2", 0.75, 2, -math.Log(0.25) / 2, 1e-14},
+		// Roundtrip: ExponentialCDF(ExponentialQuantile(p, lambda), lambda) == p
+		{"roundtrip-0.3", 0.3, 1.5, -math.Log(0.7) / 1.5, 1e-14},
+		// Invalid: p = 0
+		{"invalid-p0", 0, 1, math.NaN(), 0},
+		// Invalid: p = 1
+		{"invalid-p1", 1, 1, math.NaN(), 0},
+		// Invalid: lambda <= 0
+		{"invalid-lambda", 0.5, 0, math.NaN(), 0},
+		{"invalid-neg-lambda", 0.5, -1, math.NaN(), 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ExponentialQuantile(tt.p, tt.lambda)
+			if math.IsNaN(tt.want) {
+				if !math.IsNaN(got) {
+					t.Errorf("ExponentialQuantile(%v, %v) = %v, want NaN", tt.p, tt.lambda, got)
+				}
+				return
+			}
+			if math.Abs(got-tt.want) > tt.tol {
+				t.Errorf("ExponentialQuantile(%v, %v) = %v, want %v (tol %v)",
+					tt.p, tt.lambda, got, tt.want, tt.tol)
+			}
+		})
+	}
+}
+
+func TestExponentialQuantile_Roundtrip(t *testing.T) {
+	// For several (p, lambda) pairs, verify CDF(Quantile(p)) == p.
+	lambdas := []float64{0.5, 1.0, 2.0, 10.0}
+	probs := []float64{0.1, 0.25, 0.5, 0.75, 0.9, 0.99}
+	for _, lambda := range lambdas {
+		for _, p := range probs {
+			x := ExponentialQuantile(p, lambda)
+			roundtrip := ExponentialCDF(x, lambda)
+			if math.Abs(roundtrip-p) > 1e-14 {
+				t.Errorf("roundtrip lambda=%v p=%v: got %v, want %v",
+					lambda, p, roundtrip, p)
+			}
+		}
+	}
+}

@@ -1,0 +1,71 @@
+{
+  "function": "prob.MarkovSimulate",
+  "cases": [
+    {
+      "description": "deterministic_cycle_3x3",
+      "inputs": {
+        "matrix": [0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+        "n": 3,
+        "initial_state": 0,
+        "steps": 6
+      },
+      "expected": [0, 1, 2, 0, 1, 2, 0],
+      "tolerance": 0
+    },
+    {
+      "description": "absorbing_state_2x2",
+      "inputs": {
+        "matrix": [0.0, 1.0, 0.0, 1.0],
+        "n": 2,
+        "initial_state": 0,
+        "steps": 5
+      },
+      "expected": [0, 1, 1, 1, 1, 1],
+      "tolerance": 0
+    },
+    {
+      "description": "single_state_stays",
+      "inputs": {
+        "matrix": [1.0],
+        "n": 1,
+        "initial_state": 0,
+        "steps": 3
+      },
+      "expected": [0, 0, 0, 0],
+      "tolerance": 0
+    },
+    {
+      "description": "symmetric_2x2_from_0",
+      "inputs": {
+        "matrix": [0.5, 0.5, 0.5, 0.5],
+        "n": 2,
+        "initial_state": 0,
+        "steps": 10
+      },
+      "expected": [0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+      "tolerance": 0
+    },
+    {
+      "description": "zero_steps",
+      "inputs": {
+        "matrix": [0.5, 0.5, 0.5, 0.5],
+        "n": 2,
+        "initial_state": 1,
+        "steps": 0
+      },
+      "expected": [1],
+      "tolerance": 0
+    },
+    {
+      "description": "deterministic_forward_only",
+      "inputs": {
+        "matrix": [0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0],
+        "n": 3,
+        "initial_state": 0,
+        "steps": 4
+      },
+      "expected": [0, 1, 2, 2, 2],
+      "tolerance": 0
+    }
+  ]
+}
