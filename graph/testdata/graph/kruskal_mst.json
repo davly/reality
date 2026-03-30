@@ -1,0 +1,185 @@
+{
+  "function": "graph.KruskalMST",
+  "cases": [
+    {
+      "description": "triangle_3_nodes",
+      "inputs": {
+        "n": 3,
+        "edges": [[0, 1, 1.0], [0, 2, 3.0], [1, 2, 2.0]]
+      },
+      "expected": {"total": 3.0, "num_edges": 2},
+      "tolerance": 1e-15
+    },
+    {
+      "description": "square_4_nodes",
+      "inputs": {
+        "n": 4,
+        "edges": [[0, 1, 1.0], [1, 2, 2.0], [2, 3, 3.0], [0, 3, 4.0], [0, 2, 5.0]]
+      },
+      "expected": {"total": 6.0, "num_edges": 3},
+      "tolerance": 1e-15
+    },
+    {
+      "description": "disconnected_2_components",
+      "inputs": {
+        "n": 4,
+        "edges": [[0, 1, 5.0], [2, 3, 7.0]]
+      },
+      "expected": {"total": 12.0, "num_edges": 2},
+      "tolerance": 1e-15
+    },
+    {
+      "description": "single_edge",
+      "inputs": {
+        "n": 2,
+        "edges": [[0, 1, 42.0]]
+      },
+      "expected": {"total": 42.0, "num_edges": 1},
+      "tolerance": 1e-15
+    },
+    {
+      "description": "complete_K4",
+      "inputs": {
+        "n": 4,
+        "edges": [[0, 1, 1.0], [0, 2, 4.0], [0, 3, 3.0], [1, 2, 2.0], [1, 3, 5.0], [2, 3, 6.0]]
+      },
+      "expected": {"total": 6.0, "num_edges": 3},
+      "tolerance": 1e-15
+    },
+    {
+      "description": "path_graph_5_nodes",
+      "inputs": {
+        "n": 5,
+        "edges": [[0, 1, 1.0], [1, 2, 2.0], [2, 3, 3.0], [3, 4, 4.0]]
+      },
+      "expected": {"total": 10.0, "num_edges": 4},
+      "tolerance": 1e-15
+    },
+    {
+      "description": "star_graph_center_0",
+      "inputs": {
+        "n": 5,
+        "edges": [[0, 1, 3.0], [0, 2, 1.0], [0, 3, 4.0], [0, 4, 2.0]]
+      },
+      "expected": {"total": 10.0, "num_edges": 4},
+      "tolerance": 1e-15
+    },
+    {
+      "description": "all_equal_weights",
+      "inputs": {
+        "n": 4,
+        "edges": [[0, 1, 1.0], [1, 2, 1.0], [2, 3, 1.0], [0, 3, 1.0], [0, 2, 1.0], [1, 3, 1.0]]
+      },
+      "expected": {"total": 3.0, "num_edges": 3},
+      "tolerance": 1e-15
+    },
+    {
+      "description": "7_node_graph",
+      "inputs": {
+        "n": 7,
+        "edges": [[0, 1, 7.0], [0, 3, 5.0], [1, 2, 8.0], [1, 3, 9.0], [1, 4, 7.0], [2, 4, 5.0], [3, 4, 15.0], [3, 5, 6.0], [4, 5, 8.0], [4, 6, 9.0], [5, 6, 11.0]]
+      },
+      "expected": {"total": 39.0, "num_edges": 6},
+      "tolerance": 1e-15
+    },
+    {
+      "description": "single_node_no_edges",
+      "inputs": {
+        "n": 1,
+        "edges": []
+      },
+      "expected": {"total": 0.0, "num_edges": 0},
+      "tolerance": 1e-15
+    },
+    {
+      "description": "fractional_weights",
+      "inputs": {
+        "n": 3,
+        "edges": [[0, 1, 0.5], [1, 2, 0.3], [0, 2, 0.9]]
+      },
+      "expected": {"total": 0.8, "num_edges": 2},
+      "tolerance": 1e-15
+    },
+    {
+      "description": "large_weight_range",
+      "inputs": {
+        "n": 3,
+        "edges": [[0, 1, 0.001], [1, 2, 1000.0], [0, 2, 999.0]]
+      },
+      "expected": {"total": 999.001, "num_edges": 2},
+      "tolerance": 1e-12
+    },
+    {
+      "description": "duplicate_edges_different_weights",
+      "inputs": {
+        "n": 3,
+        "edges": [[0, 1, 10.0], [0, 1, 2.0], [1, 2, 3.0], [0, 2, 8.0]]
+      },
+      "expected": {"total": 5.0, "num_edges": 2},
+      "tolerance": 1e-15
+    },
+    {
+      "description": "three_components",
+      "inputs": {
+        "n": 6,
+        "edges": [[0, 1, 1.0], [2, 3, 2.0], [4, 5, 3.0]]
+      },
+      "expected": {"total": 6.0, "num_edges": 3},
+      "tolerance": 1e-15
+    },
+    {
+      "description": "cycle_graph_4",
+      "inputs": {
+        "n": 4,
+        "edges": [[0, 1, 1.0], [1, 2, 2.0], [2, 3, 3.0], [3, 0, 4.0]]
+      },
+      "expected": {"total": 6.0, "num_edges": 3},
+      "tolerance": 1e-15
+    },
+    {
+      "description": "negative_weight_not_typical_but_handled",
+      "inputs": {
+        "n": 3,
+        "edges": [[0, 1, -1.0], [1, 2, 2.0], [0, 2, 3.0]]
+      },
+      "expected": {"total": 1.0, "num_edges": 2},
+      "tolerance": 1e-15
+    },
+    {
+      "description": "petersen_like_5",
+      "inputs": {
+        "n": 5,
+        "edges": [[0, 1, 1.0], [1, 2, 2.0], [2, 3, 3.0], [3, 4, 4.0], [4, 0, 5.0], [0, 2, 6.0], [1, 3, 7.0]]
+      },
+      "expected": {"total": 10.0, "num_edges": 4},
+      "tolerance": 1e-15
+    },
+    {
+      "description": "two_nodes_one_edge",
+      "inputs": {
+        "n": 2,
+        "edges": [[0, 1, 3.14159]]
+      },
+      "expected": {"total": 3.14159, "num_edges": 1},
+      "tolerance": 1e-14
+    },
+    {
+      "description": "grid_2x2",
+      "inputs": {
+        "n": 4,
+        "edges": [[0, 1, 1.0], [0, 2, 2.0], [1, 3, 3.0], [2, 3, 4.0]]
+      },
+      "expected": {"total": 6.0, "num_edges": 3},
+      "tolerance": 1e-15
+    },
+    {
+      "description": "zero_weight_edges",
+      "inputs": {
+        "n": 3,
+        "edges": [[0, 1, 0.0], [1, 2, 0.0], [0, 2, 1.0]]
+      },
+      "expected": {"total": 0.0, "num_edges": 2},
+      "tolerance": 1e-15
+    }
+  ]
+}

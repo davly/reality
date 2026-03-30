@@ -1314,3 +1314,483 @@ func toTestFloat(v any) (float64, bool) {
 		return 0, false
 	}
 }
+
+// ══════════════════════════════════════════════════════════════��════════════
+// KruskalMST
+// ═══════════════════════════════════════════════════════════════════════════
+
+func TestKruskalMST_Triangle(t *testing.T) {
+	// Triangle: 0-1 (1), 0-2 (3), 1-2 (2). MST: 0-1 (1) + 1-2 (2) = 3.
+	edges := [][3]float64{{0, 1, 1}, {0, 2, 3}, {1, 2, 2}}
+	mst, total := KruskalMST(3, edges)
+	assertFloat(t, "kruskal triangle total", total, 3, 1e-15)
+	if len(mst) != 2 {
+		t.Fatalf("kruskal triangle: expected 2 edges, got %d", len(mst))
+	}
+}
+
+func TestKruskalMST_Square(t *testing.T) {
+	// Square: 0-1 (1), 1-2 (2), 2-3 (3), 0-3 (4), 0-2 (5).
+	// MST: 0-1 (1) + 1-2 (2) + 2-3 (3) = 6.
+	edges := [][3]float64{{0, 1, 1}, {1, 2, 2}, {2, 3, 3}, {0, 3, 4}, {0, 2, 5}}
+	mst, total := KruskalMST(4, edges)
+	assertFloat(t, "kruskal square total", total, 6, 1e-15)
+	if len(mst) != 3 {
+		t.Fatalf("kruskal square: expected 3 edges, got %d", len(mst))
+	}
+}
+
+func TestKruskalMST_Disconnected(t *testing.T) {
+	// Two components: {0,1} and {2,3}.
+	edges := [][3]float64{{0, 1, 5}, {2, 3, 7}}
+	mst, total := KruskalMST(4, edges)
+	assertFloat(t, "kruskal disconnected total", total, 12, 1e-15)
+	if len(mst) != 2 {
+		t.Fatalf("kruskal disconnected: expected 2 edges, got %d", len(mst))
+	}
+}
+
+func TestKruskalMST_SingleNode(t *testing.T) {
+	edges := [][3]float64{}
+	mst, total := KruskalMST(1, edges)
+	assertFloat(t, "kruskal single total", total, 0, 1e-15)
+	if len(mst) != 0 {
+		t.Fatalf("kruskal single: expected 0 edges, got %d", len(mst))
+	}
+}
+
+func TestKruskalMST_Empty(t *testing.T) {
+	mst, total := KruskalMST(0, nil)
+	if mst != nil {
+		t.Errorf("kruskal empty: expected nil, got %v", mst)
+	}
+	assertFloat(t, "kruskal empty total", total, 0, 1e-15)
+}
+
+func TestKruskalMST_Complete4(t *testing.T) {
+	// Complete graph K4 with all different weights.
+	edges := [][3]float64{
+		{0, 1, 1}, {0, 2, 4}, {0, 3, 3},
+		{1, 2, 2}, {1, 3, 5}, {2, 3, 6},
+	}
+	// MST: 0-1 (1) + 1-2 (2) + 0-3 (3) = 6.
+	_, total := KruskalMST(4, edges)
+	assertFloat(t, "kruskal K4 total", total, 6, 1e-15)
+}
+
+func TestKruskalMST_EqualWeights(t *testing.T) {
+	// All edges weight 1.
+	edges := [][3]float64{{0, 1, 1}, {1, 2, 1}, {2, 3, 1}, {0, 3, 1}}
+	_, total := KruskalMST(4, edges)
+	assertFloat(t, "kruskal equal weight total", total, 3, 1e-15)
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PrimMST
+// ═══════════════════════════════════════════════════════════════════════════
+
+func TestPrimMST_Triangle(t *testing.T) {
+	edges := [][3]float64{{0, 1, 1}, {0, 2, 3}, {1, 2, 2}}
+	mst, total := PrimMST(3, edges)
+	assertFloat(t, "prim triangle total", total, 3, 1e-15)
+	if len(mst) != 2 {
+		t.Fatalf("prim triangle: expected 2 edges, got %d", len(mst))
+	}
+}
+
+func TestPrimMST_Square(t *testing.T) {
+	edges := [][3]float64{{0, 1, 1}, {1, 2, 2}, {2, 3, 3}, {0, 3, 4}, {0, 2, 5}}
+	mst, total := PrimMST(4, edges)
+	assertFloat(t, "prim square total", total, 6, 1e-15)
+	if len(mst) != 3 {
+		t.Fatalf("prim square: expected 3 edges, got %d", len(mst))
+	}
+}
+
+func TestPrimMST_SingleNode(t *testing.T) {
+	edges := [][3]float64{}
+	mst, total := PrimMST(1, edges)
+	assertFloat(t, "prim single total", total, 0, 1e-15)
+	if len(mst) != 0 {
+		t.Fatalf("prim single: expected 0 edges, got %d", len(mst))
+	}
+}
+
+func TestPrimMST_Complete4(t *testing.T) {
+	edges := [][3]float64{
+		{0, 1, 1}, {0, 2, 4}, {0, 3, 3},
+		{1, 2, 2}, {1, 3, 5}, {2, 3, 6},
+	}
+	_, total := PrimMST(4, edges)
+	assertFloat(t, "prim K4 total", total, 6, 1e-15)
+}
+
+func TestPrimMST_MatchesKruskal(t *testing.T) {
+	// Verify Prim and Kruskal produce the same total weight.
+	edges := [][3]float64{
+		{0, 1, 7}, {0, 3, 5}, {1, 2, 8}, {1, 3, 9},
+		{1, 4, 7}, {2, 4, 5}, {3, 4, 15}, {3, 5, 6},
+		{4, 5, 8}, {4, 6, 9}, {5, 6, 11},
+	}
+	_, totalK := KruskalMST(7, edges)
+	_, totalP := PrimMST(7, edges)
+	assertFloat(t, "prim vs kruskal", totalP, totalK, 1e-15)
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BellmanFord
+// ═══════════════════════════════════════════════════════════════════════════
+
+func TestBellmanFord_SimplePositive(t *testing.T) {
+	// 0->1 (4), 0->2 (1), 1->2 (1), 2->1 (2), 1->3 (1), 2->3 (5)
+	edges := [][3]float64{
+		{0, 1, 4}, {0, 2, 1}, {1, 2, 1}, {2, 1, 2}, {1, 3, 1}, {2, 3, 5},
+	}
+	dist, _, neg := BellmanFord(4, edges, 0)
+	if neg {
+		t.Fatal("unexpected negative cycle")
+	}
+	assertFloat(t, "bf dist[0]", dist[0], 0, 1e-15)
+	assertFloat(t, "bf dist[1]", dist[1], 3, 1e-15)
+	assertFloat(t, "bf dist[2]", dist[2], 1, 1e-15)
+	assertFloat(t, "bf dist[3]", dist[3], 4, 1e-15)
+}
+
+func TestBellmanFord_NegativeWeights(t *testing.T) {
+	// 0->1 (4), 0->2 (5), 1->2 (-3)
+	edges := [][3]float64{{0, 1, 4}, {0, 2, 5}, {1, 2, -3}}
+	dist, _, neg := BellmanFord(3, edges, 0)
+	if neg {
+		t.Fatal("unexpected negative cycle")
+	}
+	assertFloat(t, "bf neg dist[0]", dist[0], 0, 1e-15)
+	assertFloat(t, "bf neg dist[1]", dist[1], 4, 1e-15)
+	assertFloat(t, "bf neg dist[2]", dist[2], 1, 1e-15) // 0->1->2 = 4 + (-3) = 1
+}
+
+func TestBellmanFord_NegativeCycle(t *testing.T) {
+	// 0->1 (1), 1->2 (-2), 2->0 (0) — negative cycle: 0->1->2->0 = -1
+	edges := [][3]float64{{0, 1, 1}, {1, 2, -2}, {2, 0, 0}}
+	_, _, neg := BellmanFord(3, edges, 0)
+	if !neg {
+		t.Fatal("expected negative cycle")
+	}
+}
+
+func TestBellmanFord_Unreachable(t *testing.T) {
+	edges := [][3]float64{{0, 1, 5}}
+	dist, _, neg := BellmanFord(3, edges, 0)
+	if neg {
+		t.Fatal("unexpected negative cycle")
+	}
+	assertFloat(t, "bf reach dist[1]", dist[1], 5, 1e-15)
+	if !math.IsInf(dist[2], 1) {
+		t.Errorf("bf unreachable: dist[2] = %v, want +Inf", dist[2])
+	}
+}
+
+func TestBellmanFord_SingleNode(t *testing.T) {
+	edges := [][3]float64{}
+	dist, _, neg := BellmanFord(1, edges, 0)
+	if neg {
+		t.Fatal("unexpected negative cycle")
+	}
+	assertFloat(t, "bf single dist[0]", dist[0], 0, 1e-15)
+}
+
+func TestBellmanFord_LinearChain(t *testing.T) {
+	edges := [][3]float64{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}}
+	dist, prev, neg := BellmanFord(4, edges, 0)
+	if neg {
+		t.Fatal("unexpected negative cycle")
+	}
+	assertFloat(t, "bf chain dist[3]", dist[3], 9, 1e-15)
+	if prev[3] != 2 || prev[2] != 1 || prev[1] != 0 {
+		t.Errorf("bf chain prev: %v", prev)
+	}
+}
+
+func TestBellmanFord_MatchesDijkstra(t *testing.T) {
+	// For non-negative weights, Bellman-Ford and Dijkstra should agree.
+	adj := IntAdjacency{0: {1, 2}, 1: {3}, 2: {1, 3}}
+	weights := map[[2]int]float64{
+		{0, 1}: 10, {0, 2}: 3, {1, 3}: 2, {2, 1}: 4, {2, 3}: 8,
+	}
+	distD, _ := Dijkstra(adj, weights, 0)
+
+	bfEdges := [][3]float64{{0, 1, 10}, {0, 2, 3}, {1, 3, 2}, {2, 1, 4}, {2, 3, 8}}
+	distBF, _, neg := BellmanFord(4, bfEdges, 0)
+	if neg {
+		t.Fatal("unexpected negative cycle")
+	}
+	for i := 0; i < 4; i++ {
+		assertFloat(t, "bf vs dijkstra", distBF[i], distD[i], 1e-15)
+	}
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Golden-file: KruskalMST
+// ═══════════════════════════════════════════════════════════════════════════
+
+func TestGolden_KruskalMST(t *testing.T) {
+	gf := testutil.LoadGolden(t, "testdata/graph/kruskal_mst.json")
+	for _, tc := range gf.Cases {
+		t.Run(tc.Description, func(t *testing.T) {
+			n := testutil.InputInt(t, tc, "n")
+			edgesRaw, ok := tc.Inputs["edges"].([]any)
+			if !ok {
+				t.Fatalf("edges is not an array: %T", tc.Inputs["edges"])
+			}
+			var edges [][3]float64
+			for _, eRaw := range edgesRaw {
+				arr, ok := eRaw.([]any)
+				if !ok || len(arr) != 3 {
+					t.Fatalf("edge not [u,v,w]: %v", eRaw)
+				}
+				u, _ := toTestFloat(arr[0])
+				v, _ := toTestFloat(arr[1])
+				w, _ := toTestFloat(arr[2])
+				edges = append(edges, [3]float64{u, v, w})
+			}
+
+			mstEdges, total := KruskalMST(n, edges)
+
+			// Parse expected.
+			expMap, ok := tc.Expected.(map[string]any)
+			if !ok {
+				t.Fatalf("expected is not a map: %T", tc.Expected)
+			}
+			wantTotal, _ := toTestFloat(expMap["total"])
+			wantNumEdges, _ := toTestFloat(expMap["num_edges"])
+
+			assertFloat(t, tc.Description+" total", total, wantTotal, tc.Tolerance)
+			if len(mstEdges) != int(wantNumEdges) {
+				t.Errorf("%s: num edges = %d, want %d", tc.Description, len(mstEdges), int(wantNumEdges))
+			}
+		})
+	}
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Golden-file: BellmanFord
+// ═══════════════════════════════════════════════════════════════════════════
+
+func TestGolden_BellmanFord(t *testing.T) {
+	gf := testutil.LoadGolden(t, "testdata/graph/bellman_ford.json")
+	for _, tc := range gf.Cases {
+		t.Run(tc.Description, func(t *testing.T) {
+			n := testutil.InputInt(t, tc, "n")
+			source := testutil.InputInt(t, tc, "source")
+			edgesRaw, ok := tc.Inputs["edges"].([]any)
+			if !ok {
+				t.Fatalf("edges is not an array: %T", tc.Inputs["edges"])
+			}
+			var edges [][3]float64
+			for _, eRaw := range edgesRaw {
+				arr, ok := eRaw.([]any)
+				if !ok || len(arr) != 3 {
+					t.Fatalf("edge not [u,v,w]: %v", eRaw)
+				}
+				u, _ := toTestFloat(arr[0])
+				v, _ := toTestFloat(arr[1])
+				w, _ := toTestFloat(arr[2])
+				edges = append(edges, [3]float64{u, v, w})
+			}
+
+			dist, _, negCycle := BellmanFord(n, edges, source)
+
+			// Parse expected.
+			expMap, ok := tc.Expected.(map[string]any)
+			if !ok {
+				t.Fatalf("expected is not a map: %T", tc.Expected)
+			}
+
+			// Check negative cycle.
+			wantNegCycle, _ := expMap["neg_cycle"].(bool)
+			if negCycle != wantNegCycle {
+				t.Errorf("%s: neg_cycle = %v, want %v", tc.Description, negCycle, wantNegCycle)
+			}
+
+			// If no negative cycle, check distances.
+			if !wantNegCycle {
+				distRaw, ok := expMap["dist"].([]any)
+				if !ok {
+					t.Fatalf("dist is not an array: %T", expMap["dist"])
+				}
+				for i, elem := range distRaw {
+					if s, ok := elem.(string); ok && s == "Inf" {
+						if !math.IsInf(dist[i], 1) {
+							t.Errorf("%s: dist[%d] = %v, want +Inf", tc.Description, i, dist[i])
+						}
+					} else {
+						want, ok := toTestFloat(elem)
+						if !ok {
+							t.Fatalf("dist[%d] not numeric: %T", i, elem)
+						}
+						assertFloat(t, tc.Description, dist[i], want, tc.Tolerance)
+					}
+				}
+			}
+		})
+	}
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PageRank
+// ═══════════════════════════════════════════════════════════════════════════
+
+func TestPageRank_NilGraph(t *testing.T) {
+	ranks := PageRank(0, nil, 0.85, 20)
+	if ranks != nil {
+		t.Errorf("expected nil for n=0, got %v", ranks)
+	}
+}
+
+func TestPageRank_SingleNode(t *testing.T) {
+	ranks := PageRank(1, nil, 0.85, 20)
+	assertFloat(t, "single node", ranks[0], 1.0, 1e-10)
+}
+
+func TestPageRank_TwoNodeCycle(t *testing.T) {
+	edges := [][3]float64{{0, 1, 1.0}, {1, 0, 1.0}}
+	ranks := PageRank(2, edges, 0.85, 50)
+	assertFloat(t, "node 0", ranks[0], 0.5, 1e-10)
+	assertFloat(t, "node 1", ranks[1], 0.5, 1e-10)
+}
+
+func TestPageRank_SumsToOne(t *testing.T) {
+	edges := [][3]float64{
+		{0, 1, 1.0}, {0, 2, 1.0}, {1, 2, 1.0},
+		{2, 0, 1.0}, {3, 0, 1.0}, {3, 2, 1.0},
+	}
+	ranks := PageRank(4, edges, 0.85, 100)
+	sum := 0.0
+	for _, r := range ranks {
+		sum += r
+	}
+	assertFloat(t, "sum to 1", sum, 1.0, 1e-10)
+}
+
+func TestPageRank_DampingZero(t *testing.T) {
+	edges := [][3]float64{{0, 1, 1.0}, {1, 2, 1.0}}
+	ranks := PageRank(3, edges, 0.0, 10)
+	for i := 0; i < 3; i++ {
+		assertFloat(t, "uniform", ranks[i], 1.0/3.0, 1e-10)
+	}
+}
+
+func TestPageRank_AuthorityNode(t *testing.T) {
+	// Node 3 receives links from 0, 1, 2 — should have highest rank.
+	edges := [][3]float64{
+		{0, 3, 1.0}, {1, 3, 1.0}, {2, 3, 1.0},
+	}
+	ranks := PageRank(4, edges, 0.85, 100)
+	for i := 0; i < 3; i++ {
+		if ranks[3] <= ranks[i] {
+			t.Errorf("authority node rank %v <= node %d rank %v", ranks[3], i, ranks[i])
+		}
+	}
+}
+
+func TestPageRank_CompleteGraphUniform(t *testing.T) {
+	edges := [][3]float64{
+		{0, 1, 1}, {0, 2, 1}, {1, 0, 1}, {1, 2, 1}, {2, 0, 1}, {2, 1, 1},
+	}
+	ranks := PageRank(3, edges, 0.85, 50)
+	for i := 0; i < 3; i++ {
+		assertFloat(t, "uniform K3", ranks[i], 1.0/3.0, 1e-10)
+	}
+}
+
+func TestPageRank_InvalidEdgesIgnored(t *testing.T) {
+	edges := [][3]float64{{-1, 0, 1.0}, {0, 5, 1.0}, {0, 1, 1.0}}
+	ranks := PageRank(2, edges, 0.85, 50)
+	if len(ranks) != 2 {
+		t.Fatalf("expected 2 ranks, got %d", len(ranks))
+	}
+	sum := ranks[0] + ranks[1]
+	assertFloat(t, "sum to 1", sum, 1.0, 1e-10)
+}
+
+func TestPageRank_WeightedEdges(t *testing.T) {
+	// Node 0 → 1 (weight 3) and 0 → 2 (weight 1).
+	// Node 1 should get more rank than node 2.
+	edges := [][3]float64{{0, 1, 3.0}, {0, 2, 1.0}}
+	ranks := PageRank(3, edges, 0.85, 100)
+	if ranks[1] <= ranks[2] {
+		t.Errorf("weighted node 1 (%v) should exceed node 2 (%v)", ranks[1], ranks[2])
+	}
+}
+
+func TestPageRank_NegativeWeightIgnored(t *testing.T) {
+	edges := [][3]float64{{0, 1, -1.0}}
+	ranks := PageRank(2, edges, 0.85, 50)
+	// With no valid edges, both nodes are dangling → uniform.
+	assertFloat(t, "node 0", ranks[0], 0.5, 1e-6)
+	assertFloat(t, "node 1", ranks[1], 0.5, 1e-6)
+}
+
+func TestPageRank_LargeIterations(t *testing.T) {
+	edges := [][3]float64{{0, 1, 1.0}, {1, 0, 1.0}}
+	r1 := PageRank(2, edges, 0.85, 1)
+	r100 := PageRank(2, edges, 0.85, 100)
+	// More iterations should converge closer to 0.5.
+	diff1 := r1[0] - 0.5
+	diff100 := r100[0] - 0.5
+	if diff1 < 0 {
+		diff1 = -diff1
+	}
+	if diff100 < 0 {
+		diff100 = -diff100
+	}
+	if diff100 > diff1 {
+		t.Errorf("100 iterations (%v) less accurate than 1 iteration (%v)", diff100, diff1)
+	}
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Golden-file: PageRank
+// ═══════════════════════════════════════════════════════════════════════════
+
+func TestGolden_PageRank(t *testing.T) {
+	gf := testutil.LoadGolden(t, "testdata/graph/pagerank.json")
+	for _, tc := range gf.Cases {
+		t.Run(tc.Description, func(t *testing.T) {
+			n := testutil.InputInt(t, tc, "n")
+			damping := testutil.InputFloat64(t, tc, "damping")
+			iterations := testutil.InputInt(t, tc, "iterations")
+			edgesRaw, ok := tc.Inputs["edges"].([]any)
+			if !ok {
+				t.Fatalf("edges is not an array: %T", tc.Inputs["edges"])
+			}
+			var edges [][3]float64
+			for _, eRaw := range edgesRaw {
+				arr, ok := eRaw.([]any)
+				if !ok || len(arr) != 3 {
+					t.Fatalf("edge not [u,v,w]: %v", eRaw)
+				}
+				u, _ := toTestFloat(arr[0])
+				v, _ := toTestFloat(arr[1])
+				w, _ := toTestFloat(arr[2])
+				edges = append(edges, [3]float64{u, v, w})
+			}
+
+			ranks := PageRank(n, edges, damping, iterations)
+
+			expected, ok := tc.Expected.([]any)
+			if !ok {
+				t.Fatalf("expected is not an array: %T", tc.Expected)
+			}
+			if len(ranks) != len(expected) {
+				t.Fatalf("length mismatch: got %d, want %d", len(ranks), len(expected))
+			}
+			for i, elem := range expected {
+				want, ok := toTestFloat(elem)
+				if !ok {
+					t.Fatalf("expected[%d] not numeric: %T", i, elem)
+				}
+				assertFloat(t, tc.Description, ranks[i], want, tc.Tolerance)
+			}
+		})
+	}
+}
