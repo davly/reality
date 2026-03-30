@@ -9,8 +9,8 @@ Universal truth encoded in code. Pure math, physics, constants. Zero dependencie
 - **License:** MIT
 - **Port:** None (library, not a service)
 - **Tests:** 1,965 (22 packages, all passing, zero failures)
-- **Design doc:** `C:/CrossPollinationAnalysis/architecture/UNIVERSAL_TRUTH_FOUNDATION.md`
-- **Review synthesis:** `C:/CrossPollinationAnalysis/reviews/reality-review/SYNTHESIS.md`
+- **Design doc:** `C:/LimitlessGodfather/architecture/UNIVERSAL_TRUTH_FOUNDATION.md`
+- **Review synthesis:** `C:/LimitlessGodfather/reviews/reality-review/SYNTHESIS.md`
 - **Context:** `CONTEXT.md` in this repo (read this for full background)
 
 ## Packages (22)
