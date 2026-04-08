@@ -84,9 +84,9 @@ Open source from v1.0. The strategic value is credibility signal, not acquisitio
 
 ---
 
-## 3. The Packages (22)
+## 3. The Packages (24)
 
-Reality contains 22 sub-packages. The original design called for 16; six additional domains were added during implementation as the physics scope was decomposed into focused packages and new applied-math areas were identified.
+Reality currently contains 24 sub-packages. The original design called for 16; the roster grew as the physics scope was decomposed into focused packages, applied-math areas were identified, and Session 23/24 added `sequence` (string distance, alignment, n-grams) and a `conduit` emit shim. The 22-package table below lists the v1.0 core domains; see Section 11 for `sequence` and `conduit`.
 
 | Package | Domain | Description |
 |---------|--------|-------------|
@@ -469,3 +469,128 @@ The golden files are the proof. Start there. The functions will follow.
 | Starting point | Extract existing | 1,044 aicore tests + 358 limitless-py tests already battle-tested |
 | Golden-file tolerance | Per-function | Transcendentals need 1e-11; accumulating ops need 1e-9 |
 | New domains (color, game, decision, queuing, geodesic, sequence) | Include in reality | Mathematics wearing domain-specific names; multi-consumer; passes inclusion tests |
+
+---
+
+## 11. Session 25 State (2026-04-08)
+
+This section is the living "current state" layer on top of the v1.0 design above. The earlier sections describe the architecture as-decided; this section describes the repository as-built on 2026-04-08.
+
+### Version and build
+
+| Field | Value |
+|---|---|
+| Version | v0.10.0 (README, CLAUDE.md) |
+| Go module | `github.com/davly/reality` |
+| Go version required | 1.24+ |
+| License | MIT (documented in README; a LICENSE file is not yet committed) |
+| External dependencies | **Zero** — only Go stdlib (`math`, `math/cmplx`, `math/rand`, `sort`, `errors`, `strings`, `bytes`, `container/heap`, `encoding/json`, `os`, `runtime`, `path/filepath`, `testing`, `context`, `net/http`, `sync/atomic`, `time`, `strconv`) |
+| Branch | `master` (not yet renamed to `main`) |
+| GitHub remote | `https://github.com/davly/reality.git` (the ONLY public repo in the Limitless ecosystem) |
+
+### Built packages (24)
+
+The v1.0 design table lists 22 domain packages. Two more have landed in the tree since:
+
+| Added | Package | Purpose | Source files |
+|---|---|---|---|
+| Session 23 (commit `07503a3`) | `reality/sequence` | Edit distances, sequence alignment, n-grams. Wagner-Fischer Levenshtein, Needleman-Wunsch, Smith-Waterman, Hamming, Jaro-Winkler, n-gram extraction. | `distance.go`, `alignment.go`, `ngram.go` |
+| Session 24 (commit `7709936`, Wave 6.A5) | `reality/conduit` | Fire-and-forget HTTP shim publishing ForgeEcosystemEvents to the Conduit bus. Non-blocking, 100ms timeout, 1-in-N sampling for hot-path math primitives. This is the ONE package in reality that is NOT pure math. | `emit.go` (no tests — trivial shim) |
+
+Note that the design document (`architecture/UNIVERSAL_TRUTH_FOUNDATION.md` in LimitlessGodfather) does not mention `sequence` or `conduit`; they post-date it. `conduit` is a minor philosophical exception to "zero dependencies, pure math" — it makes a `net/http` call and accepts that math primitives are now *observable* by the Conduit bus (though only via sampled emit, default 1-in-10,000). Reality itself does not call its own `conduit` package in any hot path in the current tree; it is present for callers that want to emit lifecycle events.
+
+### Test counts
+
+| Metric | v1.0 plan | README claim | Actual (Session 25) |
+|---|---|---|---|
+| Packages | 22 core | 22 | **24** (22 core + `sequence` + `conduit`) |
+| Top-level test functions (`--- PASS`) | — | 1,965 | **1,585** |
+| Total test runs (`=== RUN` including subtests) | — | — | **2,409** |
+| Non-test Go LOC | — | — | ~15,400 |
+| Test Go LOC | — | — | ~19,300 |
+| Public non-test functions | ~397 | — | **426** |
+| Golden-file JSON fixtures (`testdata/**.json`) | ~8,990 vectors | — | **73 fixture files** (each holding many vectors) |
+
+The 1,965 figure in `README.md` and `CLAUDE.md` counts test *invocations* from an older toolchain run; the current `go test -v ./...` reports 1,585 top-level `--- PASS` lines and 2,409 `=== RUN` entries including subtests. All packages build clean, all tests pass, no regressions.
+
+### Per-package test count (top-level PASSes, Session 25)
+
+| Package | Tests | Package | Tests |
+|---|---:|---|---:|
+| linalg | 154 | physics | 79 |
+| prob | 151 | control | 78 |
+| graph | 134 | fluids | 70 |
+| sequence | 122 | signal | 69 |
+| geometry | 91 | gametheory | 66 |
+| physics | 79 | optim | 63 |
+| control | 78 | queue | 63 |
+| combinatorics | 58 | acoustics | 62 |
+| compression | 57 | chaos | 51 |
+| crypto | 50 | color | 49 |
+| calculus | 45 | em | 31 |
+| orbital | 27 | testutil | 10 |
+| constants | 5 (golden-file driven) | conduit | 0 (shim, no tests) |
+
+(`constants` has only 5 tests because its work is the golden-file table; `testutil` has 10 because it is the infrastructure those golden files use.)
+
+### Golden-file fixture inventory (73 files)
+
+Golden files are not uniformly distributed. Packages with domain packages that host vectors: `acoustics` (4), `color` (2), `combinatorics` (1), `compression` (1), `em` (10), `fluids` (5), `geometry` (2), `graph` (7), `linalg` (5), `orbital` (8), `physics` (3), `prob` (7), `signal` (1), plus `testutil` (2 samples). Additional centralised vectors under top-level `testdata/` exist for `calculus` (4), `chaos` (1), `constants` (1), `control` (1), `crypto` (2), `gametheory` (2), `optim` (1), `queue` (2), `sequence` (1). Coverage is clearly uneven — `linalg`, `prob`, `em`, `orbital`, and `graph` are well represented; `signal` has one fixture for `fft`, `combinatorics` has one for `binomial_coeff`. This is a known expansion area.
+
+### Recent trajectory (git log, most recent first)
+
+| Commit | Meaning |
+|---|---|
+| `a3cc0f7` | session25(audit): auto-generated `ARCHITECTURE.md` baseline (Session 25 replaces this) |
+| `7709936` | wave6(reality): conduit-emit shim — Session 24 Wave 6.A5 addition |
+| `5b63907` | Session 9: edge-case test coverage for under-tested packages |
+| `809138f`, `c41d19e` | Docs updates for v0.10.0 (22 packages, 1,413 → 1,965 tests) |
+| `26d4814` | Stirling numbers added to combinatorics |
+| `27113e2` | MatSub, Trace, FrobeniusNorm added to linalg |
+| `edf961b` | MarkovChain, GammaPDF/CDF added to prob with golden vectors |
+| `82afb84` | PageRank, BellmanFord, KruskalMST added to graph with golden vectors |
+| `07503a3` | `sequence` package added (14 functions, 55 tests) — Session 23 |
+| `c389b6f` | `em` package added (10 functions, 32 tests) |
+| `e94347e` | `orbital` package added (8 functions, 27 tests) |
+| `b27204c` | `acoustics` package added (9 functions, 37 tests) |
+| `7903924` | `fluids` package added (10 functions, 38 tests) |
+| `73c79b4` | Genetic algorithm + simplex method optim extensions |
+| `46d0f38` | LinearRegression, FisherExactTest, MannWhitneyU, BenjaminiHochberg added to prob |
+| `2f5c7b7` | `calculus` package added (6 functions, 45 tests) |
+| `f3bc1cb` | Graph algorithms (Dijkstra, A*, betweenness, Louvain, max flow, topsort) |
+| `176c316` | Phase 6a: `chaos` (ODE solvers, Lorenz, SIR, Lotka-Volterra, Lyapunov) |
+| `bdb133d` | Phase 5b: `gametheory` (Nash, Gale-Shapley, bandits, voting, Kelly) |
+| `921dbe2` | Phase 5c: `queue` (M/M/1, M/M/c, Erlang B/C, Jackson networks) |
+| `2455b19` | Phase 5a: `control` (PID, filters, transfer functions) |
+
+The build has been additive since Phase 2 — every commit lands a new domain or extends an existing one with golden-file coverage. No regressions have been reverted. Rename from Phase-numbered commits to feature-scoped commits happens at commit `2f5c7b7`.
+
+### Downstream consumers
+
+Reality is the only Tier 0 foundation in the ecosystem. Direct importers today (via `github.com/davly/reality/*`):
+
+- **aicore** (`github.com/davly/aicore/*`) — pulls `linalg`, `prob`, `crypto` for its echomath/oraclemath/causalmath modules. This is the dependency inversion described in Section 10; extraction has been partial — some aicore subpackages still hold forked copies.
+- **Pistachio (C++)** — per design, should consume `limitless-cpp` headers that mirror reality functions (geometry, physics, signal, constants). Port status is "planned, not yet shipped" as of the last L3 audit.
+- **RubberDuck (C#)** — per design, should consume `Limitless.AI.Reality` mirror. Port status: not shipped.
+- **Every Go flagship that needs math** — `echo`, `oracle`, `parallax`, `horizon`, `phantom`, `sentinel`, `nexus`, `delve`, `synthesis`, `causal`, `recall`, `grounded`, `pulse`, `paradox` — any of these that want FFT, FNV-1a (`crypto/hash.go`), Jeffreys prior math, convergence scoring, or probability primitives should import from reality directly. Current state is mixed: `crypto.FNV1a64` is canonical across the ecosystem (Wave 6.A1), but Jeffreys/Dominance helpers still live in individual flagships rather than `reality/prob`.
+
+### What Session 25 should know
+
+Open items that did not exist when the v1.0 design was written:
+
+1. **Canonical FNV-1a lives here.** `reality/crypto/hash.go` holds `FNV1a32` and `FNV1a64`. The Session 22 FNV-1a cross-language fix (P0) canonicalised these; `architecture/fnv1a_canonical_vectors.json` in LimitlessGodfather holds the golden vectors. Any other FNV-1a implementation in the ecosystem should delegate here.
+2. **`sequence` package** is newer than the design doc and should probably get a first-class entry in Section 3 on the next CONTEXT.md revision. It provides 14 functions, 122 tests (!) and is heavily used by flagships doing approximate matching.
+3. **`conduit` package** is the philosophical exception. Reality is no longer *strictly* zero-dependency on `net/http` if you count the emit shim. Treatment: the shim is isolated in its own package so consumers that care about purity can simply not import it. No hot path in reality itself calls it.
+4. **Jeffreys prior helpers are missing.** The ecosystem convergence standard (Session 23) mandates Jeffreys (0.5, 0.5) with quality-weighted dominance, but the reference implementation lives in individual flagships and in `infrastructure/delve` rather than `reality/prob`. A `reality/prob/jeffreys.go` file with `BetaJeffreysDominance`, `QualityWeightedDominance`, and `ThreeWayVerdict` primitives is the obvious next addition — it would let every flagship delete its local copy.
+5. **Non-Go ports have not shipped.** Python `limitless-py/reality.py`, C++ `limitless-cpp/reality.hpp`, and C# `Limitless.AI.Reality` are all still in the "planned" column. Session 25's audit should record this as a P1 gap.
+6. **Golden-file coverage is uneven.** 73 fixture files is fewer than one per non-test `*.go` source file. Sparse packages: `signal` (1 fixture for FFT, none for filters or windows), `combinatorics` (1 fixture for binomial, none for Stirling/Bell/partitions), `chaos` (1 fixture for Lorenz). Expansion would strengthen the cross-language guarantee.
+7. **Branch is still `master`.** Per the ecosystem memory, ~70 repos need `master → main`. Reality is one of them.
+8. **LICENSE file is not committed.** The README and CONTEXT.md both declare MIT. Adding a `LICENSE` file is a zero-risk P2 action.
+
+### What is unambiguously working
+
+- All 24 packages build under Go 1.24 with `go build ./...`.
+- All tests pass under `go test ./...` on 2026-04-08.
+- Zero external dependencies — `go.mod` has no `require` clauses beyond the module declaration.
+- The module builds on Windows, Linux, and macOS without any build tags or platform-specific code (no `//go:build` directives in non-test files).
+- FNV-1a, Normal PDF/CDF/Quantile (Acklam), FFT (Cooley-Tukey radix-2, in-place, zero-alloc), Dijkstra/A*, Kepler orbital, CIEDE2000, and ~420 other functions are all documented, tested, and cited.
