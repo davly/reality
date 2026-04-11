@@ -1,11 +1,8 @@
 package prob
 
 import (
-	"context"
 	"math"
 	"sort"
-
-	"github.com/davly/reality/conduit"
 )
 
 // MinProb is the minimum allowed probability. Probabilities are clamped to
@@ -50,15 +47,6 @@ func ConfidenceFromPValue(pValue float64) float64 {
 	} else if c > 1 {
 		c = 1
 	}
-	// Wave 6.A5: sampled, fail-silent observation. Fires once per
-	// conduit.SampleRate calls so the math hot path stays clean.
-	conduit.EmitSampled(context.Background(), conduit.Event{
-		ProjectID:     "reality",
-		Domain:        "prob",
-		NewStatus:     "OBSERVING",
-		EventType:     "confidence_from_pvalue",
-		DominanceRate: c,
-	})
 	return c
 }
 
