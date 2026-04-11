@@ -142,6 +142,66 @@ func ConsistentHash(key uint64, numBuckets int) int {
 }
 
 // ---------------------------------------------------------------------------
+// Structural hashing — FNV-1a with observation shape fingerprint
+// ---------------------------------------------------------------------------
+
+// SituationHashWithStructure computes a situation hash that incorporates
+// both the observation content and its structural fingerprint. The
+// structural component captures the "shape" of the observation: how many
+// fields are present, their types, and their ordering.
+//
+// This is a cross-pollination innovation from the blind build: the layout
+// hash distinguishes observations that have the same data but different
+// structure (e.g., flat vs nested, sparse vs dense). Two observations with
+// identical content but different shapes will produce different hashes.
+//
+// Algorithm:
+//  1. Hash the content via FNV-1a 64-bit.
+//  2. Hash the structural descriptor via FNV-1a 64-bit.
+//  3. Combine using XOR-fold: (contentHash * fnv64Prime) ^ structHash
+//
+// The XOR-fold preserves FNV-1a's avalanche properties while mixing the
+// two independent hash channels.
+//
+// Time complexity: O(len(content) + len(structure))
+// Reference: FNV-1a (Fowler, Noll, Vo); structural hashing from
+// blind-build layout-hash innovation.
+func SituationHashWithStructure(content []byte, structure []byte) uint64 {
+	contentHash := FNV1a64(content)
+	structHash := FNV1a64(structure)
+	return (contentHash * fnv64Prime) ^ structHash
+}
+
+// StructuralDescriptor builds a byte descriptor for a flat key-value
+// observation. The descriptor encodes the count of fields and the length
+// of each key, producing a compact structural fingerprint.
+//
+// For example, an observation with keys ["name", "age", "score"] produces
+// a descriptor like [3, 4, 3, 5] (count=3, key lengths 4, 3, 5).
+//
+// This is intentionally simple: it captures shape without leaking content.
+// More sophisticated structural descriptors (nested, typed) can be built
+// on top by callers.
+func StructuralDescriptor(keys []string) []byte {
+	desc := make([]byte, 0, 1+len(keys))
+	// Encode field count (capped at 255).
+	count := len(keys)
+	if count > 255 {
+		count = 255
+	}
+	desc = append(desc, byte(count))
+	// Encode each key length (capped at 255).
+	for i := 0; i < count; i++ {
+		kl := len(keys[i])
+		if kl > 255 {
+			kl = 255
+		}
+		desc = append(desc, byte(kl))
+	}
+	return desc
+}
+
+// ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
 
