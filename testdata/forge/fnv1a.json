@@ -1,0 +1,101 @@
+{
+  "function": "forge.Fnv1a64",
+  "cases": [
+    {
+      "description": "FNV-1a 64-bit of \"\"",
+      "inputs": {
+        "input": ""
+      },
+      "expected": "cbf29ce484222325",
+      "tolerance": 0
+    },
+    {
+      "description": "FNV-1a 64-bit of \"a\"",
+      "inputs": {
+        "input": "a"
+      },
+      "expected": "af63dc4c8601ec8c",
+      "tolerance": 0
+    },
+    {
+      "description": "FNV-1a 64-bit of \"ab\"",
+      "inputs": {
+        "input": "ab"
+      },
+      "expected": "089c4407b545986a",
+      "tolerance": 0
+    },
+    {
+      "description": "FNV-1a 64-bit of \"abc\"",
+      "inputs": {
+        "input": "abc"
+      },
+      "expected": "e71fa2190541574b",
+      "tolerance": 0
+    },
+    {
+      "description": "FNV-1a 64-bit of \"hello\"",
+      "inputs": {
+        "input": "hello"
+      },
+      "expected": "a430d84680aabd0b",
+      "tolerance": 0
+    },
+    {
+      "description": "FNV-1a 64-bit of \"world\"",
+      "inputs": {
+        "input": "world"
+      },
+      "expected": "4f59ff5e730c8af3",
+      "tolerance": 0
+    },
+    {
+      "description": "FNV-1a 64-bit of \"foobar\"",
+      "inputs": {
+        "input": "foobar"
+      },
+      "expected": "85944171f73967e8",
+      "tolerance": 0
+    },
+    {
+      "description": "FNV-1a 64-bit of \"The quick brown fox jumps over the lazy dog\"",
+      "inputs": {
+        "input": "The quick brown fox jumps over the lazy dog"
+      },
+      "expected": "f3f9b7f5e7e47110",
+      "tolerance": 0
+    },
+    {
+      "description": "FNV-1a 64-bit of \"forge\"",
+      "inputs": {
+        "input": "forge"
+      },
+      "expected": "e768e8afb3fb4470",
+      "tolerance": 0
+    },
+    {
+      "description": "FNV-1a 64-bit of \"limitless\"",
+      "inputs": {
+        "input": "limitless"
+      },
+      "expected": "cafa17c788d8aaed",
+      "tolerance": 0
+    },
+    {
+      "description": "FNV-1a 64-bit of binary 0x00",
+      "inputs": {
+        "input_hex": "00"
+      },
+      "expected": "af63bd4c8601b7df",
+      "tolerance": 0
+    },
+    {
+      "description": "FNV-1a 64-bit of binary 0xff",
+      "inputs": {
+        "input_hex": "ff"
+      },
+      "expected": "af64724c8602eb6e",
+      "tolerance": 0
+    }
+  ]
+}

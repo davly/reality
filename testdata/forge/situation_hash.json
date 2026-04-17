@@ -1,0 +1,88 @@
+{
+  "function": "forge.SituationHash",
+  "cases": [
+    {
+      "description": "empty",
+      "inputs": {
+        "dimensions": {}
+      },
+      "expected": "cbf29ce484222325",
+      "tolerance": 0
+    },
+    {
+      "description": "single a=1",
+      "inputs": {
+        "dimensions": {
+          "a": "1"
+        }
+      },
+      "expected": "ac4d51820e249a1d",
+      "tolerance": 0
+    },
+    {
+      "description": "a=1,b=2",
+      "inputs": {
+        "dimensions": {
+          "a": "1",
+          "b": "2"
+        }
+      },
+      "expected": "ba7ba27f8aa4322d",
+      "tolerance": 0
+    },
+    {
+      "description": "weather-london",
+      "inputs": {
+        "dimensions": {
+          "domain": "weather",
+          "query": "london"
+        }
+      },
+      "expected": "2467aa2f5005049b",
+      "tolerance": 0
+    },
+    {
+      "description": "math-sqrt2",
+      "inputs": {
+        "dimensions": {
+          "domain": "math",
+          "query": "sqrt(2)"
+        }
+      },
+      "expected": "a331d5b1c59fe67a",
+      "tolerance": 0
+    },
+    {
+      "description": "key=value",
+      "inputs": {
+        "dimensions": {
+          "key": "value"
+        }
+      },
+      "expected": "8338d73bed2f6627",
+      "tolerance": 0
+    },
+    {
+      "description": "three-keys a,b,c",
+      "inputs": {
+        "dimensions": {
+          "a": "1",
+          "b": "2",
+          "c": "3"
+        }
+      },
+      "expected": "20cb0562b98a4b55",
+      "tolerance": 0
+    },
+    {
+      "description": "empty value x=\"\"",
+      "inputs": {
+        "dimensions": {
+          "x": ""
+        }
+      },
+      "expected": "be5ffa197ecee51f",
+      "tolerance": 0
+    }
+  ]
+}

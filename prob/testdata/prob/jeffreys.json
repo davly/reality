@@ -1,0 +1,95 @@
+{
+  "function": "prob.JeffreysConfidence",
+  "cases": [
+    {
+      "description": "s=0 f=0",
+      "inputs": {
+        "failures": 0,
+        "successes": 0
+      },
+      "expected": 0.5,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "s=1 f=0",
+      "inputs": {
+        "failures": 0,
+        "successes": 1
+      },
+      "expected": 0.75,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "s=0 f=1",
+      "inputs": {
+        "failures": 1,
+        "successes": 0
+      },
+      "expected": 0.25,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "s=1 f=1",
+      "inputs": {
+        "failures": 1,
+        "successes": 1
+      },
+      "expected": 0.5,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "s=3 f=2",
+      "inputs": {
+        "failures": 2,
+        "successes": 3
+      },
+      "expected": 0.5833333333333334,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "s=10 f=10",
+      "inputs": {
+        "failures": 10,
+        "successes": 10
+      },
+      "expected": 0.5,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "s=100 f=0",
+      "inputs": {
+        "failures": 0,
+        "successes": 100
+      },
+      "expected": 0.995049504950495,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "s=0 f=100",
+      "inputs": {
+        "failures": 100,
+        "successes": 0
+      },
+      "expected": 0.0049504950495049506,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "s=50 f=50",
+      "inputs": {
+        "failures": 50,
+        "successes": 50
+      },
+      "expected": 0.5,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "s=999 f=1",
+      "inputs": {
+        "failures": 1,
+        "successes": 999
+      },
+      "expected": 0.9985014985014985,
+      "tolerance": 1e-12
+    }
+  ]
+}
