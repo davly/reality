@@ -1,3 +1,5 @@
+// commit-conscience: SKIP_FNV_CHECK reason=dual-form-library-test (tests for both FNV1a32 and FNV1a64 in a dual-form library)
+
 package crypto
 
 import (

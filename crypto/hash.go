@@ -1,3 +1,5 @@
+// commit-conscience: SKIP_FNV_CHECK reason=dual-form-library (crypto package legitimately exports BOTH FNV1a32 and FNV1a64; 32-bit constants are correct for the 32-bit variant)
+
 package crypto
 
 // ---------------------------------------------------------------------------
