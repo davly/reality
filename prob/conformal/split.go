@@ -68,12 +68,59 @@ func SplitQuantile(scores []float64, alpha float64) (float64, error) {
 //
 // yhat is the point prediction at the test x.  calibrationResiduals are
 // the absolute residuals |y_i - yhat_i| computed on a held-out calibration
-// fold (NOT used for fitting the underlying model).
+// fold (NOT used for fitting the underlying model).  Inputs must be non-
+// negative; pass signed residuals through SplitIntervalSignedResiduals
+// instead, which absolutes them internally.
 func SplitInterval(yhat float64, calibrationResiduals []float64, alpha float64) (lo, hi float64, err error) {
 	q, err := SplitQuantile(calibrationResiduals, alpha)
 	if err != nil {
 		return 0, 0, err
 	}
+	return yhat - q, yhat + q, nil
+}
+
+// SplitIntervalSignedResiduals is the convenience wrapper that mirrors the
+// FleetWorks C# MathLib.ConformalInterval.Compute signature — it accepts
+// *signed* residuals (actual - predicted) and absolutes them internally
+// before calibrating.  This is the canonical cross-substrate-precision
+// API: the same input vector + alpha will produce the same (lo, hi) pair
+// here as in FW C#'s ConformalInterval.Compute, to within float64
+// rounding (verified to ≤1e-12 in TestCrossSubstratePrecision_FwCorpus).
+//
+// The caller's slice is not mutated — a copy is taken before sorting.
+func SplitIntervalSignedResiduals(yhat float64, signedResiduals []float64, alpha float64) (lo, hi float64, err error) {
+	if alpha <= 0 || alpha >= 1 || math.IsNaN(alpha) {
+		return 0, 0, ErrInvalidAlpha
+	}
+	if len(signedResiduals) == 0 {
+		return 0, 0, ErrEmptyCalibration
+	}
+	abs := make([]float64, len(signedResiduals))
+	for i, r := range signedResiduals {
+		if math.IsNaN(r) {
+			return 0, 0, ErrInvalidScore
+		}
+		if r < 0 {
+			abs[i] = -r
+		} else {
+			abs[i] = r
+		}
+	}
+	// Replicate the FW C# algorithm exactly: ceil((n+1)*(1-alpha))-th
+	// order statistic of the absolute residuals, with rank clamped into
+	// [1, n].  This branch differs from SplitQuantile only by clamping
+	// rank > n down to n (returns the maximum) rather than +Inf, to
+	// match the FW reference impl byte-for-byte.
+	n := len(abs)
+	rank := int(math.Ceil((float64(n) + 1.0) * (1.0 - alpha)))
+	if rank > n {
+		rank = n
+	}
+	if rank < 1 {
+		rank = 1
+	}
+	sort.Float64s(abs)
+	q := abs[rank-1]
 	return yhat - q, yhat + q, nil
 }
 

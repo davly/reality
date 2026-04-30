@@ -202,3 +202,160 @@ func TestSplitQuantile_Deterministic(t *testing.T) {
 		}
 	}
 }
+
+// =========================================================================
+// SplitIntervalSignedResiduals — convenience wrapper accepting signed input
+// =========================================================================
+
+func TestSplitIntervalSignedResiduals_AbsolutesInternally(t *testing.T) {
+	// Mixed-sign residuals; the abs-sorted order matters.
+	signed := []float64{3.0, -1.0, 2.0, -4.0, 0.5}
+	lo, hi, err := SplitIntervalSignedResiduals(10.0, signed, 0.2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// |signed| sorted = [0.5, 1.0, 2.0, 3.0, 4.0]; n=5, alpha=0.2 ->
+	// rank = ceil(6*0.8) = 5 -> q = sorted[4] = 4.0 -> [6, 14].
+	if math.Abs(lo-6.0) > 1e-12 || math.Abs(hi-14.0) > 1e-12 {
+		t.Errorf("interval = [%v, %v], want [6, 14]", lo, hi)
+	}
+}
+
+func TestSplitIntervalSignedResiduals_DoesNotMutateInput(t *testing.T) {
+	signed := []float64{3.0, -1.0, 2.0, -4.0}
+	copy_ := []float64{3.0, -1.0, 2.0, -4.0}
+	_, _, err := SplitIntervalSignedResiduals(0.0, signed, 0.1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := range signed {
+		if signed[i] != copy_[i] {
+			t.Errorf("input mutated at [%d]: %v vs %v", i, signed[i], copy_[i])
+		}
+	}
+}
+
+func TestSplitIntervalSignedResiduals_RejectsBadInputs(t *testing.T) {
+	if _, _, err := SplitIntervalSignedResiduals(0, nil, 0.1); err == nil {
+		t.Error("nil residuals should error")
+	}
+	if _, _, err := SplitIntervalSignedResiduals(0, []float64{1}, 0); err == nil {
+		t.Error("alpha=0 should error")
+	}
+	if _, _, err := SplitIntervalSignedResiduals(0, []float64{1}, 1); err == nil {
+		t.Error("alpha=1 should error")
+	}
+	if _, _, err := SplitIntervalSignedResiduals(0, []float64{math.NaN()}, 0.1); err == nil {
+		t.Error("NaN residual should error")
+	}
+}
+
+// =========================================================================
+// Cross-substrate-precision parity with FleetWorks C# MathLib
+// =========================================================================
+//
+// These tests replicate the FleetWorks ConformalIntervalTests.cs corpus
+// (commit dc63772f, GLIRent.RentalManagement.Tests.AI.MathLib) using
+// SplitIntervalSignedResiduals — the canonical cross-substrate
+// equivalence point.  Each case in the FW xUnit suite has a
+// hand-computed expected (lo, hi); we assert the same values to ≤1e-12,
+// which is the load-bearing R80b cross-substrate-precision-coherence
+// property for the conformal primitive.
+
+func TestCrossSubstratePrecision_FwCorpus_SymmetricAroundPrediction(t *testing.T) {
+	// FW: Conformal_Symmetric_Around_Prediction
+	// |residuals| sorted = [0, 0.5, 0.5, 1, 1]; n=5, alpha=0.1 ->
+	// rank = ceil(6*0.9) = 6 -> clamps to n=5 -> halfWidth = 1.
+	residuals := []float64{-1.0, -0.5, 0, 0.5, 1.0}
+	lo, hi, err := SplitIntervalSignedResiduals(10.0, residuals, 0.1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if math.Abs(lo-9.0) > 1e-12 {
+		t.Errorf("FW parity SymmetricAroundPrediction: lo = %v, want 9", lo)
+	}
+	if math.Abs(hi-11.0) > 1e-12 {
+		t.Errorf("FW parity SymmetricAroundPrediction: hi = %v, want 11", hi)
+	}
+}
+
+func TestCrossSubstratePrecision_FwCorpus_IndexSelectsNPlus1TimesOneMinusAlpha(t *testing.T) {
+	// FW: Conformal_Index_Selects_NPlus1_Times_OneMinusAlpha
+	// 9 residuals, alpha=0.1 -> rank = ceil(10*0.9) = 9 -> max abs = 0.9.
+	residuals := []float64{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9}
+	lo, hi, err := SplitIntervalSignedResiduals(0.0, residuals, 0.1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if math.Abs(lo-(-0.9)) > 1e-12 {
+		t.Errorf("FW parity rank-formula: lo = %v, want -0.9", lo)
+	}
+	if math.Abs(hi-0.9) > 1e-12 {
+		t.Errorf("FW parity rank-formula: hi = %v, want 0.9", hi)
+	}
+}
+
+func TestCrossSubstratePrecision_FwCorpus_DoesNotMutateCallerArray(t *testing.T) {
+	// FW: Conformal_DoesNot_Mutate_CallerArray
+	residuals := []float64{3, -1, 2, -4}
+	want := []float64{3, -1, 2, -4}
+	_, _, err := SplitIntervalSignedResiduals(0.0, residuals, 0.1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := range want {
+		if residuals[i] != want[i] {
+			t.Errorf("residuals[%d] mutated: got %v, want %v", i, residuals[i], want[i])
+		}
+	}
+}
+
+func TestCrossSubstratePrecision_FwCorpus_EmptyCalibrationErrors(t *testing.T) {
+	// FW: Conformal_Empty_Calibration_Throws + Conformal_Null_Calibration_Throws
+	if _, _, err := SplitIntervalSignedResiduals(0.0, []float64{}, 0.1); err == nil {
+		t.Error("empty calibration should error")
+	}
+	if _, _, err := SplitIntervalSignedResiduals(0.0, nil, 0.1); err == nil {
+		t.Error("nil calibration should error")
+	}
+}
+
+func TestCrossSubstratePrecision_FwCorpus_AlphaOutOfRangeErrors(t *testing.T) {
+	// FW: Conformal_Alpha_OutOfRange_Throws
+	residuals := []float64{1, 2}
+	if _, _, err := SplitIntervalSignedResiduals(0.0, residuals, 0); err == nil {
+		t.Error("alpha=0 should error")
+	}
+	if _, _, err := SplitIntervalSignedResiduals(0.0, residuals, 1); err == nil {
+		t.Error("alpha=1 should error")
+	}
+}
+
+func TestCrossSubstratePrecision_FwCorpus_EmpiricalCoverageAtLeast90Percent(t *testing.T) {
+	// FW: Conformal_Empirical_Coverage_AtLeast90Percent
+	// We use math/rand with a fixed seed; the FW seed is .NET's System
+	// .Random(42) which is a different RNG, so the *exact* covered
+	// count won't match.  What matches across substrates is the
+	// guarantee — coverage >= 88% of 1000 trials at alpha=0.1.
+	rng := rand.New(rand.NewSource(42))
+	residuals := make([]float64, 99)
+	for i := range residuals {
+		residuals[i] = rng.Float64() - 0.5
+	}
+	covered := 0
+	for t := 0; t < 1000; t++ {
+		fresh := rng.Float64() - 0.5
+		pred := 0.0
+		actual := pred + fresh
+		lo, hi, err := SplitIntervalSignedResiduals(pred, residuals, 0.1)
+		if err != nil {
+			panic(err)
+		}
+		if actual >= lo && actual <= hi {
+			covered++
+		}
+	}
+	if covered < 880 {
+		t.Errorf("coverage %d/1000 below FW slack floor 880", covered)
+	}
+}
