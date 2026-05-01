@@ -18,13 +18,23 @@
 // Dipstick reference forge — the FundamentalHz / HarmonicEnergyRatio
 // primitives originally lived at flagships/dipstick/reference/forge/
 // vibration.go and were promoted here once the SHARED-ENGINE-DUAL-BRAND
-// R-pattern reached its first instantiated consumer (Dipstick); the
-// pattern goes to 2/3 once Fleetworks Torque (FleetWorks fleet sister)
-// wires the same primitives, and to 3/3 once a third consumer (e.g.
-// Pigeonhole's wing-beat-frequency detection or Howler's purr-rate
-// fundamental) lands. See:
+// R-pattern reached its first instantiated consumer (Dipstick).
+//
+// **2 of 3 instantiated consumers as of 2026-05-01:**
+//
+//   1. flagships/dipstick (consumer brand — substrate pioneer)
+//   2. flagships/fleetworks-torque (commercial fleet sister — landed 2026-05-01)
+//
+// The 3rd consumer slot lands when:
+//   - Dipstick KMM Kotlin compiles in Android Studio (port shipped;
+//     awaits the build environment), OR
+//   - Fleetworks Torque KMM driver-side mobile shell lands its
+//     port (scaffold shipped; same condition).
+//
+// See:
 //
 //   - flagships/dipstick/docs/INSIGHTS.md §3 — SHARED-ENGINE-DUAL-BRAND
+//   - flagships/fleetworks-torque/docs/DUAL_BRAND.md
 //   - LimitlessGodfather/reviews/NEW_FLAGSHIPS_COHORT_2026-05-01.md §13.I
 //
 // Reference: standard DSP — Smith 1997, "Scientist and Engineer's Guide
@@ -33,8 +43,8 @@
 // machines in non-stationary operation".
 //
 // Consumed by:
-//   - flagships/dipstick (mechanical failure modes — substrate pioneer)
-//   - flagships/fleetworks-torque (commercial fleet sister, planned)
+//   - flagships/dipstick (mechanical failure modes — substrate pioneer; shipped)
+//   - flagships/fleetworks-torque (commercial fleet sister; shipped 2026-05-01)
 //
 // Cross-substrate parity: golden test vectors generated from this
 // package will become the canonical reference. Native ports (Kotlin
