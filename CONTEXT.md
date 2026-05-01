@@ -488,16 +488,18 @@ This section is the living "current state" layer on top of the v1.0 design above
 | Branch | `master` (not yet renamed to `main`) |
 | GitHub remote | `https://github.com/davly/reality.git` (the ONLY public repo in the Limitless ecosystem) |
 
-### Built packages (24)
+### Built packages (39 as of 2026-05-01; was 24 at Session 25 snapshot)
 
-The v1.0 design table lists 22 domain packages. Two more have landed in the tree since:
+The v1.0 design table lists 22 domain packages. Many more have landed since the Session 25 snapshot — the headline additions:
 
 | Added | Package | Purpose | Source files |
 |---|---|---|---|
 | Session 23 (commit `07503a3`) | `reality/sequence` | Edit distances, sequence alignment, n-grams. Wagner-Fischer Levenshtein, Needleman-Wunsch, Smith-Waterman, Hamming, Jaro-Winkler, n-gram extraction. | `distance.go`, `alignment.go`, `ngram.go` |
 | Session 24 (commit `7709936`, Wave 6.A5) | `reality/conduit` | Fire-and-forget HTTP shim publishing ForgeEcosystemEvents to the Conduit bus. Non-blocking, 100ms timeout, 1-in-N sampling for hot-path math primitives. This is the ONE package in reality that is NOT pure math. | `emit.go` (no tests — trivial shim) |
+| 2026-05-01 (commit `edd1428`, audio cohort intake; refined `260ea33`) | `reality/audio` (`audio/melscale`, `audio/mfcc`, `audio/fingerprint`, `audio/degradation` content) | Spectral substrate for the audio-trio flagships (Pigeonhole / Howler / Dipstick): mel filterbank (Slaney 1998), MFCC (DCT-II orthonormal, HTK convention), Welford-based fingerprint (1962, with Chan-Golub-LeVeque 1979 merge), DegradationTracker (Shewhart/EWMA control-chart on a frozen baseline). | `melscale.go`, `mfcc.go`, `fingerprint.go`, `degradation.go` |
+| 2026-05-01 (substrate-promotion from `flagships/dipstick/reference/forge/vibration.go`) | `reality/audio/vibration` | Mechanical vibration primitives: `FundamentalHz` (peak-bin fundamental from windowed FFT) + `HarmonicEnergyRatio` (fraction of total band-power in harmonic bands). First instantiated consumer = Dipstick; Fleetworks Torque expected 2nd; KMM mobile port the 3rd (SHARED-ENGINE-DUAL-BRAND R-pattern, 1/3). | `doc.go`, `fundamental.go`, `harmonic.go`, `vibration_test.go` |
 
-Note that the design document (`architecture/UNIVERSAL_TRUTH_FOUNDATION.md` in LimitlessGodfather) does not mention `sequence` or `conduit`; they post-date it. `conduit` is a minor philosophical exception to "zero dependencies, pure math" — it makes a `net/http` call and accepts that math primitives are now *observable* by the Conduit bus (though only via sampled emit, default 1-in-10,000). Reality itself does not call its own `conduit` package in any hot path in the current tree; it is present for callers that want to emit lifecycle events.
+Note that the design document (`architecture/UNIVERSAL_TRUTH_FOUNDATION.md` in LimitlessGodfather) does not mention `sequence`, `conduit`, `audio`, `audio/vibration`, or several other post-Session-25 packages (`autodiff`, `changepoint`, `forge`, `info`, `info/{lz,mdl}`, `infogeo`, `pkg/...`, `prob/conformal`, `prob/copula`, `timeseries`, `topology`); they post-date it. `conduit` is a minor philosophical exception to "zero dependencies, pure math" — it makes a `net/http` call and accepts that math primitives are now *observable* by the Conduit bus (though only via sampled emit, default 1-in-10,000). Reality itself does not call its own `conduit` package in any hot path in the current tree; it is present for callers that want to emit lifecycle events. `audio/vibration` is the substrate-extraction outcome of Dipstick's reference forge — see `flagships/dipstick/docs/INSIGHTS.md` §3 for the SHARED-ENGINE-DUAL-BRAND R-pattern this package anchors.
 
 ### Test counts
 
