@@ -63,13 +63,43 @@ func UpdateBaseline(t *DegradationTracker, x float64) {
 }
 
 // PushObservation pushes one observation into both the baseline AND the
-// recent window. Most consumers use this; reserve UpdateBaseline for
-// special "trusted-good" observations.
+// recent window. Use this when ALL observations should contribute to
+// the long-term baseline — appropriate for adaptive baselines (the
+// machine slowly changes character over years, that's expected).
 //
 // Zero allocation.
 func PushObservation(t *DegradationTracker, x float64) {
 	UpdateBaseline(t, x)
 
+	t.Window[t.WindowHead] = x
+	t.WindowHead = (t.WindowHead + 1) % t.WindowSize
+	if t.WindowFill < t.WindowSize {
+		t.WindowFill++
+	}
+}
+
+// PushWindowOnly pushes one observation into the recent window WITHOUT
+// updating the baseline. Use this when the baseline should remain
+// frozen against the establishment-period observations — appropriate
+// for drift detection where the baseline represents "healthy" and the
+// window is observation-of-the-current-state.
+//
+// Typical workflow:
+//
+//  1. Calibration: UpdateBaseline(t, x) for N "trusted-good" observations
+//  2. Live drift detection: PushWindowOnly(t, x) per new observation
+//
+// Or:
+//
+//  1. PushObservation(t, x) until BaselineN >= some threshold
+//  2. Switch to PushWindowOnly(t, x) once baseline is "established"
+//
+// Choosing between the two depends on whether the entity's normal
+// state is expected to drift slowly (use PushObservation) or remain
+// stable (use PushWindowOnly).
+//
+// Zero allocation.
+func PushWindowOnly(t *DegradationTracker, x float64) {
 	t.Window[t.WindowHead] = x
 	t.WindowHead = (t.WindowHead + 1) % t.WindowSize
 	if t.WindowFill < t.WindowSize {
@@ -106,9 +136,16 @@ func WindowMean(t *DegradationTracker) float64 {
 // ZScore returns the z-score of the current window mean against the
 // baseline distribution.
 //
-// Formula: z = (window_mean - baseline_mean) / baseline_stddev
+// Formula: z = (window_mean - baseline_mean) / max(baseline_stddev, sigma_floor)
 //
-// Returns 0 if BaselineN < 2 (no baseline variance) or window empty.
+// where sigma_floor = max(1e-6, |baseline_mean| * 1e-3) prevents
+// pathological z-scores when the baseline has near-zero variance
+// (constant signals, very few baseline observations, or floating-point
+// noise floor). The 1e-3 coefficient-of-variation floor matches the
+// typical resolution of physical measurement (a 0.1% jitter on a real-
+// world signal is usually below sensor noise).
+//
+// Returns 0 if BaselineN < 2 (variance undefined) or window empty.
 //
 // SIGN CONVENTION: positive z-score means the window has drifted
 // HIGHER than baseline. Consumers interpret per their domain:
@@ -125,12 +162,16 @@ func WindowMean(t *DegradationTracker) float64 {
 // gaussian assumption); |z| >= 3 corresponds to ~0.3% (~control-chart
 // 3-sigma).
 func ZScore(t *DegradationTracker) float64 {
-	if t.WindowFill == 0 {
+	if t.WindowFill == 0 || t.BaselineN < 2 {
 		return 0.0
 	}
 	sigma := BaselineStdDev(t)
-	if sigma == 0 {
-		return 0.0
+	floorAbs := math.Abs(t.BaselineMean) * 1e-3
+	if floorAbs < 1e-6 {
+		floorAbs = 1e-6
+	}
+	if sigma < floorAbs {
+		sigma = floorAbs
 	}
 	return (WindowMean(t) - t.BaselineMean) / sigma
 }
