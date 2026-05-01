@@ -31,13 +31,23 @@
 //   - infrastructure/recall (per-entity converged baseline cache)
 //
 // Sub-packages:
-//   - audio/vibration   — fundamental-frequency + harmonic-energy ratio
+//   - audio/vibration    — fundamental-frequency + harmonic-energy ratio
 //     (mechanical vibration analysis; substrate of Dipstick)
-//   - audio/separation  — multi-source signal separation (cocktail-party
+//   - audio/separation   — multi-source signal separation (cocktail-party
 //     problem; spectral subtraction, Wiener filter, FastICA, NMF, VAD)
-//   - audio/spectrogram — STFT, magnitude / log-magnitude / power, mel-
+//   - audio/spectrogram  — STFT, magnitude / log-magnitude / power, mel-
 //     spectrogram, PNG-encoded heatmap rendering with matplotlib-
 //     compatible Plasma / Magma / Viridis / Inferno colourmaps
+//   - audio/onset        — onset detection (energy / spectral-flux /
+//     complex-domain / SuperFlux); used for percussive event localisation
+//     (Pigeonhole call boundaries, Dipstick service-event detection)
+//   - audio/segmentation — call/event segmentation primitives (energy-VAD,
+//     onset/offset, min-silence, merge-close, min-duration); extracts
+//     individual events from longer recordings — Pigeonhole's "one call
+//     at a time" workflow
+//   - audio/pitch        — pitch / fundamental-frequency estimation
+//     (autocorrelation, YIN, McLeod, subharmonic summation); more robust
+//     than vibration's FFT peak-picker for vocal / bird / pet signals
 //
 // The package is the substrate-extraction outcome of the 2026-05-01 four-flagship
 // cohort intake. See LimitlessGodfather/reviews/NEW_FLAGSHIPS_COHORT_2026-05-01.md
