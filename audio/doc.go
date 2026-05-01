@@ -30,6 +30,15 @@
 //   - infrastructure/insights (forge-observation events for audio classifications)
 //   - infrastructure/recall (per-entity converged baseline cache)
 //
+// Sub-packages:
+//   - audio/vibration   — fundamental-frequency + harmonic-energy ratio
+//     (mechanical vibration analysis; substrate of Dipstick)
+//   - audio/separation  — multi-source signal separation (cocktail-party
+//     problem; spectral subtraction, Wiener filter, FastICA, NMF, VAD)
+//   - audio/spectrogram — STFT, magnitude / log-magnitude / power, mel-
+//     spectrogram, PNG-encoded heatmap rendering with matplotlib-
+//     compatible Plasma / Magma / Viridis / Inferno colourmaps
+//
 // The package is the substrate-extraction outcome of the 2026-05-01 four-flagship
 // cohort intake. See LimitlessGodfather/reviews/NEW_FLAGSHIPS_COHORT_2026-05-01.md
 // §2 for the substrate-extraction case (M=3 multiplier).
