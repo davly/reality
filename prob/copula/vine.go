@@ -3,6 +3,7 @@ package copula
 import (
 	"errors"
 	"fmt"
+	"math"
 )
 
 // Vine copula substrate — pair-copula construction (PCC) over a regular
@@ -174,14 +175,66 @@ func (v *DVine) HFunctionPass(treeIdx int, u []float64) ([]float64, error) {
 
 // LogPDF evaluates the D-vine's log joint density at a row of uniform
 // pseudo-observations u (length dim). Sums log-densities of every
-// bivariate copula across all trees. Used for likelihood evaluation
-// during fitting and for Monte Carlo importance ratios.
+// bivariate copula across all trees per the Aas-Czado 2009 vine
+// likelihood decomposition (§2.5).
 //
-// **Note:** this method is NOT yet implemented — it requires bivariate
-// PDF closures for Clayton/Gumbel which haven't been added to
-// archimedean.go yet. Method is exposed in the public surface so that
-// the LogPDF wire site is visible and the future PR is concretely
-// scoped. Returns a sentinel error until landed.
+// Algorithm:
+//   For tree T_1 (raw observations), edge e couples u[e] with u[e+1]:
+//     contribution = log c_e( u[e], u[e+1]; θ_e )
+//   For tree T_k (k > 1, pseudo-observations), edge e couples
+//   pseudo[e] with pseudo[e+1] where pseudo is the previous tree's
+//   h-function output:
+//     contribution = log c_e( pseudo[e], pseudo[e+1]; θ_e )
+//   Sum all contributions across all trees.
+//
+// Returns -∞ when any input falls on the unit-hypercube boundary
+// (the bivariate copula densities are degenerate there).
 func (v *DVine) LogPDF(u []float64) (float64, error) {
-	return 0, errors.New("copula: DVine.LogPDF not yet implemented (Clayton/Gumbel PDF closures pending)")
+	if len(u) != v.dim {
+		return 0, fmt.Errorf("LogPDF input length %d != dim %d", len(u), v.dim)
+	}
+	for i, ui := range u {
+		if ui <= 0 || ui >= 1 {
+			// Boundary value — copula PDFs are degenerate there.
+			return math.Inf(-1), fmt.Errorf("u[%d] = %v on hypercube boundary", i, ui)
+		}
+	}
+
+	// Accumulate log-density edge by edge. Track current "row" of
+	// pseudo-observations as we ascend the trees.
+	logL := 0.0
+	current := make([]float64, len(u))
+	copy(current, u)
+
+	for k := 0; k < v.dim-1; k++ {
+		tree := v.Trees[k]
+		// Sum log c for each edge in the current tree.
+		next := make([]float64, len(tree)) // next-tree pseudo-obs row
+		for i, edge := range tree {
+			logPdf, err := LogPDFFnForFamily(edge.Family, edge.Theta)
+			if err != nil {
+				return 0, fmt.Errorf("tree T_%d edge %d log-pdf: %w", k+1, i, err)
+			}
+			ui := current[i]
+			vi := current[i+1]
+			contrib := logPdf(ui, vi)
+			if math.IsInf(contrib, -1) {
+				return math.Inf(-1), nil
+			}
+			logL += contrib
+
+			// Compute next-tree pseudo-observation via the same edge's
+			// h-function (only if there is a next tree to feed).
+			if k+1 < v.dim-1 {
+				hfn, err := HFnForFamily(edge.Family, edge.Theta)
+				if err != nil {
+					return 0, fmt.Errorf("tree T_%d edge %d h-fn: %w", k+1, i, err)
+				}
+				next[i] = hfn(ui, vi)
+			}
+		}
+		current = next
+	}
+
+	return logL, nil
 }

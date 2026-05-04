@@ -2,6 +2,7 @@ package copula
 
 import (
 	"errors"
+	"math"
 	"testing"
 )
 
@@ -186,16 +187,45 @@ func TestDVine_HFunctionPass_RejectsBadInputLength(t *testing.T) {
 	}
 }
 
-func TestDVine_LogPDF_ReturnsNotImplementedSentinel(t *testing.T) {
-	// LogPDF is exposed in the public surface but not yet implemented;
-	// it returns a sentinel error so callers know to wait for the PR
-	// that lands the bivariate PDF closures.
+func TestDVine_LogPDF_ProducesFiniteValueOnInteriorPoint(t *testing.T) {
+	// Phase 15: LogPDF now wires the PDF closures. Interior points
+	// must return finite log-densities; boundary points return -∞.
 	trees := [][]VineEdge{
 		{{FamilyClayton, 2.0}, {FamilyClayton, 1.5}},
 		{{FamilyClayton, 1.0}},
 	}
 	v, _ := NewDVine(3, trees)
-	if _, err := v.LogPDF([]float64{0.3, 0.5, 0.7}); err == nil {
-		t.Error("expected sentinel error from LogPDF")
+	got, err := v.LogPDF([]float64{0.3, 0.5, 0.7})
+	if err != nil {
+		t.Fatalf("LogPDF interior point unexpected err: %v", err)
+	}
+	if math.IsNaN(got) || math.IsInf(got, 0) {
+		t.Errorf("LogPDF returned non-finite %v on interior point", got)
+	}
+}
+
+func TestDVine_LogPDF_RejectsBoundaryPoint(t *testing.T) {
+	trees := [][]VineEdge{
+		{{FamilyClayton, 2.0}, {FamilyClayton, 1.5}},
+		{{FamilyClayton, 1.0}},
+	}
+	v, _ := NewDVine(3, trees)
+	got, err := v.LogPDF([]float64{0.0, 0.5, 0.7})
+	if err == nil {
+		t.Errorf("expected boundary error from LogPDF, got nil (value=%v)", got)
+	}
+	if !math.IsInf(got, -1) {
+		t.Errorf("expected -∞ on boundary, got %v", got)
+	}
+}
+
+func TestDVine_LogPDF_RejectsLengthMismatch(t *testing.T) {
+	trees := [][]VineEdge{
+		{{FamilyClayton, 2.0}, {FamilyClayton, 1.5}},
+		{{FamilyClayton, 1.0}},
+	}
+	v, _ := NewDVine(3, trees)
+	if _, err := v.LogPDF([]float64{0.3, 0.5}); err == nil {
+		t.Error("expected length-mismatch error from LogPDF")
 	}
 }
