@@ -122,9 +122,17 @@ func Fit(eps []float64, init Model, cfg FitConfig) (Model, FitResult, error) {
 		}
 		lastDelta = d
 		if d < tol {
-			converged = true
-			iters = k + 1
-			break
+			// Only declare convergence if the current iterate is a valid
+			// GARCH model. negLogLikGrad returns a zero gradient on
+			// Validate failure (an "ignore this point" recovery path);
+			// without this guard we would falsely report converged=true
+			// on iteration 0 whenever the warm-start lands in an invalid
+			// region, because zero gradient ⇒ zero delta ⇒ d < tol.
+			if unpack(theta).Validate() == nil {
+				converged = true
+				iters = k + 1
+				break
+			}
 		}
 	}
 	_ = lastDelta
