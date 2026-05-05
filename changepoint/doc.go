@@ -21,13 +21,19 @@
 //
 // # Why this exists in Reality
 //
-// 24+ downstream consumers across the math-frontier hunt and the project-
-// driven hunt cite BOCPD as a substrate (lens 35.1 of REALITY_MATH_HUNT;
-// composes A01.2, A02.2, A06, A09, B11, B20, D33, D38, E50, F55, F56 in
-// RUBBERDUCK_REVOLUTIONARY_TECHNIQUES; multiple flagships: relic-insurance,
-// triage, witness, watchtower, narrator). Until now every consumer has
-// hand-rolled their own regime detector, with each rolling a different bug.
-// This package centralises the math.
+// The math + technique cross-pollination hunts identified 24+ candidate
+// downstream consumers for BOCPD as substrate.  Those are hunt-citations,
+// not import-citations: this package has zero production consumers
+// ecosystem-wide as of 2026-05-05 (verified by substring grep on
+// github.com/davly/reality/changepoint across foundation/, infrastructure/,
+// sdk/, apps/, and the named candidate flagships relic-insurance, triage,
+// witness, watchtower, narrator).  Hunt cross-references for traceability:
+// lens 35.1 of REALITY_MATH_HUNT; composes A01.2, A02.2, A06, A09, B11, B20,
+// D33, D38, E50, F55, F56 in RUBBERDUCK_REVOLUTIONARY_TECHNIQUES.  Until now
+// every candidate consumer has hand-rolled their own regime detector, with
+// each rolling a different bug; this package centralises the math so the
+// first real consumer can adopt without inventing.  First-consumer push
+// queued; see LimitlessGodfather/reviews/SESSION_62_PROGRESS.md.
 //
 // # Algorithm
 //

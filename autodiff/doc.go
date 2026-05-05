@@ -13,8 +13,8 @@
 //
 // # Why this exists in Reality
 //
-// Per the math + technique cross-pollination hunts, reverse-mode AAD is
-// load-bearing for:
+// The math + technique cross-pollination hunts identified reverse-mode AAD
+// as a candidate substrate for:
 //
 //   - GARCH / DCC-GARCH calibration (ill-posed; needs Tikhonov-regularised
 //     Newton-CG with adjoint gradients, per PLAN_RISKS.md R3 mitigation)
@@ -23,10 +23,21 @@
 //   - NSGA-II contagion-beta gradient operator
 //   - Any composite calibration whose loss has more than ~10 parameters
 //
-// Without a centralised AAD primitive every consumer either:
-//   - Uses finite differences (slow, scales as #params)
-//   - Re-implements the chain rule by hand for one specific model (fragile)
-//   - Pulls in a dependency (violates Reality's zero-dep policy)
+// Those are hunt-citations, not import-citations: this package has zero
+// production consumers ecosystem-wide as of 2026-05-05 (verified by
+// substring grep on github.com/davly/reality/autodiff across foundation/,
+// infrastructure/, sdk/, apps/).  Note that the listed users themselves are
+// downstream substrates (GARCH lives in this repo at timeseries/garch and is
+// also pre-consumer; Heston / SABR / NSGA-II do not yet exist as Reality
+// packages).  Without a centralised AAD primitive every future consumer
+// would either:
+//   - Use finite differences (slow, scales as #params)
+//   - Re-implement the chain rule by hand for one specific model (fragile)
+//   - Pull in a dependency (violates Reality's zero-dep policy)
+//
+// The package ships ahead of demand to give the first real consumer a clean
+// adoption path.  First-consumer push queued; see
+// LimitlessGodfather/reviews/SESSION_62_PROGRESS.md.
 //
 // # MVP scope
 //

@@ -25,11 +25,18 @@
 //
 // # Why this exists in Reality
 //
-// Per the math + technique cross-pollination hunts, ~25 downstream services
-// across the math-frontier and the project-driven hunt cite proximal
-// calculus as a foundational substrate. Without a centralised proximal
-// package every consumer rolls its own gradient-projection or L-BFGS hack
-// for what is structurally the same algorithm.
+// The math + technique cross-pollination hunts identified ~25 candidate
+// downstream services that could use proximal calculus as substrate (LASSO
+// regression, sparse dictionary learning, Markowitz portfolio with
+// constraints, total-variation denoising, non-negative least squares, etc.).
+// Those are hunt-citations, not import-citations: this package has zero
+// production consumers ecosystem-wide as of 2026-05-05 (verified by
+// substring grep on github.com/davly/reality/optim/proximal across
+// foundation/, infrastructure/, sdk/, apps/, and named flagship candidates).
+// Without a centralised proximal package every consumer would roll its own
+// gradient-projection or L-BFGS hack for what is structurally the same
+// algorithm — so the package ships ahead of demand. First-consumer push
+// queued; see LimitlessGodfather/reviews/SESSION_62_PROGRESS.md.
 //
 // # MVP-of-MVP scope
 //

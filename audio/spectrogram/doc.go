@@ -2,9 +2,16 @@
 // computation primitives plus spectrogram-as-image rendering.
 //
 // The STFT is the canonical 2-D time-frequency representation of an
-// audio signal — the primary substrate for downstream consumers
+// audio signal and the intended substrate for downstream consumers
 // (MFCC, fingerprinting, NMF separation, visual inspection, machine
-// listening pipelines). This package provides:
+// listening pipelines). As of 2026-05-05 the verified consumers are
+// in-Reality only — sibling packages audio/onset and audio/segmentation
+// import this package via test code; the named candidate flagships
+// Pigeonhole, Howler, Dipstick do not yet import it. First-consumer push
+// across the cohort is queued; see
+// LimitlessGodfather/reviews/SESSION_62_PROGRESS.md.
+//
+// This package provides:
 //
 //   - STFT(samples, frameSize, hopSize, window) — overlap-add complex
 //     STFT computation
@@ -13,8 +20,8 @@
 //   - MelSpectrogram — composes STFT magnitude × audio.MelFilterbank
 //     to produce a 2-D mel-band energy matrix
 //   - ToHeatmap / colourmaps — render the spectrogram as a PNG-encoded
-//     RGBA image suitable for the "spectrogram-as-art" feature
-//     (Pigeonhole, Howler, Dipstick)
+//     RGBA image suitable for the "spectrogram-as-art" feature (intended
+//     for Pigeonhole / Howler / Dipstick adoption)
 //
 // Production colourmaps (Plasma, Magma, Viridis, Inferno) match the
 // matplotlib references — RGB lookups computed at 256 stops with

@@ -10,8 +10,8 @@
 //
 // # Why this exists in Reality
 //
-// Per the math + technique cross-pollination hunts, GARCH-flex is one of
-// the six Tier-1 Foundation substrates with ~14 downstream cites:
+// The math + technique cross-pollination hunts identified GARCH-flex as one
+// of six Tier-1 Foundation substrates with ~14 candidate downstream cites:
 //
 //   - D31 vol-target / risk-budgeting
 //   - D33 regime-aware stop loss
@@ -20,10 +20,16 @@
 //   - A04 news-momentum half-life
 //   - F55 stablecoin EWS
 //
-// Without a centralised GARCH primitive every consumer rolls a different
-// vol-update recursion — different priors on omega, different constraints
-// on alpha + beta < 1, different MLE schemes — and downstream consumers
-// disagree about volatility numerically.  This package fixes the math.
+// Those are hunt-citations, not import-citations: this package has zero
+// production consumers ecosystem-wide as of 2026-05-05 (verified by
+// substring grep on github.com/davly/reality/timeseries/garch across
+// foundation/, infrastructure/, sdk/, apps/, and the named flagship
+// candidates).  Without a centralised GARCH primitive every candidate
+// consumer would roll a different vol-update recursion — different priors
+// on omega, different constraints on alpha + beta < 1, different MLE
+// schemes — and downstream consumers would disagree about volatility
+// numerically.  This package fixes the math ahead of demand.  First-consumer
+// push queued; see LimitlessGodfather/reviews/SESSION_62_PROGRESS.md.
 //
 // # MVP scope
 //

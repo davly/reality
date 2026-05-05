@@ -11,12 +11,20 @@
 //
 // # Why this exists in Reality
 //
-// Per the math + technique cross-pollination hunts, ~14 downstream services
-// across the math-frontier hunt and project-driven hunt cite
-// information-geometric divergences as substrate.  Until now every consumer
-// has rolled its own KL / JS / MMD over varying conventions (natural-log
-// vs base-2, with or without epsilon-smoothing, biased vs unbiased MMD).
-// This package centralises the formulas and the convention.
+// The math + technique cross-pollination hunts identified ~14 candidate
+// downstream services that could use information-geometric divergences as
+// substrate (regime classification, anomaly detection, two-sample testing,
+// model selection, decay tracking).  Those are hunt-citations, not
+// import-citations: this package has zero production consumers
+// ecosystem-wide as of 2026-05-05 (verified by substring grep on
+// github.com/davly/reality/infogeo across foundation/, infrastructure/,
+// sdk/, apps/, and named flagship candidates including relic-insurance,
+// witness, insights).  Until now every consumer has rolled its own KL / JS
+// / MMD over varying conventions (natural-log vs base-2, with or without
+// epsilon-smoothing, biased vs unbiased MMD); this package centralises the
+// formulas and the convention so the first real consumer can adopt without
+// inventing.  First-consumer push queued; see
+// LimitlessGodfather/reviews/SESSION_62_PROGRESS.md.
 //
 // # Convention
 //
