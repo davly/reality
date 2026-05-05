@@ -14,16 +14,28 @@
 // The math + technique cross-pollination hunts identified ~14 candidate
 // downstream services that could use information-geometric divergences as
 // substrate (regime classification, anomaly detection, two-sample testing,
-// model selection, decay tracking).  Those are hunt-citations, not
-// import-citations: this package has zero production consumers
-// ecosystem-wide as of 2026-05-05 (verified by substring grep on
+// model selection, decay tracking).  The named flagship cites
+// (relic-insurance, witness, insights) remain hunt-citations not
+// import-citations as of 2026-05-05 (verified by substring grep on
 // github.com/davly/reality/infogeo across foundation/, infrastructure/,
-// sdk/, apps/, and named flagship candidates including relic-insurance,
-// witness, insights).  Until now every consumer has rolled its own KL / JS
+// sdk/, apps/).  Until now every consumer has rolled its own KL / JS
 // / MMD over varying conventions (natural-log vs base-2, with or without
 // epsilon-smoothing, biased vs unbiased MMD); this package centralises the
-// formulas and the convention so the first real consumer can adopt without
-// inventing.  First-consumer push queued; see
+// formulas and the convention.
+//
+// Consumers (verified):
+//   - changepoint/infogeo_test.go:TestPosterior_FreshStartConvergence —
+//     uses TotalVariation and Hellinger to witness that BOCPD's
+//     run-length posterior collapses toward a fresh-start posterior
+//     after a changepoint and stays distant from it during stable
+//     regimes; first cross-package consumer for infogeo
+//     (substrate-internal first-consumer push, S62 2026-05-05).  The
+//     test cross-validates both metrics on the same posterior pairs
+//     (they must agree on direction) — early evidence that the
+//     symmetric-bounded f-divergences in this package are mutually
+//     consistent on real distributional inputs.
+//
+// Flagship first-consumer push remains queued; see
 // LimitlessGodfather/reviews/SESSION_62_PROGRESS.md.
 //
 // # Convention

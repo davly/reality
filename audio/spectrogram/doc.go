@@ -4,11 +4,17 @@
 // The STFT is the canonical 2-D time-frequency representation of an
 // audio signal and the intended substrate for downstream consumers
 // (MFCC, fingerprinting, NMF separation, visual inspection, machine
-// listening pipelines). As of 2026-05-05 the verified consumers are
-// in-Reality only — sibling packages audio/onset and audio/segmentation
-// import this package via test code; the named candidate flagships
-// Pigeonhole, Howler, Dipstick do not yet import it. First-consumer push
-// across the cohort is queued; see
+// listening pipelines).
+//
+// Consumers (verified):
+//   - audio/onset/onset_test.go — STFT-based onset-detection tests
+//     (substrate-internal sibling, in-Reality test consumer)
+//   - audio/segmentation/segmentation_test.go — STFT-based segmentation
+//     tests (substrate-internal sibling, in-Reality test consumer)
+//
+// As of 2026-05-05 the named candidate flagships Pigeonhole, Howler,
+// Dipstick still do not import this package. Cohort-side first-consumer
+// push (the "spectrogram-as-art" feature) remains queued; see
 // LimitlessGodfather/reviews/SESSION_62_PROGRESS.md.
 //
 // This package provides:

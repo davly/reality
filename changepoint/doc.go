@@ -22,18 +22,28 @@
 // # Why this exists in Reality
 //
 // The math + technique cross-pollination hunts identified 24+ candidate
-// downstream consumers for BOCPD as substrate.  Those are hunt-citations,
-// not import-citations: this package has zero production consumers
-// ecosystem-wide as of 2026-05-05 (verified by substring grep on
-// github.com/davly/reality/changepoint across foundation/, infrastructure/,
-// sdk/, apps/, and the named candidate flagships relic-insurance, triage,
-// witness, watchtower, narrator).  Hunt cross-references for traceability:
-// lens 35.1 of REALITY_MATH_HUNT; composes A01.2, A02.2, A06, A09, B11, B20,
-// D33, D38, E50, F55, F56 in RUBBERDUCK_REVOLUTIONARY_TECHNIQUES.  Until now
-// every candidate consumer has hand-rolled their own regime detector, with
-// each rolling a different bug; this package centralises the math so the
-// first real consumer can adopt without inventing.  First-consumer push
-// queued; see LimitlessGodfather/reviews/SESSION_62_PROGRESS.md.
+// downstream consumers for BOCPD as substrate.  The named flagship cites
+// (relic-insurance, triage, witness, watchtower, narrator) remain
+// hunt-citations not import-citations as of 2026-05-05 (verified by
+// substring grep on github.com/davly/reality/changepoint across
+// foundation/, infrastructure/, sdk/, apps/).  Hunt cross-references for
+// traceability: lens 35.1 of REALITY_MATH_HUNT; composes A01.2, A02.2,
+// A06, A09, B11, B20, D33, D38, E50, F55, F56 in
+// RUBBERDUCK_REVOLUTIONARY_TECHNIQUES.  Until now every candidate consumer
+// has hand-rolled their own regime detector, with each rolling a different
+// bug; this package centralises the math.
+//
+// Consumers (verified):
+//   - changepoint/infogeo_test.go:TestPosterior_FreshStartConvergence —
+//     uses infogeo.TotalVariation and infogeo.Hellinger to witness that
+//     the run-length posterior after a clean changepoint is close to
+//     a "fresh-start" BOCPD posterior (TV <= 0.25, Hellinger <= 0.35)
+//     while the pre-changepoint posterior is far (TV >= 0.6, Hellinger
+//     >= 0.7); first cross-package consumer for both changepoint and
+//     infogeo (substrate-internal first-consumer push, S62 2026-05-05).
+//
+// Flagship first-consumer push remains queued; see
+// LimitlessGodfather/reviews/SESSION_62_PROGRESS.md.
 //
 // # Algorithm
 //
