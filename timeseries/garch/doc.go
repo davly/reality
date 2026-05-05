@@ -20,16 +20,24 @@
 //   - A04 news-momentum half-life
 //   - F55 stablecoin EWS
 //
-// Those are hunt-citations, not import-citations: this package has zero
-// production consumers ecosystem-wide as of 2026-05-05 (verified by
-// substring grep on github.com/davly/reality/timeseries/garch across
-// foundation/, infrastructure/, sdk/, apps/, and the named flagship
-// candidates).  Without a centralised GARCH primitive every candidate
-// consumer would roll a different vol-update recursion — different priors
-// on omega, different constraints on alpha + beta < 1, different MLE
-// schemes — and downstream consumers would disagree about volatility
-// numerically.  This package fixes the math ahead of demand.  First-consumer
-// push queued; see LimitlessGodfather/reviews/SESSION_62_PROGRESS.md.
+// The named flagship cites above remain hunt-citations not import-citations
+// (verified by substring grep on github.com/davly/reality/timeseries/garch
+// across foundation/, infrastructure/, sdk/, apps/, and the named flagship
+// candidates as of 2026-05-05).  Without a centralised GARCH primitive
+// every candidate consumer would roll a different vol-update recursion —
+// different priors on omega, different constraints on alpha + beta < 1,
+// different MLE schemes — and downstream consumers would disagree about
+// volatility numerically.  This package fixes the math ahead of demand.
+//
+// Consumers (verified):
+//   - timeseries/garch/autodiff_test.go:TestNegLogLikGrad_AutodiffEquivalence —
+//     pins the closed-form gradient in negLogLikGrad against the same
+//     gradient computed by reverse-mode autodiff over the same forward
+//     graph (1e-9 parity); first cross-package consumer for both garch
+//     and autodiff (substrate-internal first-consumer push, S62 2026-05-05).
+//
+// Flagship first-consumer push remains queued; see
+// LimitlessGodfather/reviews/SESSION_62_PROGRESS.md.
 //
 // # MVP scope
 //
@@ -40,8 +48,11 @@
 // API:
 //
 //   - Model struct with parameters Omega, Alpha, Beta and uncondVar
-//   - Fit: Tikhonov-regularised MLE using autodiff-supplied gradients
-//     (per PLAN_RISKS.md R3 mitigation for ill-posed calibration)
+//   - Fit: Tikhonov-regularised MLE using a closed-form analytic gradient
+//     pinned to autodiff via TestNegLogLikGrad_AutodiffEquivalence (per
+//     PLAN_RISKS.md R3 mitigation for ill-posed calibration; the analytic
+//     path stays in production for speed, the autodiff path stays in
+//     tests as the parity witness)
 //   - Filter: forward recursion that returns conditional variance series
 //     and standardised residuals for downstream DCC
 //   - Simulate: deterministic-given-shocks Monte Carlo path generator

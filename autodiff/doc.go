@@ -23,20 +23,27 @@
 //   - NSGA-II contagion-beta gradient operator
 //   - Any composite calibration whose loss has more than ~10 parameters
 //
-// Those are hunt-citations, not import-citations: this package has zero
-// production consumers ecosystem-wide as of 2026-05-05 (verified by
-// substring grep on github.com/davly/reality/autodiff across foundation/,
-// infrastructure/, sdk/, apps/).  Note that the listed users themselves are
-// downstream substrates (GARCH lives in this repo at timeseries/garch and is
-// also pre-consumer; Heston / SABR / NSGA-II do not yet exist as Reality
-// packages).  Without a centralised AAD primitive every future consumer
-// would either:
+// As of 2026-05-05 the second-order Heston / SABR / NSGA-II citations
+// remain aspirational (those packages do not yet exist as Reality
+// packages; verified by substring grep on github.com/davly/reality/autodiff
+// across foundation/, infrastructure/, sdk/, apps/).  The first real
+// consumer landed in S62 — see Consumers below.  Without a centralised AAD
+// primitive every future consumer would either:
 //   - Use finite differences (slow, scales as #params)
 //   - Re-implement the chain rule by hand for one specific model (fragile)
 //   - Pull in a dependency (violates Reality's zero-dep policy)
 //
-// The package ships ahead of demand to give the first real consumer a clean
-// adoption path.  First-consumer push queued; see
+// Consumers (verified):
+//   - timeseries/garch/autodiff_test.go:TestNegLogLikGrad_AutodiffEquivalence —
+//     reverse-mode AD over the GARCH(1,1) negative-log-likelihood plus
+//     Tikhonov penalty; pins the closed-form analytic gradient in
+//     timeseries/garch/fit.go:negLogLikGrad against the autodiff path at
+//     1e-9 parity. First cross-package consumer for autodiff (S62
+//     2026-05-05); the first item in the doc-comment use-case list above
+//     (GARCH calibration) is therefore now backed by a real composition
+//     test, not a hunt citation.
+//
+// Flagship first-consumer push remains queued; see
 // LimitlessGodfather/reviews/SESSION_62_PROGRESS.md.
 //
 // # MVP scope
