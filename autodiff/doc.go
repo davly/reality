@@ -42,6 +42,14 @@
 //     2026-05-05); the first item in the doc-comment use-case list above
 //     (GARCH calibration) is therefore now backed by a real composition
 //     test, not a hunt citation.
+//   - infogeo/autodiff_test.go:TestKL_AutodiffGradientMatchesQMinusP —
+//     pins autodiff's gradient of KL(p || softmax(θ)) against the
+//     analytic closed form q − p (the canonical natural-gradient /
+//     variational-inference / policy-gradient identity) at 1e-9
+//     tolerance across three (p, θ) cases. Second cross-package
+//     consumer for autodiff (S62 overnight, 2026-05-06); the
+//     R-CLOSED-FORM-PINNED-TO-AUTODIFF pattern is now at 2/3
+//     saturation.
 //
 // Flagship first-consumer push remains queued; see
 // LimitlessGodfather/reviews/SESSION_62_PROGRESS.md.

@@ -24,6 +24,13 @@
 // formulas and the convention.
 //
 // Consumers (verified):
+//   - infogeo/autodiff_test.go:TestKL_AutodiffGradientMatchesQMinusP —
+//     pins reverse-mode autodiff's gradient of KL(p || softmax(θ))
+//     against the analytic closed form q − p across three (p, θ)
+//     cases at 1e-9 tolerance.  Second consumer for the
+//     R-CLOSED-FORM-PINNED-TO-AUTODIFF pattern (after F2.a's
+//     autodiff × garch parity test); saturation 2/3 toward
+//     promotion (S62 overnight, 2026-05-06).
 //   - changepoint/infogeo_test.go:TestPosterior_FreshStartConvergence —
 //     uses TotalVariation and Hellinger to witness that BOCPD's
 //     run-length posterior collapses toward a fresh-start posterior
