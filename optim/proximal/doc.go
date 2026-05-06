@@ -29,14 +29,24 @@
 // downstream services that could use proximal calculus as substrate (LASSO
 // regression, sparse dictionary learning, Markowitz portfolio with
 // constraints, total-variation denoising, non-negative least squares, etc.).
-// Those are hunt-citations, not import-citations: this package has zero
-// production consumers ecosystem-wide as of 2026-05-05 (verified by
-// substring grep on github.com/davly/reality/optim/proximal across
-// foundation/, infrastructure/, sdk/, apps/, and named flagship candidates).
-// Without a centralised proximal package every consumer would roll its own
+// The flagship cites remain hunt-citations not import-citations as of
+// 2026-05-06 (verified by substring grep on
+// github.com/davly/reality/optim/proximal across foundation/,
+// infrastructure/, sdk/, apps/, and named flagship candidates). Without a
+// centralised proximal package every consumer would roll its own
 // gradient-projection or L-BFGS hack for what is structurally the same
-// algorithm — so the package ships ahead of demand. First-consumer push
-// queued; see LimitlessGodfather/reviews/SESSION_62_PROGRESS.md.
+// algorithm.
+//
+// Consumers (verified):
+//   - optim/proximal_consumer_test.go:TestProximalLasso_{FBS,FISTA,ADMM}_OrthogonalClosedForm —
+//     orthogonal-design LASSO (X = I) has closed-form optimum
+//     β* = soft(y, λ); the three core solvers in this package (FBS,
+//     FISTA, ADMM via consensus splitting) all converge to that
+//     closed-form within 1e-7 to 1e-9 numerical tolerance. First
+//     cross-package consumer (parent optim package, S62 2026-05-06).
+//
+// Flagship first-consumer push remains queued; see
+// LimitlessGodfather/reviews/SESSION_62_PROGRESS.md.
 //
 // # MVP-of-MVP scope
 //
