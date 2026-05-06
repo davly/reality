@@ -47,9 +47,15 @@
 //     analytic closed form q − p (the canonical natural-gradient /
 //     variational-inference / policy-gradient identity) at 1e-9
 //     tolerance across three (p, θ) cases. Second cross-package
-//     consumer for autodiff (S62 overnight, 2026-05-06); the
-//     R-CLOSED-FORM-PINNED-TO-AUTODIFF pattern is now at 2/3
-//     saturation.
+//     consumer for autodiff (S62 overnight, 2026-05-06).
+//   - prob/copula/autodiff_test.go:TestClaytonLogPDF_AutodiffGradientMatchesAnalytic —
+//     pins autodiff's gradient of the Clayton bivariate log-density
+//     against the analytic closed form (Genest-MacKay style chain
+//     rule through u^(−θ) = exp(−θ · log u)) at 1e-9 tolerance
+//     across five (u, v, θ) cases. Third cross-package consumer for
+//     autodiff (S62 overnight, 2026-05-06); the
+//     R-CLOSED-FORM-PINNED-TO-AUTODIFF pattern is now at 3/3
+//     saturation — promotable to STANDARD.
 //
 // Flagship first-consumer push remains queued; see
 // LimitlessGodfather/reviews/SESSION_62_PROGRESS.md.

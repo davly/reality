@@ -61,6 +61,19 @@
 // translation; the FW C# original is the R80b output-parity
 // reference.
 //
+// Consumers (verified):
+//   - prob/copula/autodiff_test.go:TestClaytonLogPDF_AutodiffGradientMatchesAnalytic —
+//     pins the analytic gradient of Clayton's log-density w.r.t. θ
+//     against reverse-mode autodiff at 1e-9 tolerance across 5
+//     (u, v, θ) cases. Third consumer of the
+//     R-CLOSED-FORM-PINNED-TO-AUTODIFF pattern (after autodiff × garch
+//     and infogeo × autodiff); saturates the rule to 3/3 — promotable
+//     to ECOSYSTEM_QUALITY_STANDARD (S62 overnight, 2026-05-06).
+//
+// Flagship first-consumer push (relic-insurance Solvency II SCR
+// engine wiring) remains queued; see
+// LimitlessGodfather/reviews/SESSION_62_PROGRESS.md.
+//
 // # API surface
 //
 //   - GaussianCopulaCDF(u, sigma)           — n-variate (n in {2, 3})
