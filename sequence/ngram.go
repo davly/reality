@@ -92,6 +92,62 @@ func NGramSimilarity(a, b string, n int) float64 {
 	return float64(inter) / float64(union)
 }
 
+// NGramDiceCoefficient returns the Sørensen-Dice coefficient between the
+// character n-gram sets of strings a and b:
+//
+//	dice = 2 * |A ∩ B| / (|A| + |B|)
+//
+// where A and B are the sets of distinct n-grams in a and b respectively.
+// Equals 1.0 when both inputs are identical (or both empty); 0.0 when the
+// sets are disjoint or exactly one input is empty.
+//
+// Sørensen-Dice is a common alternative to Jaccard for fuzzy string
+// matching at the character level. It weighs the intersection more
+// strongly (denominator is sum of cardinalities, not union), so it tends
+// to score plausible matches higher than Jaccard. Bounded in [0, 1] and
+// related to Jaccard by dice = 2J/(1+J).
+//
+// Time complexity: O((len(a) + len(b)) * n)
+// Space complexity: O(len(a) + len(b))
+// References:
+//   - Sørensen T. (1948). "A method of establishing groups of equal
+//     amplitude in plant sociology based on similarity of species."
+//   - Dice L. R. (1945). "Measures of the amount of ecologic association
+//     between species."
+func NGramDiceCoefficient(a, b string, n int) float64 {
+	gramsA := NGrams(a, n)
+	gramsB := NGrams(b, n)
+
+	if len(gramsA) == 0 && len(gramsB) == 0 {
+		return 1.0
+	}
+	if len(gramsA) == 0 || len(gramsB) == 0 {
+		return 0.0
+	}
+
+	setA := make(map[string]struct{}, len(gramsA))
+	for _, g := range gramsA {
+		setA[g] = struct{}{}
+	}
+	setB := make(map[string]struct{}, len(gramsB))
+	for _, g := range gramsB {
+		setB[g] = struct{}{}
+	}
+
+	inter := 0
+	for g := range setA {
+		if _, ok := setB[g]; ok {
+			inter++
+		}
+	}
+
+	denom := len(setA) + len(setB)
+	if denom == 0 {
+		return 1.0
+	}
+	return 2.0 * float64(inter) / float64(denom)
+}
+
 // Shingling produces MinHash-ready shingles by hashing each k-character
 // substring with FNV-1a 64-bit. Returns a slice of hash values, one per
 // shingle. Duplicate hash values are preserved (caller may deduplicate).

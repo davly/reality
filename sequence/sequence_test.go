@@ -451,6 +451,57 @@ func TestNGramSimilarity_Partial(t *testing.T) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// NGramDiceCoefficient
+// ═══════════════════════════════════════════════════════════════════════════
+
+func TestNGramDiceCoefficient_Identical(t *testing.T) {
+	assertFloat(t, "identical", NGramDiceCoefficient("hello", "hello", 2), 1.0, 1e-10)
+}
+
+func TestNGramDiceCoefficient_NoOverlap(t *testing.T) {
+	assertFloat(t, "no overlap", NGramDiceCoefficient("abc", "xyz", 2), 0.0, 1e-10)
+}
+
+func TestNGramDiceCoefficient_BothEmpty(t *testing.T) {
+	assertFloat(t, "both empty", NGramDiceCoefficient("", "", 2), 1.0, 1e-10)
+}
+
+func TestNGramDiceCoefficient_OneEmpty(t *testing.T) {
+	assertFloat(t, "one empty", NGramDiceCoefficient("hello", "", 2), 0.0, 1e-10)
+}
+
+func TestNGramDiceCoefficient_BoundedInZeroOne(t *testing.T) {
+	d := NGramDiceCoefficient("night", "nacht", 2)
+	if d < 0.0 || d > 1.0 {
+		t.Errorf("out of range: %v", d)
+	}
+}
+
+// TestNGramDice_StrongerThanJaccard exercises the well-known relationship
+// dice = 2J / (1+J) — Sørensen-Dice scores plausible matches higher than
+// Jaccard for any same input pair. Tested at the character n-gram level
+// against the same inputs used in NGramSimilarity_Partial.
+func TestNGramDice_StrongerThanJaccard(t *testing.T) {
+	const n = 2
+	cases := []struct{ a, b string }{
+		{"night", "nacht"},
+		{"hello", "hallo"},
+		{"smith", "smyth"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.a+"_vs_"+tc.b, func(t *testing.T) {
+			j := NGramSimilarity(tc.a, tc.b, n)
+			d := NGramDiceCoefficient(tc.a, tc.b, n)
+			expected := 2 * j / (1 + j)
+			assertFloat(t, "dice = 2J/(1+J) identity", d, expected, 1e-10)
+			if !(j == 0 && d == 0) && d <= j {
+				t.Errorf("dice should exceed jaccard for non-zero pair: jaccard=%v dice=%v", j, d)
+			}
+		})
+	}
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // Shingling
 // ═══════════════════════════════════════════════════════════════════════════
 
