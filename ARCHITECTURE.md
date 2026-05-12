@@ -39,16 +39,16 @@ As of Session 25, reality is the only repository in the `davly/` GitHub organisa
 
 ---
 
-## 2. Package organisation (24 packages)
+## 2. Package organisation (~32 packages)
 
-Reality is a single Go module (`github.com/davly/reality`) containing 24 sub-packages. The choice of "one module, many packages" (Option A in the v1.0 design) was made unanimously by nine review agents — see `CONTEXT.md` §2 for the alternatives that were rejected.
+Reality is a single Go module (`github.com/davly/reality`) containing ~32 sub-packages on disk as of 2026-05-12 (`acoustics`, `audio` + 6 sub-packages, `autodiff`, `calculus`, `changepoint`, `chaos`, `color`, `combinatorics`, `compression`, `conduit`, `constants`, `control`, `crypto`, `em`, `fluids`, `forge`, `gametheory`, `geometry`, `graph`, `info`, `infogeo`, `linalg`, `optim`, `orbital`, `physics`, `prob`, `queue`, `sequence`, `signal`, `timeseries`, `topology`, `zkmark`; plus `pkg`, `testdata`, `testutil` infra). The 24-package figure that earlier revisions of this document cited reflects the Session 25 snapshot — see CONTEXT.md §11 for the post-Session-25 additions (audio cohort, autodiff, info, infogeo, timeseries, topology, zkmark, forge, changepoint). The tables below cover the original 22 core domain packages; post-Session-25 additions are listed in CONTEXT.md §11 rather than re-tabled here. The choice of "one module, many packages" (Option A in the v1.0 design) was made unanimously by nine review agents — see `CONTEXT.md` §2 for the alternatives that were rejected.
 
 ### Core math and structure
 
 | Package | Purpose | Notable types/functions | Depends on |
 |---|---|---|---|
 | `constants` | Mathematical + physical + unit constants. Six-tier truth taxonomy (`Pi` as `const`, `GravitationalConst` as `var` with uncertainty). | `Pi`, `E`, `Phi`, `Avogadro`, `Planck`, `SpeedOfLight`, `StandardGravity`, `GasConstant`, `StefanBoltzmann`, unit conversion tables. | stdlib `math` |
-| `linalg` | Linear algebra: vectors, matrices, decompositions, PCA, sparse. | `CosineSimilarity`, `EncodingDistance`, `DimensionWeightedDistance`, `MatMul`, `MatSub`, `Trace`, `FrobeniusNorm`, LU/QR/Cholesky, eigen, `PearsonCorrelation`, `PCAFit`. | stdlib |
+| `linalg` | Linear algebra: vectors, matrices, decompositions, PCA, sparse. | `CosineSimilarity`, `EncodingDistance`, `DimensionWeightedDistance`, `MatMul`, `MatSub`, `Trace`, `FrobeniusNorm`, `LUDecompose`, `LUSolve`, `CholeskyDecompose`, `CholeskySolve`, `QRAlgorithm` (eigenvalues via QR iteration), `PCA`, `PearsonCorrelation`. | stdlib |
 | `calculus` | Numerical differentiation and integration. | `Derivative`, `Simpsons`, `Trapezoidal`, `GaussLegendre`, `RK4`, `Brent`. | stdlib |
 | `prob` | Probability distributions, hypothesis tests, Bayesian update, time series, information theory. | `NormalPDF/CDF/Quantile` (Acklam), `BetaPDF`, `Poisson`, `Binomial`, `GammaPDF/CDF`, `BayesianUpdate`, `BrierScore`, `KLDivergence`, `TTest`, `ChiSquared`, `FisherExactTest`, `MannWhitneyU`, `BenjaminiHochberg`, `LinearRegression`, `MarkovChain`. | stdlib |
 | `crypto` | Number theory + hash functions + PRNGs. **Holds the canonical ecosystem FNV-1a.** | `FNV1a32`, `FNV1a64`, `MurmurHash3_32`, `MillerRabin`, `ModPow`, `EEAD`, `MersenneTwister`, `XorShift64`. | stdlib |
@@ -266,10 +266,12 @@ This section lists the public types and functions that are stable enough to cite
 - `DimensionWeightedDistance(a, b, weights []float64) float64`
 - `MatMul(a, b, out []float64, rowsA, colsA, colsB int)`
 - `MatSub`, `Trace`, `FrobeniusNorm`
-- `LUDecompose(a []float64, n int) (L, U []float64, perm []int, err error)`
-- `QRDecompose`, `CholeskyDecompose`
-- `Eigen(a []float64, n int) (eigenvalues []float64, eigenvectors []float64)`
-- `PCAFit(data [][]float64, k int) (components [][]float64, explained []float64)`
+- `LUDecompose(A []float64, n int, L, U []float64, perm []int) bool` — out-buffer style, returns `false` on singular pivot
+- `LUSolve(L, U []float64, n int, perm []int, b, x []float64)`
+- `CholeskyDecompose(A []float64, n int, L []float64) bool`
+- `CholeskySolve(L []float64, n int, b, x []float64)`
+- `QRAlgorithm(A []float64, n int, eigenvalues []float64, maxIter int) int` — QR-iteration eigenvalue solver; returns iterations to convergence
+- `PCA(data []float64, nSamples, nFeatures, nComponents int, components, explained []float64) float64` — principal-component fit; returns total variance
 - `PearsonCorrelation(x, y []float64) float64`
 
 ### 6.3 `prob`
@@ -399,9 +401,9 @@ The suite takes under 60 seconds on a modern laptop. There are no long-running t
 - **Go module:** `github.com/davly/reality`.
 - **Go version required:** 1.24+.
 - **External dependencies:** none. `go.mod` contains only the module declaration and Go version.
-- **GitHub:** `davly/reality`, public, MIT-licensed by declaration (a `LICENSE` file is not yet committed — a zero-risk P2 action).
+- **GitHub:** `davly/reality`, public, MIT-licensed by declaration. `LICENSE` file is committed at repo root.
 - **Build:** `go build ./...` — succeeds with no flags, no build tags, no codegen.
-- **CI:** Not yet configured in-repo. The design calls for GitHub Actions covering all four languages at v1.0.
+- **CI:** GitHub Actions configured in `.github/workflows/ci.yml` (Go 1.24 + 1.25 matrix; test with coverage gate 80%; lint via golangci-lint; benchmarks; security triple gosec + govulncheck + trivy with `exit-code: 1`). Cross-language Python / C++ / C# CI is still pending per Phase 3 of the v1.0 plan.
 
 ### 9.2 Release plan (from `CONTEXT.md` §9)
 
@@ -411,7 +413,7 @@ Reality is following a five-phase release schedule. Session 25 places it approxi
 - **Phase 1** (Weeks 3–6): Extract + reorganise existing math. **Done.** `linalg`, `prob`, `crypto`, `signal`, `graph` all hold extracted-and-cleaned code.
 - **Phase 2** (Weeks 7–14): Fill the gaps. **In progress.** All 24 packages exist; per-function coverage varies. Session 25 open items (Jeffreys helpers, expanded golden-file coverage) land here.
 - **Phase 3** (Weeks 15–18): Pistachio (C++) and RubberDuck (C#) integration. **Not started.** Python port also not shipped.
-- **Phase 4** (Weeks 19–20): Open-source preparation. **Partial.** Repo is already public, MIT declared in docs, but `LICENSE` file is missing, CI is missing, and README could use the provenance-and-citation story.
+- **Phase 4** (Weeks 19–20): Open-source preparation. **Partial.** Repo is already public, MIT declared in docs, `LICENSE` file committed, `SECURITY.md` published, Go CI workflow shipped (`.github/workflows/ci.yml`) covering test / lint / bench / security. README could still use the provenance-and-citation story; cross-language CI (Python / C++ / C#) is pending per Phase 3.
 
 ### 9.3 Versioning
 

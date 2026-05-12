@@ -1,0 +1,163 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  # Reality is Tier-0 substrate (foundation of foundations). 80% coverage gate
+  # matches aicore (foundation/aicore/.github/workflows/ci.yml). A parity
+  # regression here propagates ecosystem-wide.
+  COVERAGE_THRESHOLD: 80
+
+jobs:
+  test:
+    name: Test (Go ${{ matrix.go-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # go.mod declares `go 1.24`; matrix exercises 1.24 + 1.25 to anchor
+        # forward compatibility before bumping go.mod.
+        go-version: ['1.24', '1.25']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ matrix.go-version }}-
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test with coverage
+        run: go test -race -coverprofile=coverage.out -covermode=atomic -count=1 ./...
+
+      - name: Coverage gate
+        run: |
+          total=$(go tool cover -func=coverage.out | grep '^total:' | awk '{print $NF}' | tr -d '%')
+          echo "Reality coverage: ${total}%"
+          if [ "$(echo "${total} < ${{ env.COVERAGE_THRESHOLD }}" | bc -l)" -eq 1 ]; then
+            echo "::error::Reality coverage ${total}% is below the ${COVERAGE_THRESHOLD}% threshold"
+            exit 1
+          fi
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-1.24-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-1.24-
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
+  bench:
+    name: Benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-1.24-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-1.24-
+
+      # Reality's hot-path functions (linalg.MatMul, signal.FFT, prob.Normal*)
+      # have allocation budgets documented per-function. Benchmarks are how we
+      # detect regressions in the "zero allocations in hot paths" contract
+      # (ARCHITECTURE.md §3.3).
+      - name: Benchmarks
+        run: go test -bench=. -benchmem -benchtime=1s -run='^$' ./...
+
+  # ── Security gate (R142 scope-extension) ─────────────────
+  # gosec / govulncheck / trivy with exit-code: 1 per
+  # OVERNIGHT_2026-05-12-13 brief safe-change list. Reality is foundation
+  # of foundations — even a low-severity supply-chain finding here lands in
+  # every consumer.
+  security:
+    name: Security (gosec + govulncheck + trivy)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-1.24-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-1.24-
+
+      # gosec — fails build on any HIGH/MEDIUM finding (exit-code 1 by default
+      # in v2; -no-fail removed deliberately per R142).
+      - name: Run gosec
+        uses: securego/gosec@master
+        with:
+          args: './...'
+
+      # govulncheck — exit 1 on any known vuln in module graph (R142).
+      # Reality has zero external dependencies, so this is mostly a guard
+      # against accidentally introducing one.
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - name: Run govulncheck
+        run: govulncheck ./...
+
+      # trivy — filesystem scan, gate on CRITICAL/HIGH (R142).
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+          ignore-unfixed: true

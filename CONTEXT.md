@@ -27,6 +27,8 @@ reality imports nothing
 
 **Go module:** `github.com/davly/reality`
 
+**Status:** Built, in active use. ~32 sub-packages, 426+ public functions, 1,585+ top-level tests, 73 golden-file fixtures. All packages build and pass under Go 1.24. Tier-0 substrate consumed by aicore + Go flagships directly. Phase 2 of the v1.0 plan (gap-fill); cross-language ports (Python, C++, C#) deferred to Phase 3.
+
 ---
 
 ## 2. Architecture Decisions (Confirmed)

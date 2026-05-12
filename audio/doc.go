@@ -21,14 +21,19 @@
 // reality/prob/conformal (S55 L01) and reality/prob/copula (S55 L13)
 // substrate-shipped-first / consumers-port-against-golden patterns.
 //
-// Consumed by:
-//   - flagships/pigeonhole (UK ornithology — bird-individual identification)
-//   - flagships/howler (veterinary + canine/feline behavioural science)
-//   - flagships/dipstick (mechanical failure modes — machine fingerprinting)
-//   - flagships/folio (lateral consumer of fingerprint primitive on
-//     non-acoustic features — repeat-guest profiles)
-//   - infrastructure/insights (forge-observation events for audio classifications)
-//   - infrastructure/recall (per-entity converged baseline cache)
+// Consumed by (verified via `grep -r 'davly/reality/audio'` 2026-05-12):
+//   - flagships/pigeonhole       (UK ornithology — bird-individual identification)
+//   - flagships/howler           (veterinary + canine/feline behavioural science)
+//   - flagships/dipstick         (mechanical failure modes — machine fingerprinting; also audio/vibration sub-package)
+//   - flagships/fleetworks-torque (forge.go — fleet vehicle vibration / acoustic analysis)
+//
+// Lateral consumers previously listed here (folio repeat-guest profiles on
+// non-acoustic features; infrastructure/insights forge-observation events;
+// infrastructure/recall per-entity converged baseline cache) were aspirational
+// — none of those repos currently import `github.com/davly/reality/audio` per
+// 2026-05-12 grep audit (L40 §S1 Mirror-Problem). When/if any of them does
+// adopt audio primitives, re-add them to this list with the file:line of the
+// import.
 //
 // Sub-packages:
 //   - audio/vibration    — fundamental-frequency + harmonic-energy ratio
