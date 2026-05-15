@@ -1,19 +1,26 @@
 # Reality
 
-Universal truth encoded in code. Pure math, physics, constants. Zero dependencies. MIT open source.
+Universal truth encoded in code. Pure math, physics, constants. Zero dependencies. Apache 2.0 open source.
 
 ## Quick Reference
 
-- **Version:** v0.10.0
+- **Version:** v0.10.0 (cohort-additive — see CONTEXT.md §11)
 - **Go module:** `github.com/davly/reality`
-- **License:** MIT
+- **License:** Apache 2.0
 - **Port:** None (library, not a service)
-- **Tests:** 1,965 (22 packages, all passing, zero failures)
+- **Packages:** 49 importable (32 top-level + audio/info/optim/prob/timeseries/topology sub-packages)
+- **Public functions:** 584 exported
+- **Tests:** 2,400+ top-level `--- PASS` (3,322 invocations including subtests; all passing, zero failures)
+- **Golden fixtures:** 80 JSON files
 - **Design doc:** `C:/LimitlessGodfather/architecture/UNIVERSAL_TRUTH_FOUNDATION.md`
 - **Review synthesis:** `C:/LimitlessGodfather/reviews/reality-review/SYNTHESIS.md`
-- **Context:** `CONTEXT.md` in this repo (read this for full background)
+- **Context:** `CONTEXT.md` in this repo (read this for full background) — §11 is the canonical inventory of post-Session-25 additions
 
-## Packages (22)
+## Packages (49)
+
+> **Historical note:** v1.0 design target was 22 packages. Reality has shipped additively past that target through Sessions 22-26 + S55-S60 cohort work. CONTEXT.md §11 is the authoritative inventory.
+
+### Core math + applied physics (22 — original v1.0 set)
 
 | Package | Description |
 |---------|-------------|
@@ -25,7 +32,7 @@ Universal truth encoded in code. Pure math, physics, constants. Zero dependencie
 | `compression` | Lossless/lossy compression primitives: entropy, RLE, delta encoding, Huffman, LZ77 |
 | `constants` | Mathematical, physical, and unit conversion constants (SI 2019, NIST CODATA 2018) |
 | `control` | Classical control theory: PID controllers, transfer functions, Bode analysis, stability margins |
-| `crypto` | Number theory and cryptographic primitives: primality, modular arithmetic, PRNGs, hash functions |
+| `crypto` | Number theory and cryptographic primitives: primality, modular arithmetic, PRNGs, hash functions (canonical FNV-1a) |
 | `em` | Electromagnetism: Coulomb force, electric field, Ohm's law, RC/LC circuits, series/parallel |
 | `fluids` | Classical fluid mechanics: Reynolds, Bernoulli, Darcy-Weisbach, drag, lift, terminal velocity |
 | `gametheory` | Classical game theory: Nash equilibrium, Shapley value, minimax, replicator dynamics |
@@ -40,18 +47,53 @@ Universal truth encoded in code. Pure math, physics, constants. Zero dependencie
 | `signal` | Signal processing: FFT/IFFT, convolution, filters, window functions, Hilbert transform |
 | `testutil` | Golden-file test infrastructure for cross-language validation (JSON test vectors) |
 
+### Post-Session-25 additions (27 — see CONTEXT.md §11 for provenance)
+
+| Package | Description |
+|---------|-------------|
+| `sequence` | Edit distances (Levenshtein, Jaro-Winkler, NW/SW alignment), n-grams, Soundex (Session 23) |
+| `conduit` | Fire-and-forget HTTP emit shim for ForgeEcosystemEvents (Session 24 Wave 6.A5) |
+| `audio` | Mel filterbank (Slaney 1998), MFCC (DCT-II), Welford fingerprint, DegradationTracker (S56) |
+| `audio/beat` | Beat tracking (S56 audio cohort) |
+| `audio/cqt` | Constant-Q transform (S56 audio cohort) |
+| `audio/onset` | Onset detection: energy, spectral flux, complex domain, SuperFlux (S56) |
+| `audio/pitch` | Pitch estimators: autocorrelation, YIN, McLeod, subharmonic summation (S56) |
+| `audio/segmentation` | Audio event segmentation: VAD, onset-offset, silence-based (S56) |
+| `audio/separation` | Multi-source separation: spectral subtraction, Wiener, FastICA, NMF (S56) |
+| `audio/spectrogram` | STFT + visualisation (Plasma/Magma/Viridis/Inferno colourmaps) (S56) |
+| `audio/tempo` | Tempo estimation (S56 audio cohort) |
+| `audio/vibration` | Mechanical vibration: fundamental, harmonic energy ratio (Dipstick + FW Torque) |
+| `prob/conformal` | Conformal prediction (regulator-grade calibration; S55 L01 trio) |
+| `prob/copula` | Copula models: Gaussian, t, Archimedean — Clayton + Gumbel (S55 L13 trio) |
+| `optim/proximal` | Proximal-operator methods (LASSO closed-form witness; first consumer) |
+| `optim/transport` | Optimal transport (Sinkhorn, Wasserstein) |
+| `timeseries/dcc` | Dynamic Conditional Correlation models |
+| `timeseries/garch` | GARCH volatility models (autodiff gradient parity) |
+| `info/lz` | Lempel-Ziv complexity |
+| `info/mdl` | Minimum description length |
+| `infogeo` | Information geometry (KL gradients, statistical manifolds) |
+| `topology/persistent` | Persistent homology / TDA |
+| `changepoint` | Change-point detection (fresh-start convergence witness) |
+| `autodiff` | Automatic differentiation (forward + reverse mode; mutual-validation backbone) |
+| `zkmark` | ZK-Mirror-Mark substrate (cryptographic provenance) |
+| `forge/session40` | Bedrock corpus + canonical situation hashing (Session 40 forge lift) |
+| `pkg/canonical` | Canonical encoding helpers |
+
 ## Architecture
 
 One repo. Sub-packages. Single Go module. Go is canonical; Python/C++/C# validate against golden files.
 
 ```
 reality/
-  acoustics/    calculus/     chaos/        color/
-  combinatorics/ compression/ constants/    control/
-  crypto/       em/           fluids/       gametheory/
-  geometry/     graph/        linalg/       optim/
-  orbital/      physics/      prob/         queue/
-  signal/       testutil/
+  acoustics/    audio/{beat,cqt,onset,pitch,segmentation,separation,spectrogram,tempo,vibration}/
+  autodiff/     calculus/     changepoint/    chaos/        color/
+  combinatorics/ compression/ conduit/        constants/    control/
+  crypto/       em/           fluids/         forge/session40/
+  gametheory/   geometry/     graph/          info/{lz,mdl}/
+  infogeo/      linalg/       optim/{proximal,transport}/
+  orbital/      physics/      pkg/canonical/  prob/{conformal,copula}/
+  queue/        sequence/     signal/         testutil/
+  timeseries/{dcc,garch}/     topology/persistent/         zkmark/
 ```
 
 ## Dependency Position
@@ -83,7 +125,11 @@ The single most important design decision. Every function has golden-file test v
 ## Building / Testing
 
 ```bash
-go test ./...              # Run all tests (1,965)
+go test ./...              # Run all tests (2,400+ top-level PASS)
 go test -run TestGolden ./...  # Run golden-file validation only
 go test -v ./...           # Verbose output
 ```
+
+## Security
+
+Tier-0 substrate. See [`SECURITY.md`](./SECURITY.md) for threat model + reporting policy. CI gates: `gosec` / `govulncheck` / `trivy` all run with `exit-code: 1`.
