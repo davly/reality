@@ -1,0 +1,9 @@
+# Editor / agent harness state
+.claude/
+.cursor/
+.vscode/
+
+# Build artefacts
+*.test
+*.out
+coverage.*
