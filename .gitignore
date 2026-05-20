@@ -7,3 +7,6 @@
 *.test
 *.out
 coverage.*
+
+# Tracked exceptions (case-insensitive match would otherwise hide these on Windows)
+!docs/COVERAGE.md
