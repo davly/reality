@@ -125,6 +125,18 @@ func IsStableMatching(matching []int, proposerPrefs, receiverPrefs [][]int) bool
 		return true
 	}
 
+	// An out-of-range entry — the -1 "unmatched" sentinel, or an index >= n —
+	// means the matching is incomplete or malformed. Under the complete
+	// preference lists assumed here it cannot be stable (an unmatched proposer
+	// blocks with any acceptable receiver), and indexing it below as
+	// receiverPartner[matching[i]] would panic with index out of range. Reject
+	// it up front rather than crash.
+	for _, r := range matching {
+		if r < 0 || r >= n {
+			return false
+		}
+	}
+
 	// Build rank tables for both sides.
 	proposerRank := make([][]int, n) // proposerRank[i][j] = rank of receiver j for proposer i
 	for i := 0; i < n; i++ {
