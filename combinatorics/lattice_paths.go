@@ -208,25 +208,27 @@ func BarrierOptionReflection(s0, k, r, sigma, t, barrier float64, n int) float64
 		if payoff == 0 {
 			continue
 		}
-		// Total paths to this node minus reflected paths (those that touched h).
+		// A terminal node whose OWN price already breaches the barrier is
+		// fully knocked out: every path that reaches it has touched h. The
+		// reflection below assumes the terminal sits strictly below the
+		// barrier — without this guard, in-the-money nodes ABOVE the barrier
+		// (reachable under high volatility) would be spuriously counted.
+		// Terminal net displacement is 2j-n; barrier is at displacement h.
+		if 2*j-n >= h {
+			continue
+		}
+		// Total paths to this node minus the paths that ever touched the
+		// barrier. André's reflection principle in NET-DISPLACEMENT
+		// coordinates: the walk position is the net (up minus down)
+		// displacement, the terminal sits at displacement 2j-n, and the
+		// barrier is at displacement h. The number of n-step paths from 0 to
+		// terminal up-count j that ever reach displacement h equals the number
+		// of paths to the reflected endpoint, whose up-count is (n+h-j) — NOT
+		// (2h-j), which incorrectly mixed the up-count and displacement
+		// coordinate systems and overpriced up-and-out calls by up to ~8x.
 		total := BinomialCoeff(n, j)
 		reflected := 0.0
-		// Reflection: path touches level h iff equivalent path to reflected
-		// endpoint exists. The reflected endpoint corresponds to (2h - j_excess).
-		// In up-count coordinates the reflected count is C(n, 2h - j + d_off)
-		// — but since paths are symmetric on the up-count axis with absorbing
-		// barrier h, the number of touching paths is C(n, j_reflected) where
-		// j_reflected = 2*h_excess - j_net adjusted for the up-count.
-		// Translate: net displacement at terminal is 2j - n; barrier is at
-		// displacement >= h_disp where h_disp = 2h - n_? — easier to work
-		// directly in up-count: touching iff ever-reaches j = h.
-		// André's principle: paths from 0 ending at j that touch h equal
-		// paths from 2h ending at j, which is paths of n steps with up-count
-		// j - 2h + 0 ... in step coordinates the count is C(n, j - h + ???)
-		// — Simpler: reflected up-count is 2h - j; touching paths to j equal
-		// paths to terminal up-count (2h - j), but reversed: if 2h - j > j
-		// (i.e. h > j) the reflection lies outside [0, n] for some configs.
-		jRefl := 2*h - j
+		jRefl := n + h - j
 		if jRefl >= 0 && jRefl <= n {
 			reflected = BinomialCoeff(n, jRefl)
 		}
