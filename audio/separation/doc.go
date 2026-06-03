@@ -62,4 +62,12 @@
 //   - flagships/howler (multi-pet vocalisation isolation)
 //   - flagships/dipstick (machine-component-source separation in
 //     multi-rotor / multi-bearing assemblies)
+//
+// Update 2026-05-16: confirmed first consumer — Pigeonhole imports
+// reality/audio/separation in flagships/pigeonhole/reference/forge/
+// recording.go + forge/analytics.go (NMF Decompose + WienerFilter),
+// with the EchoChamber cohort adapter at reference/cohort/echochamber.go
+// wrapping the same Decompose call. KMM port at
+// mobile/shared/src/commonMain/kotlin/com/davly/pigeonhole/separation/
+// Nmf.kt.
 package separation

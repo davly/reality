@@ -56,4 +56,11 @@
 //   - flagships/howler (per-vocalisation segmentation)
 //   - flagships/dipstick (per-event segmentation in long machine
 //     recordings — startup, steady-state, fault transient)
+//
+// Update 2026-05-16: confirmed first consumer — Pigeonhole imports
+// reality/audio/segmentation in flagships/pigeonhole/reference/forge/
+// recording.go (SegmentByOnsetOffset + MergeCloseSegments +
+// FilterByMinDuration), with KMM port of all four primitives at
+// mobile/shared/src/commonMain/kotlin/com/davly/pigeonhole/segmentation/
+// Segmentation.kt.
 package segmentation

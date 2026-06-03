@@ -33,6 +33,11 @@
 //   - Howler / Pigeonhole / Dipstick (audio trio): periodic-event
 //     detection in vocal/mechanical signals.
 //
+// Update 2026-05-16: confirmed first flagship consumer — Pigeonhole
+// imports reality/audio/tempo in flagships/pigeonhole/reference/forge/
+// recording.go, supplying the BPM prior consumed by the beat-tracker
+// in the same file.
+//
 // # Reference
 //
 //   - Goto, M. (2001) "An audio-based real-time beat tracking system

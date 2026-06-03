@@ -17,6 +17,16 @@
 // push (the "spectrogram-as-art" feature) remains queued; see
 // LimitlessGodfather/reviews/SESSION_62_PROGRESS.md.
 //
+// Update 2026-05-16: confirmed first consumer — Pigeonhole imports
+// reality/audio/spectrogram in both the Go reference
+// (flagships/pigeonhole/reference/forge/recording.go +
+// forge/spectrogram.go, with the spectrogram-as-PNG rendering wired
+// through ToHeatmapWith) and KMM commonMain
+// (mobile/shared/src/commonMain/kotlin/com/davly/pigeonhole/spectrogram/
+// Stft.kt, ComplexStft.kt, Colourmap.kt). Howler + Dipstick adapter
+// call-sites at flagships/pigeonhole/reference/cohort/howler.go +
+// dipstick.go lift the same substrate.
+//
 // This package provides:
 //
 //   - STFT(samples, frameSize, hopSize, window) — overlap-add complex

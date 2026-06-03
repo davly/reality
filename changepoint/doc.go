@@ -45,6 +45,12 @@
 // Flagship first-consumer push remains queued; see
 // LimitlessGodfather/reviews/SESSION_62_PROGRESS.md.
 //
+// Update 2026-05-16: confirmed first flagship consumer — Pigeonhole
+// imports reality/changepoint in flagships/pigeonhole/reference/forge/
+// analytics.go, wiring BOCPD as forge.Pipeline.DetectArrival. KMM port
+// at mobile/shared/src/commonMain/kotlin/com/davly/pigeonhole/
+// changepoint/Bocpd.kt.
+//
 // # Algorithm
 //
 // At each time step t with observation x_t:

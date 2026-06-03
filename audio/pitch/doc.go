@@ -64,4 +64,9 @@
 //   - flagships/dipstick (machine resonance fundamental, alternative
 //     to vibration.FundamentalHz when the fundamental is missing —
 //     e.g. boiler combustion at sub-20 Hz)
+//
+// Update 2026-05-16: confirmed first consumer — Pigeonhole imports
+// reality/audio/pitch (YIN) in flagships/pigeonhole/reference/forge/
+// recording.go, with KMM port at mobile/shared/src/commonMain/kotlin/
+// com/davly/pigeonhole/pitch/Yin.kt.
 package pitch

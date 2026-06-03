@@ -48,6 +48,12 @@
 //   - RubberDuck (future): regime-change detection on log-frequency
 //     volatility profiles.
 //
+// Update 2026-05-16: confirmed first flagship consumer — Pigeonhole
+// imports reality/audio/cqt in flagships/pigeonhole/reference/forge/
+// analytics.go (CQT wired for the spectrogram-as-art deliverable), with
+// KMM port at mobile/shared/src/commonMain/kotlin/com/davly/pigeonhole/
+// cqt/Cqt.kt mirroring reality/audio/cqt.CQT + BinFrequencies.
+//
 // # Reference
 //
 //   - Brown, J. C. (1991) "Calculation of a constant Q spectral transform"

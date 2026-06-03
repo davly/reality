@@ -34,6 +34,11 @@
 //   - Howler / Pigeonhole / Dipstick: periodic-event tracking with
 //     tempo regularisation.
 //
+// Update 2026-05-16: confirmed first flagship consumer — Pigeonhole
+// imports reality/audio/beat in flagships/pigeonhole/reference/forge/
+// recording.go (beat-tracker wired into the recording pipeline) and
+// reference/cohort/cadence.go (Cadence cohort adapter).
+//
 // # Reference
 //
 //   - Ellis, D.P.W. (2007) "Beat tracking by dynamic programming."

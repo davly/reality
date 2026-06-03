@@ -57,4 +57,11 @@
 //   - flagships/howler (vocalisation onset detection)
 //   - reality/audio/segmentation (onset/offset segmentation builds on
 //     the same strength functions)
+//
+// Update 2026-05-16: confirmed first consumer — Pigeonhole imports
+// reality/audio/onset in flagships/pigeonhole/reference/forge/
+// recording.go + forge/analytics.go (SpectralFluxStrength +
+// SpectralFluxOnset + PickPeaksAdaptive), with KMM port at
+// mobile/shared/src/commonMain/kotlin/com/davly/pigeonhole/onset/
+// Onset.kt mirroring SpectralFluxStrength frame-for-frame.
 package onset
