@@ -34,6 +34,10 @@ import "math"
 //
 // Reference: Auer, P., Cesa-Bianchi, N., Fischer, P. (2002) "Finite-time
 // Analysis of the Multiarmed Bandit Problem", Machine Learning 47(2-3).
+//
+// Note: rewards must be cumulative SUMS, never per-arm means — passing
+// means divides by the count twice and collapses the exploitation term.
+// New callers should prefer UCB1FromArms, which makes the unit explicit.
 func UCB1(counts []int, rewards []float64, totalPulls int) int {
 	n := len(counts)
 	if n == 0 {
@@ -85,6 +89,10 @@ func UCB1(counts []int, rewards []float64, totalPulls int) int {
 // Reference: Thompson, W.R. (1933) "On the Likelihood that One Unknown
 // Probability Exceeds Another in View of the Evidence of Two Samples",
 // Biometrika 25(3-4):285-294.
+//
+// Note: for Bernoulli rewards tracked as Arm{Count, RewardSum}, new callers
+// should prefer ThompsonFromArmsBernoulli, which documents and enforces the
+// successes/failures mapping.
 func ThompsonSampling(successes, failures []int, rng interface{ Float64() float64 }) int {
 	n := len(successes)
 	if n == 0 {
@@ -192,6 +200,9 @@ func sampleStdNormal(rng interface{ Float64() float64 }) float64 {
 //
 // Reference: Sutton, R.S. & Barto, A.G. (2018) "Reinforcement Learning:
 // An Introduction", 2nd edition, Chapter 2.
+//
+// Note: rewards must be cumulative SUMS, never per-arm means. New callers
+// should prefer EpsilonGreedyFromArms, which makes the unit explicit.
 func EpsilonGreedy(rewards []float64, counts []int, epsilon float64, rng interface{ Float64() float64 }) int {
 	n := len(rewards)
 	if n == 0 {
