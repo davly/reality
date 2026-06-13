@@ -138,6 +138,14 @@ func Fit(eps []float64, init Model, cfg FitConfig) (Model, FitResult, error) {
 	_ = lastDelta
 	final := unpack(theta)
 	final.UncondVar = final.Omega / (1.0 - final.Alpha - final.Beta)
+	// Guard: a diverged fit can leave the final iterate non-finite or outside
+	// the stationarity region. Validate the fitted params before returning so
+	// we surface an error rather than silently handing back garbage with a nil
+	// error. (Non-convergence within a valid region is reported via the
+	// Converged flag, not as an error.)
+	if err := final.Validate(); err != nil {
+		return Model{}, FitResult{Iter: iters, Converged: converged, FinalLogLik: finalLL}, err
+	}
 	return final, FitResult{Iter: iters, Converged: converged, FinalLogLik: finalLL}, nil
 }
 

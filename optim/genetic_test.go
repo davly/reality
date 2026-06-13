@@ -232,3 +232,39 @@ func TestSimplex_ZeroObjective(t *testing.T) {
 		t.Errorf("Simplex zero obj = %v, want 0", obj)
 	}
 }
+
+// TestSimplex_NonConvergenceReturnsError is a regression for the silent-
+// garbage defect (immune-system convergence-guards review, 2026-06-13): if
+// the pivot loop exhausts its iteration budget without reaching optimality,
+// SimplexMethod used to fall through and `return x, optVal, nil` — handing
+// back a non-optimal result with a nil error.
+//
+// Post-fix (linear.go): a `converged` flag is set only on the optimal break;
+// after the loop, `!converged` returns a non-nil "did not converge" error.
+//
+// With Bland's rule the method is finite and converges on practical problems,
+// so we exercise the guard by shrinking the iteration cap (an unexported test
+// seam) to 1 on a problem that needs several pivots. Without the fix this
+// test fails: err is nil.
+func TestSimplex_NonConvergenceReturnsError(t *testing.T) {
+	saved := simplexMaxIter
+	simplexMaxIter = 1
+	defer func() { simplexMaxIter = saved }()
+
+	// A small Klee-Minty-style LP that takes more than one pivot to solve.
+	// maximize 100 x1 + 10 x2 + x3  (==> minimize the negatives)
+	// s.t.  x1            <= 1
+	//       20 x1 +  x2   <= 100
+	//      200 x1 + 20 x2 + x3 <= 10000,  x >= 0
+	c := []float64{-100, -10, -1}
+	A := [][]float64{
+		{1, 0, 0},
+		{20, 1, 0},
+		{200, 20, 1},
+	}
+	b := []float64{1, 100, 10000}
+
+	if _, _, err := SimplexMethod(c, A, b); err == nil {
+		t.Fatal("SimplexMethod exhausting its iteration cap should return a non-nil error, got nil")
+	}
+}
