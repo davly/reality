@@ -15,6 +15,13 @@ import (
 // All functions are self-contained with zero external dependencies.
 // ---------------------------------------------------------------------------
 
+// simplexMaxIter caps the number of simplex pivots before SimplexMethod
+// declares non-convergence. With Bland's anti-cycling rule the method is
+// finite, so this is a defensive ceiling against pathological / numerically
+// degenerate inputs. It is a package variable (rather than a const) so tests
+// can lower it to exercise the non-convergence guard.
+var simplexMaxIter = 10000
+
 // SimplexMethod solves a standard-form linear program using the revised simplex
 // method with Bland's anti-cycling rule.
 //
@@ -84,7 +91,8 @@ func SimplexMethod(c []float64, A [][]float64, b []float64) ([]float64, float64,
 	}
 
 	// Simplex iterations with Bland's rule.
-	const maxIter = 10000
+	maxIter := simplexMaxIter
+	converged := false
 	for iter := 0; iter < maxIter; iter++ {
 		// Compute reduced costs: rc[j] = c[j] - c_B' * A_j.
 		// Find entering variable (Bland: smallest index with rc < 0).
@@ -101,6 +109,7 @@ func SimplexMethod(c []float64, A [][]float64, b []float64) ([]float64, float64,
 		}
 		if entering == -1 {
 			// Optimal.
+			converged = true
 			break
 		}
 
@@ -139,6 +148,13 @@ func SimplexMethod(c []float64, A [][]float64, b []float64) ([]float64, float64,
 		}
 
 		basis[leaving] = entering
+	}
+
+	// Guard: the loop exhausted its pivot budget without reaching optimality
+	// (entering == -1 was never observed). Returning the current tableau would
+	// be a silent non-optimal result, so report a non-nil error instead.
+	if !converged {
+		return nil, 0, errors.New("optim.SimplexMethod: did not converge within iteration limit")
 	}
 
 	// Extract solution.
