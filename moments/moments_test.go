@@ -360,3 +360,172 @@ func TestNewWelfordVecRejectsBadDim(t *testing.T) {
 	}()
 	NewWelfordVec(0)
 }
+
+// TestM2Accessor pins the new M2 accessor against the variance accessors it
+// feeds: M2 is the sum of squared deviations, so Variance == M2/(n-1) and
+// PopVariance == M2/n exactly. For the golden series M2 = popVar*n = 4*8 = 32.
+func TestM2Accessor(t *testing.T) {
+	w := feed(goldenData)
+
+	if got, want := w.M2(), goldenPopVar*float64(len(goldenData)); !approx(got, want, 1e-12) {
+		t.Errorf("M2 = %v, want %v (popVar*n)", got, want)
+	}
+	// M2 must be the exact numerator of both variance accessors.
+	if got, want := w.Variance(), w.M2()/float64(w.Count()-1); !approx(got, want, 1e-15) {
+		t.Errorf("Variance = %v but M2/(n-1) = %v — M2 is not the sample-variance numerator", got, want)
+	}
+	if got, want := w.PopVariance(), w.M2()/float64(w.Count()); !approx(got, want, 1e-15) {
+		t.Errorf("PopVariance = %v but M2/n = %v — M2 is not the pop-variance numerator", got, want)
+	}
+
+	// Empty and single-observation accumulators carry no dispersion => M2 == 0.
+	var empty Welford
+	if got := empty.M2(); got != 0 {
+		t.Errorf("empty M2 = %v, want 0", got)
+	}
+	var one Welford
+	one.Update(42)
+	if got := one.M2(); got != 0 {
+		t.Errorf("single-observation M2 = %v, want 0", got)
+	}
+}
+
+// TestNewWelfordRoundTrip is the headline persistence test: a Welford built by
+// streaming, decomposed into its (Count, Mean, M2) triple, and reconstructed via
+// NewWelford must be byte-for-byte identical downstream — every accessor equal
+// EXACTLY, not just to a tolerance, since reconstruction copies the same scalars.
+func TestNewWelfordRoundTrip(t *testing.T) {
+	w1 := feed(goldenData)
+
+	// Decompose to the persisted triple, then rehydrate.
+	w2 := NewWelford(w1.Count(), w1.Mean(), w1.M2())
+
+	if w2.Count() != w1.Count() {
+		t.Errorf("round-trip Count = %d, want %d", w2.Count(), w1.Count())
+	}
+	if w2.Mean() != w1.Mean() {
+		t.Errorf("round-trip Mean = %v, want exactly %v", w2.Mean(), w1.Mean())
+	}
+	if w2.M2() != w1.M2() {
+		t.Errorf("round-trip M2 = %v, want exactly %v", w2.M2(), w1.M2())
+	}
+	if w2.Variance() != w1.Variance() {
+		t.Errorf("round-trip Variance = %v, want exactly %v", w2.Variance(), w1.Variance())
+	}
+	if w2.PopVariance() != w1.PopVariance() {
+		t.Errorf("round-trip PopVariance = %v, want exactly %v", w2.PopVariance(), w1.PopVariance())
+	}
+	if w2.StdDev() != w1.StdDev() {
+		t.Errorf("round-trip StdDev = %v, want exactly %v", w2.StdDev(), w1.StdDev())
+	}
+	// The reconstructed value must be struct-identical to the streamed one, so it
+	// is interchangeable everywhere a Welford value flows (e.g. Merge, ==).
+	if w2 != *w1 {
+		t.Errorf("round-trip struct = %+v, want %+v", w2, *w1)
+	}
+}
+
+// TestNewWelfordMergeEquivalence proves the reconstructed state behaves
+// identically DOWNSTREAM: merging a rehydrated w2 with a third stream w3 yields
+// the same result as merging the original streamed w1 with w3. If NewWelford
+// dropped or mangled any field, the merge (which reads n, mean AND m2) diverges.
+func TestNewWelfordMergeEquivalence(t *testing.T) {
+	w1 := feed(goldenData)
+	w2 := NewWelford(w1.Count(), w1.Mean(), w1.M2())
+
+	w3 := feed([]float64{100.5, -7.25, 3.0, 88.0, 12.5, -1.0, 0.0})
+
+	fromStreamed := Merge(*w1, *w3)
+	fromRehydrated := Merge(w2, *w3)
+
+	if fromRehydrated != fromStreamed {
+		t.Errorf("Merge(rehydrated, w3) = %+v, want %+v (Merge(streamed, w3)) — "+
+			"reconstructed state is not downstream-equivalent", fromRehydrated, fromStreamed)
+	}
+}
+
+// TestNewWelfordGolden pins NewWelford against hand-computed values and the
+// documented edge conventions, independent of any streaming.
+func TestNewWelfordGolden(t *testing.T) {
+	// Direct golden: n=8, mean=5, M2=32 => PopVar 4, SamVar 32/7, M2() 32.
+	w := NewWelford(8, 5.0, 32.0)
+	if got := w.Count(); got != 8 {
+		t.Errorf("Count = %d, want 8", got)
+	}
+	if got := w.Mean(); got != 5.0 {
+		t.Errorf("Mean = %v, want 5", got)
+	}
+	if got := w.M2(); got != 32.0 {
+		t.Errorf("M2 = %v, want 32", got)
+	}
+	if got := w.PopVariance(); got != 4.0 {
+		t.Errorf("PopVariance = %v, want exactly 4", got)
+	}
+	if got, want := w.Variance(), 32.0/7.0; !approx(got, want, 1e-12) {
+		t.Errorf("Variance = %v, want %v (32/7)", got, want)
+	}
+
+	// Empty: NewWelford(0,0,0) is the zero accumulator.
+	if got := NewWelford(0, 0, 0); got != (Welford{}) {
+		t.Errorf("NewWelford(0,0,0) = %+v, want zero Welford", got)
+	}
+	// n<0 is clamped to empty; mean/m2 ignored.
+	if got := NewWelford(-3, 99, 99); got != (Welford{}) {
+		t.Errorf("NewWelford(-3,99,99) = %+v, want zero Welford (n<0 => empty)", got)
+	}
+	empty := NewWelford(0, 0, 0)
+	if empty.Count() != 0 {
+		t.Errorf("empty Count = %d, want 0", empty.Count())
+	}
+	if empty.Variance() != 0 {
+		t.Errorf("empty Variance = %v, want 0", empty.Variance())
+	}
+
+	// n=1: a single observation carries no dispersion => Variance 0 (n<2).
+	one := NewWelford(1, 42.0, 0)
+	if got := one.Count(); got != 1 {
+		t.Errorf("n=1 Count = %d, want 1", got)
+	}
+	if got := one.Mean(); got != 42.0 {
+		t.Errorf("n=1 Mean = %v, want 42", got)
+	}
+	if got := one.Variance(); got != 0 {
+		t.Errorf("n=1 Variance = %v, want 0 (n<2)", got)
+	}
+}
+
+// TestNewWelfordM2IsLoadBearing is the MUTATION test: it proves M2 is actually
+// carried through reconstruction. If NewWelford ignored its m2 argument (e.g.
+// hard-coded 0), the rehydrated dispersion would collapse to 0 and these
+// assertions would fire — so a passing run is positive evidence that M2 is
+// load-bearing in the round-trip, not incidental.
+func TestNewWelfordM2IsLoadBearing(t *testing.T) {
+	w1 := feed(goldenData)
+
+	// The faithful reconstruction must reproduce the non-zero dispersion.
+	good := NewWelford(w1.Count(), w1.Mean(), w1.M2())
+	if good.Variance() == 0 {
+		t.Fatalf("sanity: golden series has non-zero variance but reconstruction is 0")
+	}
+	if good.Variance() != w1.Variance() || good.M2() != w1.M2() {
+		t.Errorf("faithful reconstruction diverged: M2 %v/%v variance %v/%v",
+			good.M2(), w1.M2(), good.Variance(), w1.Variance())
+	}
+
+	// The MUTANT — dropping m2 to 0 — MUST differ. This is the discriminating
+	// check: if it did NOT differ, M2 would be dead weight in NewWelford.
+	mutant := NewWelford(w1.Count(), w1.Mean(), 0)
+	if mutant.M2() != 0 {
+		t.Fatalf("mutant M2 = %v, want 0 (test wiring)", mutant.M2())
+	}
+	if mutant.Variance() != 0 {
+		t.Errorf("mutant (m2=0) Variance = %v, want 0", mutant.Variance())
+	}
+	if mutant.M2() == good.M2() {
+		t.Errorf("mutant M2 (%v) equals faithful M2 (%v) — NewWelford is ignoring m2; "+
+			"round-trip would silently lose dispersion", mutant.M2(), good.M2())
+	}
+	if mutant.Variance() == good.Variance() {
+		t.Errorf("mutant Variance equals faithful Variance — m2 is not load-bearing")
+	}
+}
