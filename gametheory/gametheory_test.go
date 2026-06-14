@@ -399,6 +399,21 @@ func TestUCB1_Empty(t *testing.T) {
 	}
 }
 
+// TestUCB1_DegenerateTotalPulls_NoSilentNaN pins the guard against an
+// inconsistent totalPulls (< 1, or < sum(counts)). Without it, log(0)/log(neg)
+// makes every score NaN and `NaN > bestScore` is always false, so the lowest-
+// index arm silently wins regardless of reward. arm 2 has the clearly highest
+// average reward and must be selected.
+func TestUCB1_DegenerateTotalPulls_NoSilentNaN(t *testing.T) {
+	counts := []int{5, 5, 5}
+	rewards := []float64{1.0, 2.0, 9.0} // averages 0.2, 0.4, 1.8 -> arm 2 best
+	for _, total := range []int{0, -3, 2} { // 0, negative, and < sum(=15)
+		if got := UCB1(counts, rewards, total); got != 2 {
+			t.Errorf("totalPulls=%d: expected highest-reward arm 2, got %d (silent NaN/least-index bug?)", total, got)
+		}
+	}
+}
+
 // ---------------------------------------------------------------------------
 // ThompsonSampling
 // ---------------------------------------------------------------------------
