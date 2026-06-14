@@ -89,6 +89,33 @@ type Welford struct {
 	m2   float64 // running sum of squared deviations from the current mean
 }
 
+// NewWelford constructs a Welford directly from a persisted scalar state triple:
+// the observation count n, the running mean, and m2 — the Welford M2 aggregate
+// (the running SUM OF SQUARED DEVIATIONS from the mean, NOT the variance). It is
+// the inverse of the (Count(), Mean(), M2()) accessors and exists so a consumer
+// that stores a Welford on disk as three scalars (e.g. folio persisting n / mean
+// / m2) can REHYDRATE the encapsulated accumulator without re-streaming the
+// underlying series — the unexported fields make a literal impossible from
+// outside the package.
+//
+// To recover the sample (n-1) variance call Variance() (= M2/(n-1)); for the
+// population (n) variance call PopVariance() (= M2/n). Pass m2 as the raw M2
+// aggregate, NOT a variance: rebuild from a stored variance v as
+// NewWelford(n, mean, v*float64(n-1)) (sample) or v*float64(n) (population).
+//
+// A non-positive n is treated as the empty / zero accumulator (count 0, mean 0,
+// M2 0), matching the zero-value Welford and the empty conventions of the
+// accessors; mean and m2 are ignored in that case. The caller owns the validity
+// of the persisted triple — NewWelford does not re-derive or sanity-check m2
+// against n and mean (it cannot, having discarded the series), so a corrupt
+// store yields a correspondingly corrupt accumulator.
+func NewWelford(n int, mean, m2 float64) Welford {
+	if n <= 0 {
+		return Welford{}
+	}
+	return Welford{n: n, mean: mean, m2: m2}
+}
+
 // Update folds one observation x into w in-place, in O(1).
 //
 //	n      = n + 1
@@ -110,6 +137,14 @@ func (w *Welford) Count() int { return w.n }
 // Mean returns the running arithmetic mean, or 0 for an empty accumulator
 // (matching folio's scalar WelfordState convention, not NaN).
 func (w *Welford) Mean() float64 { return w.mean }
+
+// M2 returns the internal Welford M2 aggregate: the running SUM OF SQUARED
+// DEVIATIONS from the current mean (NOT a variance). It is 0 for an empty or
+// single-observation accumulator. M2 completes the (Count(), Mean(), M2())
+// triple needed to round-trip a Welford through persistence via NewWelford, and
+// is the numerator the variance accessors divide: Variance() = M2()/(Count()-1)
+// (sample, n>=2) and PopVariance() = M2()/Count() (population, n>=1).
+func (w *Welford) M2() float64 { return w.m2 }
 
 // Variance returns the unbiased SAMPLE variance (divisor n-1):
 //
