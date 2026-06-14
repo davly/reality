@@ -97,21 +97,76 @@ func (g ADMG) IdentifyEffect(treatment, outcome []string) (expr string, identifi
 			return "", false, &idError{"treatment and outcome overlap at: " + n}
 		}
 	}
-	e, ok := g.id(y, x, &exprP{}) // P starts as the joint over all of V
+	e, ok := g.id(y, x, &exprP{}, &hedgeBox{}) // P starts as the joint over all of V
 	if !ok {
 		return "", false, nil
 	}
 	return e.String(), true, nil
 }
 
+// IdentifyEffectWithWitness is IdentifyEffect plus, when the effect is NOT
+// identifiable, the hedge certificate explaining why (nil when identifiable).
+func (g ADMG) IdentifyEffectWithWitness(treatment, outcome []string) (expr string, identifiable bool, hedge *Hedge, err error) {
+	known := setOf(g.nodes)
+	for _, n := range append(append([]string{}, treatment...), outcome...) {
+		if _, ok := known[n]; !ok {
+			return "", false, nil, &idError{"unknown node: " + n}
+		}
+	}
+	x, y := setOf(treatment), setOf(outcome)
+	for n := range x {
+		if _, ok := y[n]; ok {
+			return "", false, nil, &idError{"treatment and outcome overlap at: " + n}
+		}
+	}
+	hb := &hedgeBox{}
+	e, ok := g.id(y, x, &exprP{}, hb)
+	if !ok {
+		return "", false, hb.h, nil
+	}
+	return e.String(), true, nil, nil
+}
+
+func join(xs []string) string {
+	out := "{"
+	for i, s := range xs {
+		if i > 0 {
+			out += ","
+		}
+		out += s
+	}
+	return out + "}"
+}
+
 type idError struct{ msg string }
 
 func (e *idError) Error() string { return "graph: ID: " + e.msg }
 
+// Hedge is the non-identifiability certificate (Shpitser & Pearl 2006). When an
+// effect is not identifiable, the algorithm exhibits a hedge: a pair of nested
+// C-forests ⟨Forest, Subforest⟩ over which the latent (bidirected) confounding
+// entangles the treatment with the outcome's ancestors. Subforest ⊆ Forest,
+// Subforest is disjoint from the treatment, and Forest meets the treatment — so
+// no observational functional can separate the intervened from the confounded
+// part. It tells you WHERE to intervene to restore identifiability (break a
+// latent edge inside Forest, or randomise a treatment in it).
+type Hedge struct {
+	Forest    []string // F: the confounded C-forest at the failure point (meets X)
+	Subforest []string // F': the inner C-forest rooted in An(Y), disjoint from X
+}
+
+func (h *Hedge) String() string {
+	return "hedge⟨F=" + join(h.Forest) + ", F'=" + join(h.Subforest) + "⟩"
+}
+
+// hedgeBox carries the hedge captured at the deepest FAIL point up the recursion.
+type hedgeBox struct{ h *Hedge }
+
 // id is the recursive Shpitser-Pearl procedure on the current subgraph g.
-// y, x are vertex sets; p is the current probabilistic expression. Returns the
-// identifying expression and whether identification succeeded.
-func (g ADMG) id(y, x map[string]struct{}, p expr) (expr, bool) {
+// y, x are vertex sets; p is the current probabilistic expression; hb captures
+// the hedge witness on failure. Returns the identifying expression and whether
+// identification succeeded.
+func (g ADMG) id(y, x map[string]struct{}, p expr, hb *hedgeBox) (expr, bool) {
 	V := setOf(g.nodes)
 
 	// Line 1: no intervention -> marginalise.
@@ -123,7 +178,7 @@ func (g ADMG) id(y, x map[string]struct{}, p expr) (expr, bool) {
 	anY := g.ancestors(y)
 	if len(anY) < len(V) { // An(Y) is always within V; V != An(Y) iff it is strictly smaller
 		gi := g.induced(anY)
-		return gi.id(y, inter(x, anY), marginal(diff(V, anY), p))
+		return gi.id(y, inter(x, anY), marginal(diff(V, anY), p), hb)
 	}
 
 	// Line 3: W = (V \ X) \ An(Y) in G_{\bar X}.
@@ -131,7 +186,7 @@ func (g ADMG) id(y, x map[string]struct{}, p expr) (expr, bool) {
 	anYxbar := gxbar.ancestors(y)
 	w := diff(diff(V, x), anYxbar)
 	if len(w) > 0 {
-		return g.id(y, union(x, w), p)
+		return g.id(y, union(x, w), p, hb)
 	}
 
 	// Line 4: c-components of G[V \ X].
@@ -140,7 +195,7 @@ func (g ADMG) id(y, x map[string]struct{}, p expr) (expr, bool) {
 	if len(cc) > 1 {
 		factors := make([]expr, 0, len(cc))
 		for _, s := range cc {
-			sub, ok := g.id(setOf(s), diff(V, setOf(s)), p)
+			sub, ok := g.id(setOf(s), diff(V, setOf(s)), p, hb)
 			if !ok {
 				return nil, false
 			}
@@ -155,6 +210,7 @@ func (g ADMG) id(y, x map[string]struct{}, p expr) (expr, bool) {
 
 	// Line 5/6: if the whole graph is one c-component -> hedge -> NON-identifiable.
 	if len(ccG) == 1 {
+		hb.h = &Hedge{Forest: append([]string{}, g.nodes...), Subforest: idSortedKeys(s)}
 		return nil, false
 	}
 
@@ -174,7 +230,7 @@ func (g ADMG) id(y, x map[string]struct{}, p expr) (expr, bool) {
 		}
 	}
 	gsp := g.induced(sprime)
-	return gsp.id(inter(y, sprime), inter(x, sprime), gsp.qFactor(sprime, order))
+	return gsp.id(inter(y, sprime), inter(x, sprime), gsp.qFactor(sprime, order), hb)
 }
 
 // qFactor returns the c-component factorisation Q[S] = prod_{Vi in S} P(Vi | V^{(i-1)})

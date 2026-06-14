@@ -60,7 +60,7 @@ func (g ADMG) IdentifyConditionalEffect(treatment, outcome, conditioning []strin
 	}
 
 	// P(y | do x, z) = ID(y ∪ z ; do x) / Σ_y ID(y ∪ z ; do x).
-	e, ok := g.id(union(y, z), x, &exprP{})
+	e, ok := g.id(union(y, z), x, &exprP{}, &hedgeBox{})
 	if !ok {
 		return "", false, nil
 	}
