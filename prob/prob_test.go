@@ -322,6 +322,50 @@ func TestWilsonConfidenceInterval(t *testing.T) {
 	}
 }
 
+func TestWilsonScoreInterval(t *testing.T) {
+	// wantLow/wantHigh of NaN means "do not assert this bound exactly" (still
+	// checked for finite + in-range).
+	tests := []struct {
+		name     string
+		p        float64
+		n        int
+		z        float64
+		wantLow  float64
+		wantHigh float64
+		tol      float64
+	}{
+		// Reaches the true mathematical bounds, unlike the clamped CI:
+		{"p=1.0 upper hits 1.0", 1.0, 100, 1.96, math.NaN(), 1.0, 1e-9},
+		{"p=0.0 lower hits 0.0", 0.0, 30, 1.96, 0.0, math.NaN(), 1e-9},
+		{"p=0.99,n=100 upper ~0.9982", 0.99, 100, 1.96, math.NaN(), 0.9982, 1e-3},
+		{"n=100,p=0.5 symmetric", 0.5, 100, 1.96, 0.40, 0.60, 0.01},
+		// Out-of-range / degenerate inputs stay finite in [0,1] (no NaN):
+		{"p=1.5 clamps to 1.0", 1.5, 100, 1.96, math.NaN(), 1.0, 1e-9},
+		{"p=-0.1 clamps to 0.0", -0.1, 100, 1.96, 0.0, math.NaN(), 1e-9},
+		{"n=0 fallback finite", 0.5, 0, 1.96, 0.2, 0.8, 1e-12},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			low, high := WilsonScoreInterval(tt.p, tt.n, tt.z)
+			if math.IsNaN(low) || math.IsNaN(high) {
+				t.Fatalf("got NaN bound: low=%v high=%v", low, high)
+			}
+			if low < 0 || low > 1 || high < 0 || high > 1 {
+				t.Errorf("bounds escaped [0,1]: low=%v high=%v", low, high)
+			}
+			if !math.IsNaN(tt.wantLow) && math.Abs(low-tt.wantLow) > tt.tol {
+				t.Errorf("low = %v, want ~%v (tol %v)", low, tt.wantLow, tt.tol)
+			}
+			if !math.IsNaN(tt.wantHigh) && math.Abs(high-tt.wantHigh) > tt.tol {
+				t.Errorf("high = %v, want ~%v (tol %v)", high, tt.wantHigh, tt.tol)
+			}
+			if low > high {
+				t.Errorf("low (%v) > high (%v)", low, high)
+			}
+		})
+	}
+}
+
 // ---------------------------------------------------------------------------
 // SimpleAverage
 // ---------------------------------------------------------------------------

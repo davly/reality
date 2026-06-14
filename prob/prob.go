@@ -253,6 +253,49 @@ func WilsonConfidenceInterval(p float64, n int, z float64) (low, high float64) {
 	return ClampProbability(centre - margin), ClampProbability(centre + margin)
 }
 
+// clamp01 clamps x into the MATHEMATICAL probability range [0,1] (unlike
+// ClampProbability, which clamps into the epistemic forecast band
+// [MinProb,MaxProb]=[0.01,0.99]). NaN maps to 0 so no caller can propagate a NaN.
+func clamp01(x float64) float64 {
+	switch {
+	case math.IsNaN(x):
+		return 0
+	case x < 0:
+		return 0
+	case x > 1:
+		return 1
+	default:
+		return x
+	}
+}
+
+// WilsonScoreInterval is WilsonConfidenceInterval for confidence-INTERVAL
+// reporting: it lets the bounds reach the true mathematical limits 0 and 1 (the
+// whole point of a Wilson score interval at extreme proportions) instead of
+// clamping into the forecast band [0.01,0.99]. Use this on surfaces that REPORT
+// an interval (e.g. win-rate odds CIs, species-rate CIs) — e.g. 99/100 wins
+// yields a high of ~0.998, not a flat 0.99, and 100/100 yields exactly 1.0.
+// WilsonConfidenceInterval is left unchanged for callers that intentionally want
+// the clamped epistemic band (log-odds inputs). p is clamped into [0,1] first so
+// an out-of-range or NaN input can never produce a NaN bound.
+func WilsonScoreInterval(p float64, n int, z float64) (low, high float64) {
+	p = clamp01(p)
+	if n <= 0 {
+		return clamp01(p - 0.3), clamp01(p + 0.3)
+	}
+	if z <= 0 {
+		z = 1.96
+	}
+
+	nf := float64(n)
+	z2 := z * z
+	denominator := 1.0 + z2/nf
+	centre := (p + z2/(2.0*nf)) / denominator
+	margin := (z * math.Sqrt((p*(1.0-p)+z2/(4.0*nf))/nf)) / denominator
+
+	return clamp01(centre - margin), clamp01(centre + margin)
+}
+
 // SimpleAverage computes the arithmetic mean of values.
 // Returns 0.5 if the slice is empty. Result is clamped to [MinProb, MaxProb].
 //
