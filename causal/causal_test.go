@@ -329,6 +329,147 @@ func TestInsufficientData_NoTreatedArm(t *testing.T) {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// REFUTATION layer (BackdoorATEWithRefutation): DoWhy-style falsification
+// checks on the IDENTIFIED back-door estimate.
+//
+// Salvage subset: placebo-treatment + bootstrap-subset only. The
+// random-common-cause refuter is deliberately NOT implemented because the
+// adjustment set is graph-derived (graph.BackdoorAdjustmentSet), never from
+// data columns — an injected synthetic covariate can never enter Z, so it is a
+// provable no-op. See the doc comment on BackdoorATEWithRefutation / Refutation.
+// ---------------------------------------------------------------------------
+
+func TestRefutation_PlaceboCollapsesToZero(t *testing.T) {
+	edges := []graph.Edge{{"Z", "X"}, {"Z", "Y"}, {"X", "Y"}}
+	data := simpsonData()
+
+	res, err := BackdoorATEWithRefutation(edges, "X", "Y", data, RefuteOptions{Seed: 1})
+	if err != nil {
+		t.Fatalf("BackdoorATEWithRefutation error: %v", err)
+	}
+	// No regression: point estimate identical to BackdoorATE's 0.20.
+	if !res.Identifiable {
+		t.Fatalf("expected Identifiable=true")
+	}
+	if !approx(res.BackdoorATE, 0.20) {
+		t.Errorf("BackdoorATE = %v, want 0.20 (refutation must not move the point estimate)", res.BackdoorATE)
+	}
+	if res.Refutation == nil {
+		t.Fatalf("expected Refutation != nil for an identifiable effect")
+	}
+	if res.Refutation.PlaceboTrials != 100 {
+		t.Errorf("PlaceboTrials = %d, want default 100", res.Refutation.PlaceboTrials)
+	}
+	// The MEAN placebo ATE over many permutations must collapse toward 0 (the
+	// permuted treatment is independent of Y given Z). This is far smaller than
+	// the true effect (0.20), so it discriminates a real effect from noise.
+	if math.Abs(res.Refutation.PlaceboATE) >= 0.05 {
+		t.Errorf("PlaceboATE = %v, want |PlaceboATE| < 0.05 (mean placebo must collapse to ~0)", res.Refutation.PlaceboATE)
+	}
+	if !res.Refutation.PlaceboPassed {
+		t.Errorf("expected PlaceboPassed=true, got false (PlaceboATE=%v, tol=%v)",
+			res.Refutation.PlaceboATE, res.Refutation.PlaceboTolerance)
+	}
+	if !approx(res.Refutation.PlaceboTolerance, 0.05) {
+		t.Errorf("PlaceboTolerance = %v, want default 0.05", res.Refutation.PlaceboTolerance)
+	}
+}
+
+func TestRefutation_BootstrapStable(t *testing.T) {
+	edges := []graph.Edge{{"Z", "X"}, {"Z", "Y"}, {"X", "Y"}}
+	data := simpsonData()
+
+	res, err := BackdoorATEWithRefutation(edges, "X", "Y", data, RefuteOptions{Seed: 1})
+	if err != nil {
+		t.Fatalf("BackdoorATEWithRefutation error: %v", err)
+	}
+	if res.Refutation == nil {
+		t.Fatalf("expected Refutation != nil")
+	}
+	if res.Refutation.Resamples != 200 {
+		t.Errorf("Resamples = %d, want default 200", res.Refutation.Resamples)
+	}
+	// Bootstrap mean should sit near the point estimate (0.20).
+	if math.Abs(res.Refutation.BootstrapMean-0.20) > 0.05 {
+		t.Errorf("BootstrapMean = %v, want within 0.05 of 0.20", res.Refutation.BootstrapMean)
+	}
+	// Spread positive but well below the signal (0.20) => stable relative to the
+	// effect. On this small N=100 fixture the genuine bootstrap std is ~0.1, so
+	// the band is < 0.15 (about half the point estimate), not arbitrarily tiny.
+	if !(res.Refutation.BootstrapStd > 0 && res.Refutation.BootstrapStd < 0.15) {
+		t.Errorf("BootstrapStd = %v, want 0 < std < 0.15 (stable relative to 0.20 effect)", res.Refutation.BootstrapStd)
+	}
+}
+
+func TestRefutation_Deterministic(t *testing.T) {
+	edges := []graph.Edge{{"Z", "X"}, {"Z", "Y"}, {"X", "Y"}}
+	data := simpsonData()
+
+	r1, err := BackdoorATEWithRefutation(edges, "X", "Y", data, RefuteOptions{Seed: 1})
+	if err != nil {
+		t.Fatalf("run 1 error: %v", err)
+	}
+	r2, err := BackdoorATEWithRefutation(edges, "X", "Y", data, RefuteOptions{Seed: 1})
+	if err != nil {
+		t.Fatalf("run 2 error: %v", err)
+	}
+	if r1.Refutation == nil || r2.Refutation == nil {
+		t.Fatalf("expected non-nil Refutation on both runs")
+	}
+	if r1.Refutation.PlaceboATE != r2.Refutation.PlaceboATE {
+		t.Errorf("PlaceboATE not reproducible: %v vs %v", r1.Refutation.PlaceboATE, r2.Refutation.PlaceboATE)
+	}
+	if r1.Refutation.BootstrapMean != r2.Refutation.BootstrapMean {
+		t.Errorf("BootstrapMean not reproducible: %v vs %v", r1.Refutation.BootstrapMean, r2.Refutation.BootstrapMean)
+	}
+	if r1.Refutation.BootstrapStd != r2.Refutation.BootstrapStd {
+		t.Errorf("BootstrapStd not reproducible: %v vs %v", r1.Refutation.BootstrapStd, r2.Refutation.BootstrapStd)
+	}
+}
+
+func TestRefutation_NotIdentifiableSkipsRefuter(t *testing.T) {
+	edges := []graph.Edge{{"Y", "X"}} // reverse causation => not identifiable
+
+	var data []Observation
+	data = append(data, cellNoZ(10, 1, 1)...)
+	data = append(data, cellNoZ(10, 1, 0)...)
+	data = append(data, cellNoZ(2, 0, 1)...)
+	data = append(data, cellNoZ(8, 0, 0)...)
+
+	res, err := BackdoorATEWithRefutation(edges, "X", "Y", data, RefuteOptions{Seed: 1})
+	if err != nil {
+		t.Fatalf("BackdoorATEWithRefutation error: %v", err)
+	}
+	if res.Identifiable {
+		t.Fatalf("expected Identifiable=false")
+	}
+	if res.Refutation != nil {
+		t.Errorf("expected Refutation == nil when not identifiable, got %+v", res.Refutation)
+	}
+}
+
+// TestRefutation_NoRandomCommonCauseField is a compile-time guard recording the
+// deliberate omission of the random-common-cause refuter (a provable no-op given
+// the graph-derived adjustment set). It references exactly the real Refutation
+// fields; if anyone adds a random-common-cause field, this enumeration becomes a
+// reminder that the omission was intentional and source-grounded.
+func TestRefutation_NoRandomCommonCauseField(t *testing.T) {
+	// UNKEYED literal: lists every field in order. Adding any field (e.g. a
+	// random-common-cause one) will break this compile, forcing a reviewer to
+	// re-confirm the deliberate, source-grounded omission.
+	r := Refutation{
+		0,     // PlaceboATE
+		0,     // PlaceboTrials
+		false, // PlaceboPassed
+		0,     // PlaceboTolerance
+		0,     // Resamples
+		0,     // BootstrapMean
+		0,     // BootstrapStd
+	}
+	_ = r
+}
+
 // binary coercion: any non-zero value counts as the treated/positive arm.
 func TestBinaryCoercion(t *testing.T) {
 	if binary(0) != 0 {
