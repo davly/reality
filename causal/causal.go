@@ -4,7 +4,7 @@
 // must be adjusted for, then computes the adjusted average treatment effect
 // (ATE) by stratifying the observed data on that adjustment set.
 //
-// The problem it solves
+// # The problem it solves
 //
 // In observational data the naive association E[Y|X=1] - E[Y|X=0] is generally
 // a BIASED estimate of the causal effect of X on Y, because a confounder Z may

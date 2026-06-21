@@ -3,6 +3,7 @@ package causal
 import (
 	"errors"
 	"math"
+	"math/rand"
 	"testing"
 
 	"github.com/davly/reality/graph"
@@ -45,13 +46,15 @@ func cellNoZ(n, x, y int) []Observation {
 //	  X=1: 40 obs, 12 with Y=1  => E[Y|X=1,Z=1] = 0.3   contrast +0.2
 //
 // Naive:    E[Y|X=1] = (7+12)/(10+40) = 19/50 = 0.38
-//           E[Y|X=0] = (20+1)/(40+10) = 21/50 = 0.42
-//           NaiveATE = 0.38 - 0.42 = -0.04   (NEGATIVE)
+//
+//	E[Y|X=0] = (20+1)/(40+10) = 21/50 = 0.42
+//	NaiveATE = 0.38 - 0.42 = -0.04   (NEGATIVE)
 //
 // Adjusted: P(Z=0)=50/100=0.5, P(Z=1)=50/100=0.5
-//           BackdoorATE = 0.2*0.5 + 0.2*0.5 = +0.20   (POSITIVE)
-//           AdjustedOutcome(1) = 0.7*0.5 + 0.3*0.5 = 0.50
-//           AdjustedOutcome(0) = 0.5*0.5 + 0.1*0.5 = 0.30
+//
+//	BackdoorATE = 0.2*0.5 + 0.2*0.5 = +0.20   (POSITIVE)
+//	AdjustedOutcome(1) = 0.7*0.5 + 0.3*0.5 = 0.50
+//	AdjustedOutcome(0) = 0.5*0.5 + 0.1*0.5 = 0.30
 //
 // The sign FLIPS: naive says treatment hurts (-0.04), adjustment reveals it
 // helps (+0.20). This is the discriminating test: a naive-association estimator
@@ -152,10 +155,12 @@ func TestSimpsonsParadox_AdjustmentFlipsSign(t *testing.T) {
 // BackdoorATE == NaiveATE.
 //
 // Data (N=40):
-//   X=0: 20 obs, 5 with Y=1  => E[Y|X=0] = 0.25
-//   X=1: 20 obs, 15 with Y=1 => E[Y|X=1] = 0.75
-//   NaiveATE = 0.75 - 0.25 = 0.50, and with empty Z the single stratum gives
-//   the same number, BackdoorATE = 0.50.
+//
+//	X=0: 20 obs, 5 with Y=1  => E[Y|X=0] = 0.25
+//	X=1: 20 obs, 15 with Y=1 => E[Y|X=1] = 0.75
+//	NaiveATE = 0.75 - 0.25 = 0.50, and with empty Z the single stratum gives
+//	the same number, BackdoorATE = 0.50.
+//
 // ---------------------------------------------------------------------------
 func TestNoConfounding_AdjustedEqualsNaive(t *testing.T) {
 	edges := []graph.Edge{{"X", "Y"}}
@@ -271,18 +276,21 @@ func TestNotIdentifiable_MissingNode(t *testing.T) {
 // DAG: Z->X, Z->Y, X->Y. Back-door set {Z}.
 //
 // Data:
-//   Z=0 stratum (40 obs): BOTH arms present.
-//     X=0: 20 obs, 10 Y=1 => E[Y|X=0,Z=0]=0.5
-//     X=1: 20 obs, 16 Y=1 => E[Y|X=1,Z=0]=0.8   contrast +0.3
-//   Z=1 stratum (10 obs): ONLY X=1 present (no untreated) => POSITIVITY VIOLATED.
-//     X=1: 10 obs, 5 Y=1
+//
+//	Z=0 stratum (40 obs): BOTH arms present.
+//	  X=0: 20 obs, 10 Y=1 => E[Y|X=0,Z=0]=0.5
+//	  X=1: 20 obs, 16 Y=1 => E[Y|X=1,Z=0]=0.8   contrast +0.3
+//	Z=1 stratum (10 obs): ONLY X=1 present (no untreated) => POSITIVITY VIOLATED.
+//	  X=1: 10 obs, 5 Y=1
 //
 // Total N=50. Dropped mass = 10/50 = 0.2.
 // Usable strata: only Z=0, with P(Z=0 | usable weighting) computed as its share
 // of the FULL sample => 40/50 = 0.8 weight in the un-normalized sum.
-//   AdjustedOutcome1 = 0.8 (E[Y|X=1,Z=0]) * 0.8 = 0.64
-//   AdjustedOutcome0 = 0.5 (E[Y|X=0,Z=0]) * 0.8 = 0.40
-//   BackdoorATE = 0.64 - 0.40 = 0.24   (= contrast 0.3 * weight 0.8)
+//
+//	AdjustedOutcome1 = 0.8 (E[Y|X=1,Z=0]) * 0.8 = 0.64
+//	AdjustedOutcome0 = 0.5 (E[Y|X=0,Z=0]) * 0.8 = 0.40
+//	BackdoorATE = 0.64 - 0.40 = 0.24   (= contrast 0.3 * weight 0.8)
+//
 // ---------------------------------------------------------------------------
 func TestPositivityViolation_DropAndReport(t *testing.T) {
 	edges := []graph.Edge{{"Z", "X"}, {"Z", "Y"}, {"X", "Y"}}
@@ -477,5 +485,115 @@ func TestBinaryCoercion(t *testing.T) {
 	}
 	if binary(1) != 1 || binary(2) != 1 || binary(-3) != 1 {
 		t.Errorf("binary of non-zero must be 1")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Gold-standard refinement: targeted coverage of the refutation layer's
+// risk-surface branches that the headline tests do not exercise — custom
+// RefuteOptions are honoured (not silently overridden by defaults), the
+// PlaceboPassed=false branch fires when the tolerance is tighter than the
+// (small but non-zero) placebo mean, and the unexported refuter helpers handle
+// degenerate inputs (empty data / zero trials / zero resamples) without
+// dividing by zero. These are additive: they touch no production code.
+// ---------------------------------------------------------------------------
+
+// Custom RefuteOptions must be threaded through verbatim (not clobbered by the
+// zero-value defaulting), and must remain deterministic for a fixed seed.
+func TestRefutation_CustomOptionsHonored(t *testing.T) {
+	edges := []graph.Edge{{"Z", "X"}, {"Z", "Y"}, {"X", "Y"}}
+	data := simpsonData()
+
+	opts := RefuteOptions{Seed: 42, Resamples: 50, PlaceboTrials: 30, PlaceboTolerance: 0.1}
+	res, err := BackdoorATEWithRefutation(edges, "X", "Y", data, opts)
+	if err != nil {
+		t.Fatalf("BackdoorATEWithRefutation error: %v", err)
+	}
+	if res.Refutation == nil {
+		t.Fatalf("expected Refutation != nil")
+	}
+	// The non-default knobs must be reflected exactly — proving the defaulting
+	// block only fires for <=0 values and does not override caller intent.
+	if res.Refutation.PlaceboTrials != 30 {
+		t.Errorf("PlaceboTrials = %d, want 30 (custom)", res.Refutation.PlaceboTrials)
+	}
+	if res.Refutation.Resamples != 50 {
+		t.Errorf("Resamples = %d, want 50 (custom)", res.Refutation.Resamples)
+	}
+	if !approx(res.Refutation.PlaceboTolerance, 0.1) {
+		t.Errorf("PlaceboTolerance = %v, want 0.1 (custom)", res.Refutation.PlaceboTolerance)
+	}
+	// Point estimate is still produced by the BackdoorATE path: unchanged at 0.20.
+	if !approx(res.BackdoorATE, 0.20) {
+		t.Errorf("BackdoorATE = %v, want 0.20 (refutation must not move it)", res.BackdoorATE)
+	}
+	// Deterministic for this seed: a second identical call reproduces it.
+	res2, _ := BackdoorATEWithRefutation(edges, "X", "Y", data, opts)
+	if res.Refutation.PlaceboATE != res2.Refutation.PlaceboATE ||
+		res.Refutation.BootstrapMean != res2.Refutation.BootstrapMean ||
+		res.Refutation.BootstrapStd != res2.Refutation.BootstrapStd {
+		t.Errorf("custom-seed run not reproducible: %+v vs %+v", res.Refutation, res2.Refutation)
+	}
+}
+
+// PlaceboPassed must report FALSE when the configured tolerance is tighter than
+// the (small, non-zero) placebo mean. The mean placebo collapses to ~ -0.0091
+// on this seeded fixture, so a tolerance of 0.005 sits just below it: the gate
+// must flip to false. This exercises the |PlaceboATE| <= tol comparison from the
+// failing side (the headline test only covers the passing side).
+func TestRefutation_PlaceboFailsUnderTightTolerance(t *testing.T) {
+	edges := []graph.Edge{{"Z", "X"}, {"Z", "Y"}, {"X", "Y"}}
+	data := simpsonData()
+
+	res, err := BackdoorATEWithRefutation(edges, "X", "Y", data, RefuteOptions{Seed: 1, PlaceboTolerance: 0.005})
+	if err != nil {
+		t.Fatalf("BackdoorATEWithRefutation error: %v", err)
+	}
+	if res.Refutation == nil {
+		t.Fatalf("expected Refutation != nil")
+	}
+	// Precondition: the placebo mean is non-zero but well inside 0.005..0.05.
+	abs := math.Abs(res.Refutation.PlaceboATE)
+	if !(abs > 0.005 && abs < 0.05) {
+		t.Fatalf("fixture precondition broken: |PlaceboATE|=%v not in (0.005,0.05)", abs)
+	}
+	if res.Refutation.PlaceboPassed {
+		t.Errorf("PlaceboPassed = true, want false (|PlaceboATE|=%v > tol=0.005)", abs)
+	}
+}
+
+// The unexported refuter helpers must be degenerate-safe: empty data or a
+// zero trial/resample count returns the zero value rather than dividing by
+// zero (NaN) or panicking. These guards are not reachable through the public
+// API (BackdoorATEWithRefutation errors out on insufficient data and defaults
+// non-positive counts), so they are verified directly in-package.
+func TestRefuterHelpers_DegenerateInputs(t *testing.T) {
+	rng := rand.New(rand.NewSource(1))
+	z := []string{"Z"}
+	data := simpsonData()
+
+	if got := placeboATE(rng, z, "X", "Y", nil, 10); got != 0 {
+		t.Errorf("placeboATE(empty data) = %v, want 0", got)
+	}
+	if got := placeboATE(rng, z, "X", "Y", data, 0); got != 0 {
+		t.Errorf("placeboATE(trials=0) = %v, want 0", got)
+	}
+	if m, s := bootstrapATE(rng, z, "X", "Y", nil, 10); m != 0 || s != 0 {
+		t.Errorf("bootstrapATE(empty data) = (%v,%v), want (0,0)", m, s)
+	}
+	if m, s := bootstrapATE(rng, z, "X", "Y", data, 0); m != 0 || s != 0 {
+		t.Errorf("bootstrapATE(resamples=0) = (%v,%v), want (0,0)", m, s)
+	}
+}
+
+// adjustedOutcomes must return all-zero (and not NaN) on empty data — the guard
+// that protects every refuter draw when a bootstrap/placebo sample collapses.
+func TestAdjustedOutcomes_EmptyData(t *testing.T) {
+	out1, out0, dropped := adjustedOutcomes([]string{"Z"}, "X", "Y", nil)
+	if out1 != 0 || out0 != 0 || dropped != 0 {
+		t.Errorf("adjustedOutcomes(nil) = (%v,%v,%v), want (0,0,0)", out1, out0, dropped)
+	}
+	if math.IsNaN(out1) || math.IsNaN(out0) || math.IsNaN(dropped) {
+		t.Errorf("adjustedOutcomes(nil) produced NaN")
 	}
 }
