@@ -459,6 +459,20 @@ func tabulate(z []string, treatment, outcome string, data []Observation) (map[st
 	return strata, total
 }
 
+// sortedStratumKeys returns the keys of a strata map in ascending order, so
+// callers can accumulate a weighted sum over strata in a run-independent order.
+// This is what makes BackdoorATE (and therefore the refutation layer, which
+// re-estimates hundreds of times) bit-reproducible despite Go's randomized map
+// iteration order and the non-associativity of floating-point addition.
+func sortedStratumKeys(strata map[string]*stratumCounts) []string {
+	keys := make([]string, 0, len(strata))
+	for k := range strata {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
 // adjustedOutcomes computes BOTH adjusted potential outcomes
 // E[Y|do(X=1)] and E[Y|do(X=0)] and the positivity-dropped mass in one pass,
 // summing only over strata that have BOTH arms (so the within-stratum contrast
@@ -471,7 +485,14 @@ func adjustedOutcomes(z []string, treatment, outcome string, data []Observation)
 		return 0, 0, 0
 	}
 	denom := float64(total)
-	for _, sc := range strata {
+	// Accumulate over strata in a DETERMINISTIC order. Go map iteration order is
+	// randomized per run, and floating-point addition is non-associative, so
+	// summing in map order makes out1/out0/droppedMass vary in the low bits
+	// between runs (breaking the documented bit-reproducibility of BackdoorATE
+	// and the refutation layer, which sum this hundreds of times). Sorting the
+	// stratum keys pins the summation order.
+	for _, key := range sortedStratumKeys(strata) {
+		sc := strata[key]
 		if sc.n1 == 0 || sc.n0 == 0 {
 			// Positivity violation for this stratum: cannot form a contrast.
 			droppedMass += float64(sc.total) / denom
@@ -494,7 +515,10 @@ func adjustedOutcomeOneArm(z []string, treatment, outcome string, arm int, data 
 	}
 	denom := float64(total)
 	var out, droppedMass float64
-	for _, sc := range strata {
+	// Deterministic accumulation order (see adjustedOutcomes): map iteration is
+	// randomized and float addition is non-associative.
+	for _, key := range sortedStratumKeys(strata) {
+		sc := strata[key]
 		var sum float64
 		var n int
 		if arm == 1 {

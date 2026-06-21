@@ -597,3 +597,54 @@ func TestAdjustedOutcomes_EmptyData(t *testing.T) {
 		t.Errorf("adjustedOutcomes(nil) produced NaN")
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Second-pass adversarial finding: BIT-EXACT determinism of the adjusted
+// estimator under Go's randomized map-iteration order.
+//
+// adjustedOutcomes accumulates the weighted per-stratum contrasts by iterating
+// a map keyed on the stratum value-combination. Go randomizes map iteration
+// order per run, and floating-point addition is NOT associative, so summing in
+// map order makes BackdoorATE / AdjustedOutcome* vary in the low bits between
+// otherwise-identical runs. That breaks the documented bit-reproducibility of
+// BackdoorATEWithRefutation (which re-estimates hundreds of times under the same
+// seed and is compared with exact `==` in TestRefutation_Deterministic).
+//
+// This was invisible to the existing tests because simpsonData has only TWO
+// strata, where the low-bit difference happens not to surface. The fixture below
+// uses FIVE binary adjustment vars (up to 32 strata) so the summation order
+// genuinely matters. Pre-fix this fails (results differ in the last ULP across
+// runs); post-fix (sorted-key accumulation) it is bit-stable.
+// ---------------------------------------------------------------------------
+func TestAdjustedOutcomes_BitDeterministicAcrossMapOrder(t *testing.T) {
+	z := []string{"A", "B", "C", "D", "E"}
+	rng := rand.New(rand.NewSource(7))
+	var data []Observation
+	for i := 0; i < 2000; i++ {
+		o := Observation{}
+		for _, v := range z {
+			o[v] = rng.Intn(2)
+		}
+		o["X"] = rng.Intn(2)
+		o["Y"] = rng.Intn(2)
+		data = append(data, o)
+	}
+	first1, first0, firstd := adjustedOutcomes(z, "X", "Y", data)
+	// Many repetitions to exercise different randomized map orders.
+	for k := 0; k < 200; k++ {
+		o1, o0, d := adjustedOutcomes(z, "X", "Y", data)
+		if o1 != first1 || o0 != first0 || d != firstd {
+			t.Fatalf("adjustedOutcomes not bit-deterministic across map-iteration orders:\n"+
+				"  run0 = (%v, %v, %v)\n  run%d = (%v, %v, %v)",
+				first1, first0, firstd, k, o1, o0, d)
+		}
+	}
+	// adjustedOutcomeOneArm shares the same accumulation and must also be stable.
+	base, baseDrop := adjustedOutcomeOneArm(z, "X", "Y", 1, data)
+	for k := 0; k < 200; k++ {
+		v, drop := adjustedOutcomeOneArm(z, "X", "Y", 1, data)
+		if v != base || drop != baseDrop {
+			t.Fatalf("adjustedOutcomeOneArm not bit-deterministic: (%v,%v) vs (%v,%v)", v, drop, base, baseDrop)
+		}
+	}
+}
