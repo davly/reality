@@ -1,0 +1,35 @@
+{
+  "schema": "forge.decide.parity.v1",
+  "description": "Language-neutral golden KAT (R169 cross-substrate siblings) for the canonical three-way forge Decide(dominance, confidence, total) -> {uncertain|converged|escape}. Any substrate port (Go / Rust / Python / C#) loads this file and asserts each case's verdict byte-identical to its native Decide; drift fails every site simultaneously. Non-finite dominance/confidence are encoded as the string tokens \"+Inf\", \"-Inf\", \"NaN\" so the fixture stays JSON-portable; the loader maps tokens to the substrate's non-finite floats. Per OD-2 the canonical fails CLOSED on non-finite input (-> uncertain), which differs from the unguarded fork majority that would emit converged on +Inf.",
+  "thresholds": {
+    "converged_dominance": 0.70,
+    "converged_confidence": 0.65,
+    "escape_threshold": 0.60,
+    "min_observations": 3
+  },
+  "cases": [
+    { "name": "below_min_obs_total_0",            "dominance": 0.99, "confidence": 0.99, "total": 0, "verdict": "uncertain" },
+    { "name": "below_min_obs_total_2",            "dominance": 0.99, "confidence": 0.99, "total": 2, "verdict": "uncertain" },
+    { "name": "min_obs_exact_converged",          "dominance": 0.99, "confidence": 0.99, "total": 3, "verdict": "converged" },
+
+    { "name": "converged_clear",                  "dominance": 0.85, "confidence": 0.80, "total": 10, "verdict": "converged" },
+    { "name": "converged_dominance_exact_floor",  "dominance": 0.70, "confidence": 0.65, "total": 10, "verdict": "converged" },
+    { "name": "converged_confidence_exact_floor", "dominance": 0.80, "confidence": 0.65, "total": 10, "verdict": "converged" },
+
+    { "name": "dominance_just_below_converged",   "dominance": 0.699, "confidence": 0.99, "total": 10, "verdict": "uncertain" },
+    { "name": "confidence_just_below_converged",  "dominance": 0.99,  "confidence": 0.649, "total": 10, "verdict": "uncertain" },
+
+    { "name": "escape_clear",                     "dominance": 0.40, "confidence": 0.90, "total": 10, "verdict": "escape" },
+    { "name": "escape_just_below_threshold",      "dominance": 0.599, "confidence": 0.90, "total": 10, "verdict": "escape" },
+    { "name": "escape_threshold_exact_not_escape","dominance": 0.60, "confidence": 0.90, "total": 10, "verdict": "uncertain" },
+
+    { "name": "mid_band_uncertain",               "dominance": 0.65, "confidence": 0.55, "total": 10, "verdict": "uncertain" },
+    { "name": "high_dominance_low_confidence",    "dominance": 0.95, "confidence": 0.40, "total": 10, "verdict": "uncertain" },
+
+    { "name": "nonfinite_pos_inf_dominance",      "dominance": "+Inf", "confidence": "+Inf", "total": 10, "verdict": "uncertain" },
+    { "name": "nonfinite_pos_inf_confidence",     "dominance": 0.99,   "confidence": "+Inf", "total": 10, "verdict": "uncertain" },
+    { "name": "nonfinite_neg_inf_dominance",      "dominance": "-Inf", "confidence": 0.99,   "total": 10, "verdict": "uncertain" },
+    { "name": "nonfinite_nan_dominance",          "dominance": "NaN",  "confidence": 0.99,   "total": 10, "verdict": "uncertain" },
+    { "name": "nonfinite_nan_confidence",         "dominance": 0.99,   "confidence": "NaN",  "total": 10, "verdict": "uncertain" }
+  ]
+}
