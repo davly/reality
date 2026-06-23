@@ -333,10 +333,12 @@ func PoissonCDF(k int, lambda float64) float64 {
 	if k < 0 {
 		return 0
 	}
-	// Use the complementary regularized gamma function:
-	// P(X <= k) = 1 - P(a, x) where a = k+1, x = lambda
-	// This is more numerically stable for large k.
-	return 1.0 - regularizedGammaLowerSeries(float64(k+1), lambda)
+	// PoissonCDF(k; lambda) = P(X <= k) = Q(k+1, lambda), the upper regularized
+	// incomplete gamma. Computed via regularizedGammaQ (continued fraction in the
+	// large-lambda regime) so the tail is not formed as 1 - P, which both cancels
+	// and, with the old series-only path, returned grossly wrong values for large
+	// lambda (the series could not converge within its iteration cap).
+	return regularizedGammaQ(float64(k+1), lambda)
 }
 
 // ---------------------------------------------------------------------------
@@ -385,7 +387,8 @@ func GammaPDF(x, k, theta float64) float64 {
 // Valid range: k > 0, theta > 0, x >= 0
 // Returns NaN if k <= 0 or theta <= 0
 // Returns 0 if x <= 0
-// Precision: ~1e-14 (via regularizedGammaLowerSeries)
+// Precision: ~1e-12 (via regularizedGammaP: series for x<a+1, continued
+// fraction for x>=a+1, so the large-x tail is correct)
 // Reference: Abramowitz & Stegun, Chapter 6; DLMF 8.2
 func GammaCDF(x, k, theta float64) float64 {
 	if k <= 0 || theta <= 0 {
@@ -394,7 +397,7 @@ func GammaCDF(x, k, theta float64) float64 {
 	if x <= 0 {
 		return 0
 	}
-	return regularizedGammaLowerSeries(k, x/theta)
+	return regularizedGammaP(k, x/theta)
 }
 
 // ExponentialQuantile returns the inverse CDF (quantile function) of the
