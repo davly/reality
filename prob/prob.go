@@ -21,10 +21,17 @@ const MaxProb = 0.99
 // ClampProbability clamps p to the interval [MinProb, MaxProb].
 //
 // Formula: max(MinProb, min(MaxProb, p))
-// Valid range: any float64 (including NaN — returns MinProb)
+// Valid range: any float64. NaN returns MinProb (a NaN must be neutralized to the
+// epistemic floor, not propagated: math.Min/Max are NaN-poisoning, so the guard is
+// explicit). This function is the safeguard routed through by ProbToLogOdds,
+// BayesianUpdate, LogOddsPool, LogLoss, and the averaging helpers, so a leaked NaN
+// would otherwise contaminate the whole scoring/pooling surface.
 // Precision: exact
 // Reference: standard numerical safeguard for log-odds computation
 func ClampProbability(p float64) float64 {
+	if math.IsNaN(p) {
+		return MinProb
+	}
 	return math.Max(MinProb, math.Min(MaxProb, p))
 }
 
