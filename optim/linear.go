@@ -167,6 +167,31 @@ func SimplexMethod(c []float64, A [][]float64, b []float64) ([]float64, float64,
 		}
 	}
 
+	// Feasibility verification against the ORIGINAL constraints. This method
+	// starts from the all-slack origin (x = 0) and has no Phase I, so for an
+	// infeasible LP — or a feasible LP whose origin is infeasible (e.g. a
+	// constraint with b < 0, i.e. an effective ">=") — the pivots can terminate
+	// at a point that is optimal for the relaxed tableau yet does not satisfy
+	// Ax <= b. Returning that point with a nil error (the previous behavior)
+	// silently handed back a wrong, infeasible "solution". Verify and return the
+	// honest error the docstring promises for infeasible problems.
+	const feasTol = 1e-7
+	for j := 0; j < n; j++ {
+		if x[j] < -feasTol {
+			return nil, 0, errors.New("optim.SimplexMethod: no feasible solution found (negative variable; problem may be infeasible — Phase I not implemented)")
+		}
+	}
+	for i := 0; i < m; i++ {
+		lhs := 0.0
+		for j := 0; j < n; j++ {
+			lhs += A[i][j] * x[j]
+		}
+		tol := feasTol * (1 + math.Abs(b[i]))
+		if lhs > b[i]+tol {
+			return nil, 0, errors.New("optim.SimplexMethod: no feasible solution found (constraint violated; problem may be infeasible or its origin infeasible — Phase I not implemented)")
+		}
+	}
+
 	return x, optVal, nil
 }
 
