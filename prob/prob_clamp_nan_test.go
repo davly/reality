@@ -29,3 +29,20 @@ func TestClampProbability_NaNReturnsMinProb(t *testing.T) {
 		t.Fatalf("LogOddsToProb(NaN) leaked NaN through the clamp: %v", got)
 	}
 }
+
+// ConfidenceFromPValue documents "result is always in [0, 1]" but its manual clamp leaked
+// NaN; it now routes through the NaN-safe clamp01.
+func TestConfidenceFromPValue_NaNAndBounds(t *testing.T) {
+	if got := ConfidenceFromPValue(math.NaN()); got != 0 {
+		t.Fatalf("ConfidenceFromPValue(NaN) = %v, want 0 (doc: always in [0,1])", got)
+	}
+	if got := ConfidenceFromPValue(0.05); got != 0.95 {
+		t.Fatalf("ConfidenceFromPValue(0.05) = %v, want 0.95", got)
+	}
+	if got := ConfidenceFromPValue(-1); got != 1 { // p<0 -> 1-p>1 -> clamp to 1
+		t.Fatalf("ConfidenceFromPValue(-1) = %v, want 1", got)
+	}
+	if got := ConfidenceFromPValue(2); got != 0 { // p>1 -> 1-p<0 -> clamp to 0
+		t.Fatalf("ConfidenceFromPValue(2) = %v, want 0", got)
+	}
+}

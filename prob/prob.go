@@ -48,13 +48,10 @@ func ClampProbability(p float64) float64 {
 //
 // Source: extracted from aicore/parallaxmath.ConfidenceFromPValue.
 func ConfidenceFromPValue(pValue float64) float64 {
-	c := 1.0 - pValue
-	if c < 0 {
-		c = 0
-	} else if c > 1 {
-		c = 1
-	}
-	return c
+	// Reuse the NaN-safe clamp01: the manual clamp below leaked NaN (every Go comparison
+	// with NaN is False), contradicting the documented "result is always in [0, 1]".
+	// clamp01 already guards NaN -> 0; ConfidenceFromPValue did not.
+	return clamp01(1.0 - pValue)
 }
 
 // ProbToLogOdds converts a probability to log-odds (logit function).
