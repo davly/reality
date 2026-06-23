@@ -6,10 +6,14 @@ import "math"
 // between two equal-length slices. Returns 0 if fewer than 2 data points or
 // if either variable has zero variance.
 //
-// Definition: r = (n*sum(xy) - sum(x)*sum(y)) / sqrt((n*sum(x^2) - sum(x)^2) * (n*sum(y^2) - sum(y)^2))
-// Result range: [-1, 1].
+// Definition: r = cov(x,y) / (sd(x)*sd(y)), computed in the numerically stable
+// two-pass (mean-subtracted) form r = sum(dx*dy) / sqrt(sum(dx^2)*sum(dy^2))
+// with dx = x_i - mean(x), dy = y_i - mean(y).
+// Result range: [-1, 1] (clamped to absorb residual rounding).
 // Valid input range: len(x) == len(y) >= 2; at least one variable must have nonzero variance.
-// Precision: exact for IEEE 754 float64.
+// Precision: ~1e-14 relative. The previous one-pass form n*sum(x^2)-(sum x)^2
+// catastrophically cancelled for large-magnitude data (e.g. timestamps), returning
+// a grossly wrong r or even a NaN (negative radicand) that escaped the [-1,1] range.
 //
 // Source: extracted from aicore/echomath.PearsonCorrelation.
 func PearsonCorrelation(x, y []float64) float64 {
@@ -17,20 +21,35 @@ func PearsonCorrelation(x, y []float64) float64 {
 	if n < 2 || len(y) != n {
 		return 0
 	}
-	var sumX, sumY, sumXY, sumX2, sumY2 float64
-	for i := 0; i < n; i++ {
-		sumX += x[i]
-		sumY += y[i]
-		sumXY += x[i] * y[i]
-		sumX2 += x[i] * x[i]
-		sumY2 += y[i] * y[i]
-	}
 	nf := float64(n)
-	denom := math.Sqrt((nf*sumX2 - sumX*sumX) * (nf*sumY2 - sumY*sumY))
+	var meanX, meanY float64
+	for i := 0; i < n; i++ {
+		meanX += x[i]
+		meanY += y[i]
+	}
+	meanX /= nf
+	meanY /= nf
+
+	var sxy, sxx, syy float64
+	for i := 0; i < n; i++ {
+		dx := x[i] - meanX
+		dy := y[i] - meanY
+		sxy += dx * dy
+		sxx += dx * dx
+		syy += dy * dy
+	}
+	denom := math.Sqrt(sxx * syy)
 	if denom == 0 {
 		return 0
 	}
-	return (nf*sumXY - sumX*sumY) / denom
+	r := sxy / denom
+	if r > 1 {
+		return 1
+	}
+	if r < -1 {
+		return -1
+	}
+	return r
 }
 
 // SpearmanCorrelation computes the Spearman rank correlation coefficient
