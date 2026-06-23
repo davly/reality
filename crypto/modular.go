@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"errors"
+	"math/bits"
 )
 
 // ---------------------------------------------------------------------------
@@ -44,12 +45,17 @@ func ModPow(base, exp, mod uint64) uint64 {
 // ---------------------------------------------------------------------------
 
 // ModInverse returns the modular multiplicative inverse of a modulo mod,
-// i.e., the value x such that (a * x) ≡ 1 (mod m). Returns (0, false)
-// if gcd(a, mod) != 1 (inverse does not exist).
+// i.e., the value x in [0, mod) such that (a * x) ≡ 1 (mod m). Returns
+// (0, false) if gcd(a, mod) != 1 (inverse does not exist).
 //
-// Uses the extended Euclidean algorithm internally.
+// The extended Euclidean algorithm is run entirely in uint64 arithmetic so the
+// result is correct across the WHOLE uint64 range. (The previous implementation
+// cast a and mod to int64; for operands >= 2^63 that cast wrapped to a negative
+// value, so it silently returned a wrong inverse — reporting ok=true — or a
+// false "no inverse". This is the foundation primitive for RSA/DH/CRT, where
+// 64-bit moduli are routine.)
 //
-// Time complexity: O(log(min(a, mod)))
+// Time complexity: O(log(mod) · cost_of_mulmod)
 // Reference: Bezout's identity applied to modular arithmetic
 func ModInverse(a, mod uint64) (uint64, bool) {
 	if mod == 0 {
@@ -59,19 +65,29 @@ func ModInverse(a, mod uint64) (uint64, bool) {
 		return 0, true // everything ≡ 0 (mod 1)
 	}
 
-	gcd, x, _ := ExtendedGCD(int64(a), int64(mod))
-
-	if gcd != 1 {
-		return 0, false
+	// Iterative extended Euclidean. The Bezout coefficient t is maintained in
+	// [0, mod) via modular arithmetic (mulmod is overflow-safe for any uint64
+	// operands); the remainders r strictly decrease so plain uint64 subtraction
+	// in "r - q*newR" never underflows or overflows.
+	var t, newT uint64 = 0, 1
+	r, newR := mod, a%mod
+	for newR != 0 {
+		q := r / newR
+		t, newT = newT, subMod(t, mulmod(q, newT, mod), mod)
+		r, newR = newR, r-q*newR
 	}
-
-	// x may be negative; bring it into [0, mod).
-	result := x % int64(mod)
-	if result < 0 {
-		result += int64(mod)
+	if r != 1 {
+		return 0, false // gcd(a, mod) != 1 -> not invertible
 	}
+	return t, true
+}
 
-	return uint64(result), true
+// subMod returns (a - b) mod m for inputs a, b already reduced into [0, m).
+func subMod(a, b, m uint64) uint64 {
+	if a >= b {
+		return a - b
+	}
+	return a + (m - b)
 }
 
 // ---------------------------------------------------------------------------
@@ -108,10 +124,18 @@ func ChineseRemainder(residues, moduli []uint64) (uint64, error) {
 		_ = i
 	}
 
-	// Compute M = product of all moduli.
+	// Compute M = product of all moduli, detecting uint64 overflow. The previous
+	// code accumulated M *= m and silently wrapped once the product exceeded
+	// 2^64, after which every modular step used the wrong M and the function
+	// returned a value congruent to NONE of the inputs with a nil error. We now
+	// fail honestly; callers needing a larger M must use a big-integer CRT.
 	M := uint64(1)
 	for _, m := range moduli {
-		M *= m
+		hi, lo := bits.Mul64(M, m)
+		if hi != 0 {
+			return 0, errors.New("crypto.ChineseRemainder: product of moduli overflows uint64 (M must be < 2^64); use a big-integer CRT for larger systems")
+		}
+		M = lo
 	}
 
 	var result uint64
