@@ -19,7 +19,7 @@ import "math"
 // discovered a linear-time recurrence on the C(n, k) parametric-
 // complexity:
 //
-//	C(n, k) = C(n, k-1) + (n / (k-1)) * C(n, k-2)
+//	C(n, k) = C(n, k-1) + (n / (k-2)) * C(n, k-2)
 //
 // with base cases C(n, 1) = 1 and C(n, 2) computable in O(n) by
 // directly summing the Bernoulli mass over k = 0..n.  The recurrence
@@ -88,14 +88,14 @@ func NMLMultinomial(counts []int) (float64, error) {
 	}
 
 	// Apply the linear recurrence:
-	//   C(n, k) = C(n, k-1) + (n / (k-1)) * C(n, k-2)
+	//   C(n, k) = C(n, k-1) + (n / (k-2)) * C(n, k-2)
 	// for k >= 3.  Initial values: prev2 = C(n, 1) = 1,
 	// prev1 = C(n, 2) = cn2.
 	prev2 := 1.0
 	prev1 := cn2
 	var curr float64
 	for kk := 3; kk <= k; kk++ {
-		curr = prev1 + (float64(n)/float64(kk-1))*prev2
+		curr = prev1 + (float64(n)/float64(kk-2))*prev2
 		prev2 = prev1
 		prev1 = curr
 	}
