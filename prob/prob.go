@@ -25,6 +25,13 @@ const MaxProb = 0.99
 // Precision: exact
 // Reference: standard numerical safeguard for log-odds computation
 func ClampProbability(p float64) float64 {
+	// Go's math.Max/math.Min PROPAGATE NaN, so without this guard a NaN passes straight
+	// through — contradicting the documented contract above (NaN -> MinProb) and letting a
+	// NaN leak through every caller that clamps here (LogOddsToProb, the averages, Wilson,
+	// LogOddsPool). Fail closed to the floor.
+	if math.IsNaN(p) {
+		return MinProb
+	}
 	return math.Max(MinProb, math.Min(MaxProb, p))
 }
 
