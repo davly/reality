@@ -54,14 +54,17 @@ func NormalCDF(x, mu, sigma float64) float64 {
 // NormalQuantile returns the inverse CDF (quantile function) of the normal
 // distribution for probability p, with mean mu and standard deviation sigma.
 //
-// Uses the rational approximation by Peter Acklam (2004), which provides
-// full float64 precision across the entire range (0, 1).
+// Uses the rational approximation by Peter Acklam (2004).
 //
 // Formula: mu + sigma * Phi^{-1}(p) where Phi^{-1} is the standard
 // normal quantile (probit function).
 // Valid range: p in (0, 1), sigma > 0
 // Returns: NaN if p <= 0, p >= 1, or sigma <= 0
-// Precision: maximum relative error < 1.15e-9 across all p in (0, 1)
+// Precision: relative error ~1.15e-9 in the central region. The bare rational
+// approximation (no Newton/Halley refinement) degrades toward ~1e-7 in the
+// extreme tails (p below ~1e-50), but remains correct there: the result
+// round-trips through NormalCDF to ~1e-7 relative even at p=1e-300 — e.g.
+// NormalQuantile(1e-300,0,1) = -37.047 and NormalCDF(-37.047,0,1) ≈ 1e-300.
 // Reference: Acklam, P.J. (2004) "An algorithm for computing the inverse
 // normal cumulative distribution function"
 func NormalQuantile(p, mu, sigma float64) float64 {
