@@ -116,7 +116,7 @@ func TestBinomialRelErrTypical(t *testing.T) {
 	const bound = 1e-12
 	worst, n, k := binomialWorstRelErr(200)
 	if worst > bound {
-		t.Skipf("PRECISION OVER-CLAIM: BinomialCoeff (counting.go:48) claims rel err < %g for typical inputs, but observed %g at C(%d,%d) (n<=200)", bound, worst, n, k)
+		t.Errorf("PRECISION REGRESSION: BinomialCoeff (counting.go:48) claims rel err < %g for typical inputs, but observed %g at C(%d,%d) (n<=200)", bound, worst, n, k)
 	}
 	t.Logf("PINNED counting.go:48 BinomialCoeff (typical, n<=200): worst rel err %g at C(%d,%d) (< %g)", worst, n, k, bound)
 }

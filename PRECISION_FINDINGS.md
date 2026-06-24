@@ -9,16 +9,39 @@ visible finding.
   source, or behavior code was modified. The zero-external-dependency law is
   preserved (tests use only `testing`, `testing/quick`, `math`, `math/big`,
   `math/cmplx`, `sort` — all Go stdlib; `go.mod` still has zero requires).
-- **Suite is GREEN.** Over-claims are surfaced via `t.Skip(...)` with a precise
-  reason (visible in `go test -v`), never a failing test and never a silent
-  pass. The bound that DOES hold is pinned as a PASS alongside each finding.
-- 37 new test functions across 9 packages: **33 PASS, 4 SKIP (findings)**.
+- **Two distinct test outcomes, used deliberately — do NOT conflate them:**
+  - **ENFORCED invariants (fail RED).** For a bound that DEMONSTRABLY HOLDS
+    today, the failure path is `t.Errorf` / `t.Fatalf`, so a *future* regression
+    of that bound turns the suite RED and is caught by CI. These are genuine
+    regression guards: a `t.Skip` would NOT guard a bound (a SKIP is success to
+    `go test` — exit code 0 — so a regressed bound would stay invisible-green).
+    The 33 holding-bound pins (mel/sRGB/HSV/Lab round-trips, quaternion
+    isometry/identity/normalize, NormalCDF monotone, NormalQuantile lower-half,
+    StudentT, Wiener, Quantile range/monotone, bisection, LinearInterpolate, and
+    especially the chi-sq regression guard) are all ENFORCED. *Proven:* forcing
+    any of these guards to fire yields `go test` exit code 1 (RED), not a SKIP.
+  - **DOCUMENTED over-claims (SKIP, never silent).** For the 4 bounds that
+    genuinely do NOT hold over the full claimed domain, the test `t.Skip(...)`s
+    with a precise reason (visible in `go test -v`) — surfacing the honest
+    finding without inventing a failure or silently passing. `t.Skip` is
+    reserved EXCLUSIVELY for these 4; it is never used to swallow a holding
+    bound.
+- The suite is GREEN today because every enforced bound currently holds and the
+  4 documented over-claims are the only SKIPs — but "green" here means
+  "no regression of an enforced bound", NOT "no failing test was allowed to
+  fail". An enforced bound that regresses WILL turn it red.
+- 37 new test functions across 9 packages: **33 PASS (enforced, fail-red), 4
+  SKIP (documented over-claims).**
 
 Run: `go test -v ./audio/ ./geometry/ ./optim/ ./prob/ ./prob/copula/ ./combinatorics/ ./color/ ./audio/separation/`
 
 ---
 
-## Claims PINNED (bound holds — proven PASS)
+## Claims PINNED (bound holds — ENFORCED, fail-RED on regression)
+
+These bounds hold today and are pinned as PASS; their failure path is
+`t.Errorf`/`t.Fatalf`, so a future regression turns the suite RED (real CI
+protection — a `t.Skip` would not guard them).
 
 | Function (file:line) | Claimed bound | How tested | Worst observed |
 |---|---|---|---|
@@ -48,7 +71,12 @@ Run: `go test -v ./audio/ ./geometry/ ./optim/ ./prob/ ./prob/copula/ ./combinat
 
 ---
 
-## OVER-CLAIMS FOUND (honest findings — documented via `t.Skip`)
+## OVER-CLAIMS FOUND (honest findings — DOCUMENTED via `t.Skip`, never silent)
+
+These 4 bounds do NOT hold over their full claimed domain. Each test
+`t.Skip(...)`s with a precise reason (visible in `go test -v`) — surfacing the
+over-claim honestly without manufacturing a failure or silently passing. `t.Skip`
+is used ONLY here, never to swallow a holding bound.
 
 ### 1. `Factorial` — `< 1e-15` is over-claimed for `n > 20` (counting.go:21)
 - **Claim:** "relative error < 1e-15 for n <= 170".

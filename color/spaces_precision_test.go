@@ -35,7 +35,7 @@ func TestSRGBLinearRoundTrip(t *testing.T) {
 		return err <= bound
 	}
 	if err := quick.Check(prop, &quick.Config{MaxCount: 200000}); err != nil {
-		t.Skipf("PRECISION OVER-CLAIM: SRGBToLinear/LinearToSRGB claim 'exact to float64', round-trip error %g at c=%g exceeds %g", worst, worstAt, bound)
+		t.Errorf("PRECISION REGRESSION: SRGBToLinear/LinearToSRGB claim 'exact to float64', round-trip error %g at c=%g exceeds %g", worst, worstAt, bound)
 	}
 	t.Logf("PINNED spaces.go:25/43 sRGB<->linear round-trip: worst error %g at c=%g (< %g)", worst, worstAt, bound)
 }
@@ -57,7 +57,7 @@ func TestRGBHSVRoundTrip(t *testing.T) {
 		return e <= bound
 	}
 	if err := quick.Check(prop, &quick.Config{MaxCount: 200000}); err != nil {
-		t.Skipf("PRECISION OVER-CLAIM: RGB<->HSV claim 'exact to float64', round-trip error %g at (%g,%g,%g) exceeds %g", worst, worstR, worstG, worstB, bound)
+		t.Errorf("PRECISION REGRESSION: RGB<->HSV claim 'exact to float64', round-trip error %g at (%g,%g,%g) exceeds %g", worst, worstR, worstG, worstB, bound)
 	}
 	t.Logf("PINNED spaces.go:157/194 RGB<->HSV round-trip: worst error %g (< %g)", worst, bound)
 }
@@ -84,7 +84,7 @@ func TestXYZLabRoundTrip(t *testing.T) {
 		return e <= bound
 	}
 	if err := quick.Check(prop, &quick.Config{MaxCount: 200000}); err != nil {
-		t.Skipf("PRECISION OVER-CLAIM: XYZ<->Lab round-trip error %g exceeds %g", worst, bound)
+		t.Errorf("PRECISION REGRESSION: XYZ<->Lab round-trip error %g exceeds %g", worst, bound)
 	}
 	t.Logf("PINNED XYZ<->Lab round-trip: worst error %g (< %g)", worst, bound)
 }

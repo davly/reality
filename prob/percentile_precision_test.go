@@ -55,7 +55,7 @@ func TestQuantileWithinRange(t *testing.T) {
 		return got >= mn-1e-9 && got <= mx+1e-9
 	}
 	if err := quick.Check(prop, &quick.Config{MaxCount: 100000}); err != nil {
-		t.Skipf("PRECISION OVER-CLAIM: Quantile output left [min,max]: %v", err)
+		t.Errorf("PRECISION REGRESSION: Quantile output left [min,max]: %v", err)
 	}
 	t.Logf("PINNED percentile.go output-range: Quantile(data,q) in [min,max] for all q")
 }
@@ -78,7 +78,7 @@ func TestQuantileMonotoneInQ(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(prop, &quick.Config{MaxCount: 20000}); err != nil {
-		t.Skipf("PRECISION OVER-CLAIM: Quantile not monotone non-decreasing in q: %v", err)
+		t.Errorf("PRECISION REGRESSION: Quantile not monotone non-decreasing in q: %v", err)
 	}
 }
 

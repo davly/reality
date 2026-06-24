@@ -82,7 +82,7 @@ func quatAxisAngleWorstRotationErr(loAngle float64) float64 {
 func TestQuatAxisAngleRoundTripWellConditioned(t *testing.T) {
 	worst := quatAxisAngleWorstRotationErr(0.05)
 	if worst > quatRoundTripBound {
-		t.Skipf("PRECISION OVER-CLAIM: QuatToAxisAngle round-trip claims <= %g; even in the well-conditioned band [0.05, pi-0.05] observed rotation-action error %g", quatRoundTripBound, worst)
+		t.Errorf("PRECISION REGRESSION: QuatToAxisAngle round-trip claims <= %g; even in the well-conditioned band [0.05, pi-0.05] observed rotation-action error %g", quatRoundTripBound, worst)
 	}
 	t.Logf("PINNED quaternion.go:132/158 axis-angle round-trip (band [0.05, pi-0.05]): worst rotation-action error %g (bound %g)", worst, quatRoundTripBound)
 }
@@ -126,7 +126,7 @@ func TestQuatRotateVecPreservesLength(t *testing.T) {
 		return rel <= tol
 	}
 	if err := quick.Check(prop, &quick.Config{MaxCount: 200000}); err != nil {
-		t.Skipf("PRECISION OVER-CLAIM: QuatRotateVec claims 'exact', isometry violated by relative %g > %g", worst, tol)
+		t.Errorf("PRECISION REGRESSION: QuatRotateVec claims 'exact', isometry violated by relative %g > %g", worst, tol)
 	}
 	t.Logf("PINNED quaternion.go:190 isometry: worst relative length error %g (tol %g)", worst, tol)
 }
@@ -142,7 +142,7 @@ func TestQuatIdentityRotateExact(t *testing.T) {
 		return r[0] == v[0] && r[1] == v[1] && r[2] == v[2]
 	}
 	if err := quick.Check(prop, &quick.Config{MaxCount: 100000}); err != nil {
-		t.Skipf("PRECISION OVER-CLAIM: QuatRotateVec(identity, v) is not bit-exact: %v", err)
+		t.Errorf("PRECISION REGRESSION: QuatRotateVec(identity, v) is not bit-exact: %v", err)
 	}
 }
 
@@ -166,7 +166,7 @@ func TestQuatNormalizeUnitLength(t *testing.T) {
 		return e <= tol
 	}
 	if err := quick.Check(prop, &quick.Config{MaxCount: 100000}); err != nil {
-		t.Skipf("PRECISION OVER-CLAIM: QuatNormalize unit-length violated by %g > %g", worst, tol)
+		t.Errorf("PRECISION REGRESSION: QuatNormalize unit-length violated by %g > %g", worst, tol)
 	}
 	t.Logf("PINNED quaternion.go:47 unit length: worst |mag-1| = %g (tol %g)", worst, tol)
 }

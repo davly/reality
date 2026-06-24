@@ -60,7 +60,7 @@ func TestNormalQuantileRoundTrip(t *testing.T) {
 		return err <= 1e-9
 	}
 	if err := quick.Check(prop, &quick.Config{MaxCount: 200000}); err != nil {
-		t.Skipf("PRECISION OVER-CLAIM: NormalQuantile claims max rel err < 1.15e-9; CDF round-trip error %g at p=%g exceeds 1e-9", worstBulk, worstBulkAt)
+		t.Errorf("PRECISION REGRESSION: NormalQuantile claims max rel err < 1.15e-9; CDF round-trip error %g at p=%g exceeds 1e-9", worstBulk, worstBulkAt)
 	}
 	t.Logf("PINNED distributions.go:64 NormalQuantile (bulk CDF round-trip): worst error %g at p=%g (< 1e-9)", worstBulk, worstBulkAt)
 }
@@ -103,7 +103,7 @@ func TestNormalQuantileValueLowerAndBulk(t *testing.T) {
 		}
 	}
 	if worst > bound {
-		t.Skipf("PRECISION OVER-CLAIM: NormalQuantile (distributions.go:64) claims max rel err < %g; lower/bulk observed %g at p=%g", bound, worst, worstAt)
+		t.Errorf("PRECISION REGRESSION: NormalQuantile (distributions.go:64) claims max rel err < %g; lower/bulk observed %g at p=%g", bound, worst, worstAt)
 	}
 	t.Logf("PINNED distributions.go:64 NormalQuantile value (lower+bulk, p in [1e-12,0.5)): worst rel err %g at p=%g (< %g)", worst, worstAt, bound)
 }
@@ -167,7 +167,7 @@ func TestNormalCDFMonotone(t *testing.T) {
 		return math.Abs(NormalCDF(-xa, 0, 1)+ca-1) <= 1e-12
 	}
 	if err := quick.Check(prop, &quick.Config{MaxCount: 100000}); err != nil {
-		t.Skipf("PRECISION OVER-CLAIM: NormalCDF monotonicity/symmetry violated: %v", err)
+		t.Errorf("PRECISION REGRESSION: NormalCDF monotonicity/symmetry violated: %v", err)
 	}
 }
 
@@ -204,7 +204,7 @@ func TestChiSquaredTestNoLargeStatBug(t *testing.T) {
 		}
 		// p must be NON-INCREASING as chi increases (CDF monotone).
 		if chi > prevChi && p > prevP+1e-12 {
-			t.Skipf("PRECISION OVER-CLAIM / BUG: ChiSquaredTest p-value not monotone — chi=%g gave p=%g but smaller chi gave p=%g (gamma/chi-sq CDF regression)", chi, p, prevP)
+			t.Fatalf("PRECISION REGRESSION / BUG: ChiSquaredTest p-value not monotone — chi=%g gave p=%g but smaller chi gave p=%g (gamma/chi-sq CDF regression)", chi, p, prevP)
 		}
 		prevChi, prevP = chi, p
 	}
@@ -216,7 +216,7 @@ func TestChiSquaredTestNoLargeStatBug(t *testing.T) {
 		t.Fatalf("test setup: expected large chi2, got %g", chiBig)
 	}
 	if pBig > 1e-6 {
-		t.Skipf("PRECISION OVER-CLAIM / BUG: ChiSquaredTest with chi2=%g returned p=%g (expected ~0; the series-only gamma bug returns ~1.0)", chiBig, pBig)
+		t.Fatalf("PRECISION REGRESSION / BUG: ChiSquaredTest with chi2=%g returned p=%g (expected ~0; the series-only gamma bug returns ~1.0)", chiBig, pBig)
 	}
 	t.Logf("PINNED hypothesis.go:165 chi-sq regression: chi2=%g -> p=%g (~0, gamma two-branch fix holds)", chiBig, pBig)
 }

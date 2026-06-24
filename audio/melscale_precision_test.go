@@ -43,8 +43,9 @@ func TestMelToHzRoundTripBound(t *testing.T) {
 		return err <= melRoundTripBound
 	}
 	if err := quick.Check(prop, &quick.Config{MaxCount: 200000}); err != nil {
-		// Over-claim surfaced: keep the suite green, make the finding visible.
-		t.Skipf("PRECISION OVER-CLAIM: MelToHz docstring claims HzToMel(MelToHz(m)) <= %g of m for m in [0,8000], observed worst abs error %g at m=%g — needs a tightened impl or an honest docstring", melRoundTripBound, worst, worstAt)
+		// Enforced invariant: this bound holds today (worst ~9.09e-13), so a
+		// future regression must turn the suite RED, not silently SKIP.
+		t.Errorf("PRECISION REGRESSION: MelToHz docstring claims HzToMel(MelToHz(m)) <= %g of m for m in [0,8000], observed worst abs error %g at m=%g — needs a tightened impl or an honest docstring", melRoundTripBound, worst, worstAt)
 	}
 	t.Logf("PINNED melscale.go:38 round-trip <= %g over [0,8000]: worst observed |HzToMel(MelToHz(m))-m| = %g at m=%g", melRoundTripBound, worst, worstAt)
 }
@@ -63,7 +64,7 @@ func TestMelToHzRoundTripDeterministicGrid(t *testing.T) {
 		}
 	}
 	if worst > melRoundTripBound {
-		t.Skipf("PRECISION OVER-CLAIM: MelToHz docstring claims round-trip <= %g over [0,8000], observed %g at m=%g", melRoundTripBound, worst, worstAt)
+		t.Errorf("PRECISION REGRESSION: MelToHz docstring claims round-trip <= %g over [0,8000], observed %g at m=%g", melRoundTripBound, worst, worstAt)
 	}
 	t.Logf("PINNED (grid) melscale.go:38: worst round-trip error %g at m=%g (bound %g)", worst, worstAt, melRoundTripBound)
 }
