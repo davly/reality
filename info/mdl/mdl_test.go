@@ -165,13 +165,13 @@ func TestNMLMultinomial_K2_MatchesDirectSum(t *testing.T) {
 // k -> k+1 by computing C(n, 3) two ways and asserting equality.
 //
 // For n = 10:
-//   C(10, 3) = C(10, 2) + (10/2) * C(10, 1)
-//            = C(10, 2) + 5 * 1.0
+//   C(10, 3) = C(10, 2) + (10/1) * C(10, 1)   // KM divisor is n/(k-2) = 10/1
+//            = C(10, 2) + 10 * 1.0
 // Compute C(10, 2) directly via the Bernoulli-mass sum, then compare
 // against NMLMultinomial([10/3, 10/3, 10/3 + 1]) = NMLMultinomial([3, 3, 4]).
 func TestNMLMultinomial_K3_KontkanenRecurrence(t *testing.T) {
 	cn2 := computeCn2(10)
-	wantC10_3 := cn2 + 5*1.0
+	wantC10_3 := cn2 + 10*1.0
 	want := math.Log(wantC10_3)
 	got, err := NMLMultinomial([]int{3, 3, 4})
 	if err != nil {
