@@ -28,7 +28,7 @@ func mulModBig(a, b, mod uint64) uint64 {
 func TestModInverse_LargeOperands_MatchBigInt(t *testing.T) {
 	cases := []struct{ a, mod uint64 }{
 		{1<<63 + 7, 1000003},
-		{3, 9223372036854775837},     // mod is prime > 2^63
+		{3, 9223372036854775837}, // mod is prime > 2^63
 		{1<<63 + 1, 9223372036854775837},
 		{18446744073709551557, 9223372036854775783}, // both near 2^64 / 2^63, prime mod
 		{12345678901234567, 9999999999999999961},
