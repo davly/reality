@@ -65,12 +65,20 @@ func SDFCapsule(p, a, b [3]float64, radius float64) float64 {
 	apz := p[2] - a[2]
 
 	// Project ap onto ab, clamped to [0, 1].
-	t := (apx*abx + apy*aby + apz*abz) / (abx*abx + aby*aby + abz*abz)
-	if t < 0 {
+	abLen2 := abx*abx + aby*aby + abz*abz
+	var t float64
+	if abLen2 == 0 {
+		// Degenerate zero-length segment (a == b): the capsule is a sphere at a.
+		// Avoid the 0/0 = NaN; t = 0 puts the nearest point at a.
 		t = 0
-	}
-	if t > 1 {
-		t = 1
+	} else {
+		t = (apx*abx + apy*aby + apz*abz) / abLen2
+		if t < 0 {
+			t = 0
+		}
+		if t > 1 {
+			t = 1
+		}
 	}
 
 	// Nearest point on segment.
