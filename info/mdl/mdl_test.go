@@ -39,18 +39,20 @@ func TestUniversalIntegerCodeLength_N2(t *testing.T) {
 	}
 }
 
-// TestUniversalIntegerCodeLength_N10 tests n = 10:
-// L*(10) = log(10) + log(log(10)) + log(2.865064)
-//        = log(10) + log(log(10)) + 1.0524
-// log(10) ≈ 2.3026; log(log(10)) ≈ log(2.3026) ≈ 0.8340; subsequent
-// log(0.8340) is < 0 and terminates.
+// TestUniversalIntegerCodeLength_N10 tests n = 10 against the canonical BASE-2
+// iterated log* (converted to nats). log2(10) ≈ 3.3219; log2(3.3219) ≈ 1.7321;
+// log2(1.7321) ≈ 0.7925; log2(0.7925) < 0 terminates. Plus log2(2.865064).
+// (The previous expected value iterated the natural log, which violates Kraft.)
 func TestUniversalIntegerCodeLength_N10(t *testing.T) {
 	got, err := UniversalIntegerCodeLength(10)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
-	x := math.Log(10.0)
-	want := x + math.Log(x) + math.Log(2.865064)
+	sum := math.Log2(10.0)
+	for y := math.Log2(math.Log2(10.0)); y > 0; y = math.Log2(y) {
+		sum += y
+	}
+	want := (sum + math.Log2(2.865064)) * math.Ln2
 	if math.Abs(got-want) > 1e-12 {
 		t.Errorf("L*(10): got %v, want %v", got, want)
 	}
