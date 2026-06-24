@@ -336,7 +336,7 @@ func PoissonCDF(k int, lambda float64) float64 {
 	// Use the complementary regularized gamma function:
 	// P(X <= k) = 1 - P(a, x) where a = k+1, x = lambda
 	// This is more numerically stable for large k.
-	return 1.0 - regularizedGammaLowerSeries(float64(k+1), lambda)
+	return 1.0 - regularizedGammaP(float64(k+1), lambda)
 }
 
 // ---------------------------------------------------------------------------
@@ -394,7 +394,7 @@ func GammaCDF(x, k, theta float64) float64 {
 	if x <= 0 {
 		return 0
 	}
-	return regularizedGammaLowerSeries(k, x/theta)
+	return regularizedGammaP(k, x/theta)
 }
 
 // ExponentialQuantile returns the inverse CDF (quantile function) of the
