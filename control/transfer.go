@@ -244,7 +244,16 @@ func (tf *TransferFunction) IsStable() bool {
 
 	poles := tf.Poles()
 	for _, p := range poles {
-		if real(p) >= 0 {
+		// Treat a pole within a small tolerance of the imaginary axis as NOT in
+		// the open left half plane. For degree>=3 the Durand-Kerner root finder
+		// returns poles that sit exactly on the jw axis with a real part of order
+		// 1e-18 whose SIGN is numerical roundoff; without this band a marginally
+		// unstable system (poles on the axis, e.g. (s^2+w^2)(s+a)) is silently
+		// reported stable. The tolerance scales with the pole magnitude, and the
+		// false-"stable" direction is the safety-critical one for the documented
+		// Pulse (feedback-loop) and Sentinel (filter) consumers.
+		tol := 1e-9 * (1 + cmplx.Abs(p))
+		if real(p) >= -tol {
 			return false
 		}
 	}
