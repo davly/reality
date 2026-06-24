@@ -135,7 +135,14 @@ func SampleBackingFactor(n int, halfSaturation float64) float64 {
 		return 0
 	}
 	nf := float64(n)
-	return nf / (nf + halfSaturation)
+	r := nf / (nf + halfSaturation)
+	if r >= 1 {
+		// nf/(nf+k) is always < 1 mathematically, but rounds to exactly 1.0 in
+		// float64 for absurdly large n (when k < nf*2^-53), violating the
+		// documented half-open [0,1). Snap to the largest float < 1 to honor it.
+		r = math.Nextafter(1, 0)
+	}
+	return r
 }
 
 // clamp01 clamps x into [0,1]. NaN maps to 0 so no caller can propagate a NaN.
