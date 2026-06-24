@@ -106,8 +106,9 @@ func BanzhafIndex(weights []float64, quota float64) []float64 {
 // permutations. For n > 12, uses Monte Carlo sampling with 100,000
 // random permutations.
 //
-// Returns a slice of Shapley values, one per player. By the efficiency
-// axiom, they sum to charFunc(grand coalition).
+// Returns a slice of Shapley values, one per player. By the efficiency axiom
+// they sum to v(grand coalition) - v(empty coalition); for the usual normalised
+// game where v(empty) = 0 this is simply charFunc(grand coalition).
 //
 // Definition: phi_i = sum over all S not containing i of
 //
@@ -194,6 +195,13 @@ func shapleySampled(n int, charFunc func(coalition []bool) float64, iterations i
 		return seed
 	}
 
+	// The first player in each permutation contributes v({p1}) - v(empty), so the
+	// running value must be SEEDED with the empty-coalition value, not 0. Without
+	// this, the (uniformly-random) first player absorbs the entire v(empty)
+	// baseline, making the sampled path disagree with the exact path and produce
+	// asymmetric values for a symmetric game whenever v(empty) != 0.
+	emptyVal := charFunc(make([]bool, n))
+
 	perm := make([]int, n)
 	for iter := 0; iter < iterations; iter++ {
 		// Generate a random permutation using Fisher-Yates.
@@ -207,7 +215,7 @@ func shapleySampled(n int, charFunc func(coalition []bool) float64, iterations i
 
 		// Walk through the permutation, computing marginal contributions.
 		coalition := make([]bool, n)
-		prevVal := 0.0
+		prevVal := emptyVal
 		for _, player := range perm {
 			coalition[player] = true
 			newVal := charFunc(coalition)
