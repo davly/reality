@@ -101,6 +101,65 @@ func TestMillerRabin_EdgeCases(t *testing.T) {
 	}
 }
 
+// TestIsPrime_StrongPseudoprimes guards against an insufficient Miller-Rabin
+// witness set. Within the uint64 domain, full determinism requires the
+// 12-witness Sinclair set {2,3,5,7,11,13,17,19,23,29,31,37}; a smaller set
+// silently misclassifies certain strong pseudoprimes as prime.
+//
+// 3825123056546413051 = 149491 × 747451 × 34233211 is composite but is a
+// strong pseudoprime to all of bases 2,3,5,7,11,13,17,19,23 — so it fools any
+// witness set that does not include a base >= 29. This regime is otherwise
+// entirely uncovered by the existing tiny-input tests.
+func TestIsPrime_StrongPseudoprimes(t *testing.T) {
+	// Composites that must be rejected. Each is a known strong pseudoprime
+	// (Sinclair / OEIS A014233 family) that fools the previous 7-witness set
+	// {2,3,5,7,11,13,17} used by IsPrime for large n, and is only caught once
+	// a base >= 29 is added (the 12-witness Sinclair set).
+	composites := []uint64{
+		3825123056546413051, // = 149491 × 747451 × 34233211; SPSP to bases up to 23
+		341550071728321,     // A014233(7): SPSP to bases 2,3,5,7,11,13,17 — fools the old set
+	}
+	for _, c := range composites {
+		if IsPrime(c) {
+			t.Errorf("IsPrime(%d) = true, want false (strong pseudoprime / composite)", c)
+		}
+	}
+
+	// Genuine primes near the top of the uint64 range must remain prime: the
+	// witness-set expansion is a pure correctness improvement and must not
+	// regress any actual prime.
+	primes := []uint64{
+		18446744073709551557, // largest prime < 2^64
+		uint64(1)<<61 - 1,    // 2^61 - 1, Mersenne prime
+		uint64(1)<<31 - 1,    // 2^31 - 1, Mersenne prime
+	}
+	for _, p := range primes {
+		if !IsPrime(p) {
+			t.Errorf("IsPrime(%d) = false, want true (prime)", p)
+		}
+	}
+}
+
+// TestMillerRabin_DeterministicUint64 pins the documented determinism contract
+// of MillerRabin: full uint64 determinism requires k >= 12 witnesses (the first
+// 12 primes / Sinclair set). With the strong pseudoprime 3825123056546413051,
+// k < 12 (k=7..11) wrongly reports prime, while k >= 12 correctly reports
+// composite — which is why the documented threshold must be k >= 12, not k >= 7.
+func TestMillerRabin_DeterministicUint64(t *testing.T) {
+	const spsp = uint64(3825123056546413051) // composite (SPSP to bases up to 23)
+
+	// k=12 (and above) must correctly classify the SPSP as composite.
+	if MillerRabin(spsp, 12) {
+		t.Errorf("MillerRabin(%d, 12) = true, want false (composite)", spsp)
+	}
+
+	// A genuine large prime must stay prime at the deterministic threshold.
+	const largestPrimeBelow2_64 = uint64(18446744073709551557)
+	if !MillerRabin(largestPrimeBelow2_64, 12) {
+		t.Errorf("MillerRabin(%d, 12) = false, want true (prime)", largestPrimeBelow2_64)
+	}
+}
+
 // =========================================================================
 // Golden-file Miller-Rabin test
 // =========================================================================

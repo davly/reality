@@ -15,12 +15,13 @@ package crypto
 // ---------------------------------------------------------------------------
 
 // IsPrime returns true if n is a prime number. The result is DETERMINISTIC and
-// exact for every uint64: small n uses the {2,3,5,7} witness set (proven correct
-// for all n < 3,215,031,751), and larger n uses the first 12 primes
-// {2,3,5,7,11,13,17,19,23,29,31,37} (proven correct for all n < 3.18×10^23, which
-// covers the entire uint64 range with margin). There are NO false positives in
-// uint64. (The earlier 7-witness set {2..17} was only correct to ~3.4×10^14 and
-// reported some uint64 composites as prime — e.g. 3825123056546413051.)
+// exact for every uint64: small n (n < 3,215,031,751) uses the {2,3,5,7} witness
+// set (proven correct for all such values), and larger n uses the 12-witness
+// Sinclair set {2,3,5,7,11,13,17,19,23,29,31,37}, which is proven deterministic
+// for all n < 3.317×10^24 and therefore covers the entire uint64 range with
+// margin. There are NO false positives in uint64. (The earlier 7-witness set
+// {2..17} was only correct to ~3.4×10^14 and reported some uint64 composites as
+// prime — e.g. 3825123056546413051.)
 //
 // Time complexity: O(k · log²(n)) where k is the number of witnesses.
 // Reference: Miller (1976), Rabin (1980); witness sets from
@@ -49,10 +50,13 @@ func IsPrime(n uint64) bool {
 	// Deterministic Miller-Rabin witnesses (witness sets from Sinclair,
 	// https://miller-rabin.appspot.com/).
 	// For n < 3,215,031,751, witnesses {2, 3, 5, 7} are proven sufficient.
-	// For larger n, the first 12 primes {2..37} are proven correct for all
-	// n < 3.18×10^23 — which covers the whole uint64 range. (Using only
-	// {2..17} here was a bug: it is correct only to ~3.4×10^14, so uint64
-	// composites such as 3825123056546413051 slipped through as "prime".)
+	// For larger n, we use the 12-witness Sinclair set
+	// {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37}, which is proven
+	// deterministic for all n < 3.317×10^24 — which covers the whole uint64
+	// range. A smaller set (e.g. only {2..17}) is NOT sufficient: it is only
+	// deterministic up to ~3.4×10^14 and silently misclassifies large strong
+	// pseudoprimes such as 3825123056546413051 (= 149491 × 747451 × 34233211)
+	// as prime.
 	var witnesses []uint64
 	if n < 3215031751 {
 		witnesses = []uint64{2, 3, 5, 7}
@@ -67,11 +71,12 @@ func IsPrime(n uint64) bool {
 // using k random-ish witnesses. In this deterministic implementation, the
 // witnesses are the first k primes (2, 3, 5, 7, 11, 13, ...).
 //
-// Deterministic for all uint64 only when k >= 12 (the first 12 primes {2..37};
-// see IsPrime). For smaller k there are uint64 composites that pass as prime —
-// e.g. k=7 ({2..17}) reports 3825123056546413051 as prime. Prefer IsPrime, which
-// always uses a uint64-exact witness set; use MillerRabin(n, k) directly only
-// when you specifically want a fixed small k.
+// Deterministic for all uint64 only when k >= 12 (the first 12 primes, the
+// Sinclair set {2,3,5,7,11,13,17,19,23,29,31,37}; see IsPrime). For smaller k
+// there are uint64 composites that pass as prime — Carmichael numbers fool tiny
+// k, and large strong pseudoprimes (e.g. 3825123056546413051) fool k as high as
+// 11. Prefer IsPrime, which always uses a uint64-exact witness set; use
+// MillerRabin(n, k) directly only when you specifically want a fixed small k.
 //
 // Formula: decompose n-1 = 2^r · d, then for each witness a check:
 //   a^d ≡ 1 (mod n) OR a^(2^i · d) ≡ -1 (mod n) for some 0 <= i < r.
