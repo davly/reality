@@ -33,6 +33,10 @@ var simplexMaxIter = 10000
 // where A is m x n, b is m x 1, c is n x 1. Slack variables are added
 // internally to convert to the equality form Ax + s = b, s >= 0.
 //
+// Requires b >= 0: this single-phase method starts from the all-slack basis
+// (s = b), so a constraint with b_i < 0 returns an error rather than being
+// silently negated (negating the row would flip <= into >=, a different LP).
+//
 // Returns the optimal solution x (length n), the optimal objective value, and
 // an error if the problem is infeasible or unbounded.
 //
@@ -54,20 +58,21 @@ func SimplexMethod(c []float64, A [][]float64, b []float64) ([]float64, float64,
 		}
 	}
 
-	// Check that b >= 0 (standard form requirement after adding slacks).
-	// If b[i] < 0, multiply the row by -1.
+	// This single-phase method starts from the all-slack basis (s = b), which is
+	// feasible only when b >= 0. A constraint A_i x <= b_i with b_i < 0 cannot be
+	// reduced to that form: negating the row to make b positive turns A_i x <= b_i
+	// into A_i x >= b_i, which silently solves a DIFFERENT LP. Reject it explicitly
+	// -- a b<0 (or >=) constraint needs a two-phase / Big-M simplex, not provided
+	// here. (Previously the row was negated, returning a wrong answer with nil err.)
 	aCopy := make([][]float64, m)
 	bCopy := make([]float64, m)
 	for i := 0; i < m; i++ {
+		if b[i] < 0 {
+			return nil, 0, errors.New("optim.SimplexMethod: requires b >= 0; a constraint with b_i < 0 (e.g. an encoded >= constraint) needs a two-phase/Big-M simplex, not implemented here")
+		}
 		aCopy[i] = make([]float64, n)
 		copy(aCopy[i], A[i])
 		bCopy[i] = b[i]
-		if bCopy[i] < 0 {
-			for j := 0; j < n; j++ {
-				aCopy[i][j] = -aCopy[i][j]
-			}
-			bCopy[i] = -bCopy[i]
-		}
 	}
 
 	// Build the full tableau: m rows x (n + m) columns (original + slack).
