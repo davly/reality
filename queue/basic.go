@@ -183,19 +183,44 @@ func MM1K(lambda, mu float64, K int) (Lq, Wq, L, W, rho, pLoss float64) {
 
 	rho = lambda / mu
 
-	if math.Abs(rho-1.0) < 1e-12 {
-		// Special case: ρ = 1 → uniform distribution
-		pLoss = 1.0 / float64(K+1)
-		L = float64(K) / 2.0
-	} else {
+	switch {
+	case math.Abs(rho-1.0) < 1e-6:
+		// Near ρ = 1 the closed forms below catastrophically cancel: ρ/(1-ρ) and
+		// the second term are each ~1/|ρ-1| but differ to give only ~K/2, so a
+		// 1e-12 window left a wide band of silently-wrong L (e.g. K=100,
+		// ρ=1+1e-10 gave L=100 vs true 50). Sum the stationary distribution
+		// directly: P(n) = ρⁿ/Σρᵐ. Here ρ ≈ 1 so ρⁿ stays ~1 — exact,
+		// overflow-free, and cancellation-free for any practical K. (Exactly
+		// ρ = 1 reduces to the uniform K/2.)
+		var sum, nSum, pK float64
+		p := 1.0
+		for n := 0; n <= K; n++ {
+			sum += p
+			nSum += float64(n) * p
+			if n == K {
+				pK = p
+			}
+			p *= rho
+		}
+		pLoss = pK / sum
+		L = nSum / sum
+	case rho < 1.0:
 		// P(n) = (1-ρ)·ρⁿ / (1-ρ^(K+1))
 		rhoK1 := math.Pow(rho, float64(K+1))
 		denom := 1.0 - rhoK1
-
 		pLoss = (1.0 - rho) * math.Pow(rho, float64(K)) / denom
-
 		// L = ρ/(1-ρ) - (K+1)·ρ^(K+1)/(1-ρ^(K+1))
 		L = rho/(1.0-rho) - float64(K+1)*rhoK1/denom
+	default:
+		// ρ > 1: ρ^(K+1) overflows to +Inf for large K (ρ=10,K>=308; ρ=1000,K>=102),
+		// poisoning pLoss/L to NaN. Factor out ρ^-(K+1) (in (0,1], never overflows)
+		// to get the algebraically-equivalent, overflow-safe form:
+		//   pLoss = (ρ-1) / (ρ·(1 - ρ^-(K+1)))
+		//   L     = ρ/(1-ρ) + (K+1)/(1 - ρ^-(K+1))
+		rhoNeg := math.Pow(rho, -float64(K+1))
+		d := 1.0 - rhoNeg
+		pLoss = (rho - 1.0) / (rho * d)
+		L = rho/(1.0-rho) + float64(K+1)/d
 	}
 
 	lambdaEff := lambda * (1.0 - pLoss)
