@@ -122,7 +122,9 @@ func (m Model) ForecastVariance(eps2T, sigma2T float64, h int) ([]float64, error
 	}
 	out := make([]float64, h)
 	v := m.UncondVar
-	if v <= 0 {
+	if v <= 0 || math.IsNaN(v) || math.IsInf(v, 0) {
+		// Validate() does not check UncondVar, so a valid Model can carry a
+		// NaN/Inf UncondVar; fall back to the implied value (as Filter does).
 		v = m.Omega / (1.0 - m.Alpha - m.Beta)
 	}
 	persistence := m.Alpha + m.Beta
@@ -157,7 +159,9 @@ func (m Model) Simulate(shocks, eps, sigma2 []float64) error {
 	}
 	prevEps2 := m.UncondVar
 	prevS2 := m.UncondVar
-	if prevS2 <= 0 {
+	if prevS2 <= 0 || math.IsNaN(prevS2) || math.IsInf(prevS2, 0) {
+		// Match Filter: a valid Model can carry NaN/Inf UncondVar (Validate does
+		// not check it), which would otherwise poison the whole simulated path.
 		prevS2 = m.Omega / (1.0 - m.Alpha - m.Beta)
 		prevEps2 = prevS2
 	}
