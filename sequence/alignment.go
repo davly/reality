@@ -70,7 +70,7 @@ func NeedlemanWunsch(a, b string, match, mismatch, gap float64) (string, string,
 				continue
 			}
 		}
-		if i > 0 && dp[i][j] == dp[i-1][j]+gap {
+		if i > 0 && (j == 0 || dp[i][j] == dp[i-1][j]+gap) {
 			alignA = append(alignA, ra[i-1])
 			alignB = append(alignB, '-')
 			i--

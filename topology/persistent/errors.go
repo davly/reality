@@ -32,3 +32,9 @@ var ErrInconsistentDim = errors.New("persistent: every point must have the same 
 // "no cap" should pass the diameter of the point cloud (or any
 // sufficiently large finite number).
 var ErrInvalidMaxRadius = errors.New("persistent: maxRadius must be a non-negative finite number")
+
+// ErrNonFinitePoint is returned when any point coordinate is NaN or +/-Inf.
+// A non-finite coordinate makes every pairwise distance to that point NaN, so
+// the Vietoris-Rips edges silently fail to form and the barcode is wrong (extra
+// spurious essential bars) with no error signalled.
+var ErrNonFinitePoint = errors.New("persistent: every point coordinate must be finite")

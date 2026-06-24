@@ -84,7 +84,12 @@ func BettingEValue(mu0, lambda, lo, hi float64) (EValueFunc, error) {
 		xn := (x - lo) / width
 		// Clamp to the support so an out-of-range observation cannot produce a
 		// negative e-value and silently void the guarantee.
-		if xn < 0 {
+		if math.IsNaN(xn) {
+			// A NaN observation escapes the < / > comparisons; map it to the null
+			// mean m0 (a neutral e-value of 1) so it neither poisons the e-process
+			// accumulator nor voids the false-alarm guarantee.
+			xn = m0
+		} else if xn < 0 {
 			xn = 0
 		} else if xn > 1 {
 			xn = 1
