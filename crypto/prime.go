@@ -14,11 +14,12 @@ package crypto
 // Primality testing
 // ---------------------------------------------------------------------------
 
-// IsPrime returns true if n is a prime number. For n < 2^32, a deterministic
-// set of Miller-Rabin witnesses is used that gives correct results for all
-// 32-bit integers. For larger n, a deterministic set of 7 witnesses is used
-// that is correct for all n < 3.317×10^24 (more than covers uint64 range
-// in practice for most uses).
+// IsPrime returns true if n is a prime number. For n < 3,215,031,751, a
+// deterministic set of 4 Miller-Rabin witnesses {2, 3, 5, 7} is used that
+// gives correct results for all such values. For larger n, the 12-witness
+// Sinclair set {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37} is used, which
+// is proven deterministic for all n < 3.317×10^24 and therefore for the
+// entire uint64 range.
 //
 // Time complexity: O(k · log²(n)) where k is the number of witnesses.
 // Reference: Miller (1976), Rabin (1980); witness sets from
@@ -46,13 +47,18 @@ func IsPrime(n uint64) bool {
 
 	// Deterministic Miller-Rabin witnesses.
 	// For n < 3,215,031,751, witnesses {2, 3, 5, 7} suffice.
-	// For larger n, we use {2, 3, 5, 7, 11, 13, 17} which is correct
-	// for all n < 3.317×10^24 (covers all uint64 values we care about).
+	// For larger n, we use the 12-witness Sinclair set
+	// {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37}, which is proven
+	// deterministic for all n < 3.317×10^24 (covers the entire uint64 range).
+	// A smaller set (e.g. the first 7 primes) is NOT sufficient: it is only
+	// deterministic up to ~3.4×10^14 and silently misclassifies large strong
+	// pseudoprimes such as 3825123056546413051 (= 149491 × 747451 × 34233211)
+	// as prime.
 	var witnesses []uint64
 	if n < 3215031751 {
 		witnesses = []uint64{2, 3, 5, 7}
 	} else {
-		witnesses = []uint64{2, 3, 5, 7, 11, 13, 17}
+		witnesses = []uint64{2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37}
 	}
 
 	return millerRabinTest(n, witnesses)
@@ -62,8 +68,11 @@ func IsPrime(n uint64) bool {
 // using k random-ish witnesses. In this deterministic implementation, the
 // witnesses are the first k primes (2, 3, 5, 7, 11, 13, ...).
 //
-// For k >= 7, this is deterministic for all uint64 values (see IsPrime).
-// For smaller k, false positives are possible for Carmichael numbers.
+// For k >= 12, this is deterministic for all uint64 values: the first 12
+// prime witnesses (the Sinclair set {2,3,5,7,11,13,17,19,23,29,31,37}) are
+// required to cover the full uint64 range (see IsPrime). For smaller k,
+// false positives are possible — Carmichael numbers fool tiny k, and large
+// strong pseudoprimes (e.g. 3825123056546413051) fool k as high as 11.
 //
 // Formula: decompose n-1 = 2^r · d, then for each witness a check:
 //   a^d ≡ 1 (mod n) OR a^(2^i · d) ≡ -1 (mod n) for some 0 <= i < r.
