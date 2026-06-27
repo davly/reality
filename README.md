@@ -4,7 +4,7 @@ Universal truth encoded in code. Pure math, physics, and constants with zero ext
 
 ## Overview
 
-Reality is the foundational math and science library for the Limitless ecosystem. It provides deterministic, pure functions validated against cross-language golden-file test vectors (JSON).
+Reality is the foundational math and science library for the Limitless ecosystem. It provides deterministic, pure functions validated against language-neutral golden-file test vectors (JSON).
 
 **Version:** v0.10.0 (cohort-additive — see CONTEXT.md §11)
 **Module:** `github.com/davly/reality`
@@ -126,7 +126,7 @@ go test ./physics/
 
 ## Golden-File Test Vectors
 
-Golden files are JSON documents in `testdata/` that define expected inputs and outputs for every function. The same JSON files are used by Go, Python, C++, and C# implementations to ensure cross-language consistency.
+Golden files are JSON documents in `testdata/` that define expected inputs and outputs for every function. They are the language-neutral CONTRACT for these functions: the Go implementation validates against them, and the JSON format is designed so independent Python/C++/C# implementations could validate against the same vectors — though only the Go implementation ships in this repository today.
 
 Format:
 ```json
@@ -156,7 +156,7 @@ aicore imports reality. reality imports nothing.
 ## Design Rules
 
 1. **Zero dependencies.** Only Go standard library.
-2. **Golden files are the proof.** Every function has cross-language test vectors.
+2. **Golden files are the proof.** Every function has language-neutral test vectors.
 3. **Every constant cites its source.** SI 2019, NIST CODATA 2018, or ISO standards.
 4. **Pure functions only.** No global state, no goroutines, numbers in / numbers out.
 5. **No allocations in hot paths.** Functions accept output buffers. Pistachio calls these at 60 FPS.
