@@ -17,20 +17,39 @@ func PearsonCorrelation(x, y []float64) float64 {
 	if n < 2 || len(y) != n {
 		return 0
 	}
-	var sumX, sumY, sumXY, sumX2, sumY2 float64
-	for i := 0; i < n; i++ {
-		sumX += x[i]
-		sumY += y[i]
-		sumXY += x[i] * y[i]
-		sumX2 += x[i] * x[i]
-		sumY2 += y[i] * y[i]
-	}
+	// Two-pass centered computation. The single-pass uncentered form
+	// (n*Σx² - (Σx)²) catastrophically cancels for large-magnitude, small-variance
+	// data: the two terms are nearly-equal huge numbers, so the discriminant can
+	// go slightly NEGATIVE (sqrt -> NaN) or the ratio can exceed [-1,1]. Centering
+	// on the means removes the cancellation.
 	nf := float64(n)
-	denom := math.Sqrt((nf*sumX2 - sumX*sumX) * (nf*sumY2 - sumY*sumY))
+	var meanX, meanY float64
+	for i := 0; i < n; i++ {
+		meanX += x[i]
+		meanY += y[i]
+	}
+	meanX /= nf
+	meanY /= nf
+	var sxy, sxx, syy float64
+	for i := 0; i < n; i++ {
+		dx := x[i] - meanX
+		dy := y[i] - meanY
+		sxy += dx * dy
+		sxx += dx * dx
+		syy += dy * dy
+	}
+	denom := math.Sqrt(sxx * syy)
 	if denom == 0 {
 		return 0
 	}
-	return (nf*sumXY - sumX*sumY) / denom
+	r := sxy / denom
+	// Clamp to the documented [-1,1] range (rounding can push it a hair outside).
+	if r > 1 {
+		r = 1
+	} else if r < -1 {
+		r = -1
+	}
+	return r
 }
 
 // SpearmanCorrelation computes the Spearman rank correlation coefficient
