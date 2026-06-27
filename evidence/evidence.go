@@ -128,7 +128,9 @@ func Summarize(samples []int, minSampleThreshold int) Summary {
 // Reference: add-k / Bayesian-shrinkage pseudo-count saturation; Gelman et al.
 // (2013).
 func SampleBackingFactor(n int, halfSaturation float64) float64 {
-	if halfSaturation <= 0 {
+	if !(halfSaturation > 0) {
+		// Catches non-positive AND NaN (NaN > 0 is false): a NaN halfSaturation
+		// would otherwise skip a plain `<= 0` guard and poison nf/(nf+NaN) to NaN.
 		halfSaturation = DefaultHalfSaturation
 	}
 	if n <= 0 {
