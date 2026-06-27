@@ -108,9 +108,6 @@ func AStar(adj IntAdjacency, weights map[[2]int]float64, source, target int, heu
 		inClosed[u.node] = true
 
 		for _, v := range adj[u.node] {
-			if inClosed[v] {
-				continue
-			}
 			w, ok := weights[[2]int{u.node, v}]
 			if !ok {
 				continue
@@ -119,6 +116,13 @@ func AStar(adj IntAdjacency, weights map[[2]int]float64, source, target int, heu
 			if tentative < gScore[v] {
 				gScore[v] = tentative
 				cameFrom[v] = u.node
+				// Reopen v if it was already closed. With a merely ADMISSIBLE
+				// (not necessarily consistent) heuristic, a node can be closed at
+				// a suboptimal g and later reached more cheaply; skipping closed
+				// neighbors (the old behaviour) then returned a SUBOPTIMAL path,
+				// contradicting the documented admissible-heuristic optimality.
+				// Reopening keeps A* optimal for any admissible heuristic.
+				inClosed[v] = false
 				fScore := tentative + heuristic(v)
 				heap.Push(pq, dijkstraItem{node: v, dist: fScore})
 			}
