@@ -170,19 +170,14 @@ func SimplexMethod(c []float64, A [][]float64, b []float64) ([]float64, float64,
 	return x, optVal, nil
 }
 
-// InteriorPoint solves a standard-form linear program using a primal-dual
-// interior point (barrier) method.
+// InteriorPoint is QUARANTINED and currently returns an error.
 //
-// Problem:
-//
-//	minimize   c'x
-//	subject to Ax <= b, x >= 0
-//
-// The method converts to equality form with slacks and applies a log-barrier
-// approach, iteratively reducing the barrier parameter mu toward zero.
-//
-// Returns the optimal solution x (length n), the optimal objective value, and
-// an error if the problem cannot be solved.
+// The previous primal-dual barrier implementation was not correct: its "Newton
+// step" was an ad-hoc approximation that did not solve the KKT system, so it
+// diverged to NaN/garbage on essentially every well-posed LP while returning a
+// nil error (a silently-wrong result). Rather than mislead callers, it now fails
+// closed. Use SimplexMethod for linear programs until a correct primal-dual
+// method is implemented here.
 //
 // Reference: Wright, "Primal-Dual Interior-Point Methods," SIAM, 1997.
 func InteriorPoint(c []float64, A [][]float64, b []float64) ([]float64, float64, error) {
@@ -195,138 +190,10 @@ func InteriorPoint(c []float64, A [][]float64, b []float64) ([]float64, float64,
 		return nil, 0, errors.New("optim.InteriorPoint: len(b) != len(A)")
 	}
 
-	// Equality form: [A | I] [x; s] = b, x >= 0, s >= 0.
-	// Variables: x (n), s (m). Total = n + m.
-	totalVars := n + m
-
-	// Initialize strictly feasible interior point.
-	x := make([]float64, totalVars)
-	for i := range x {
-		x[i] = 1.0
-	}
-	// Adjust slacks so A*x_orig + s = b (approximately).
-	for i := 0; i < m; i++ {
-		ax := 0.0
-		for j := 0; j < n; j++ {
-			ax += A[i][j] * x[j]
-		}
-		slack := b[i] - ax
-		if slack < 0.1 {
-			slack = 0.1
-		}
-		x[n+i] = slack
-	}
-
-	// Dual variables.
-	lambda := make([]float64, m)
-	mu := 10.0
-
-	const maxOuter = 50
-	const maxInner = 30
-	const sigma = 0.2 // centering parameter
-
-	for outer := 0; outer < maxOuter; outer++ {
-		// Reduce barrier.
-		mu *= sigma
-
-		if mu < 1e-12 {
-			break
-		}
-
-		for inner := 0; inner < maxInner; inner++ {
-			// Compute residuals.
-			// Primal residual: A_eq * x - b
-			rp := make([]float64, m)
-			for i := 0; i < m; i++ {
-				sum := 0.0
-				for j := 0; j < n; j++ {
-					sum += A[i][j] * x[j]
-				}
-				sum += x[n+i] // slack
-				rp[i] = sum - b[i]
-			}
-
-			// Dual residual: c_ext - A_eq' * lambda - diag(1/x)*mu*e
-			// For original vars: c[j] - sum_i(A[i][j]*lambda[i]) - mu/x[j]
-			// For slack vars:    0 - lambda[i] - mu/x[n+i]
-			rd := make([]float64, totalVars)
-			for j := 0; j < n; j++ {
-				rd[j] = c[j]
-				for i := 0; i < m; i++ {
-					rd[j] -= A[i][j] * lambda[i]
-				}
-				if x[j] > 1e-15 {
-					rd[j] -= mu / x[j]
-				}
-			}
-			for i := 0; i < m; i++ {
-				rd[n+i] = -lambda[i]
-				if x[n+i] > 1e-15 {
-					rd[n+i] -= mu / x[n+i]
-				}
-			}
-
-			// Check convergence.
-			rpNorm := 0.0
-			for _, v := range rp {
-				rpNorm += v * v
-			}
-			rdNorm := 0.0
-			for _, v := range rd {
-				rdNorm += v * v
-			}
-			if math.Sqrt(rpNorm) < 1e-8 && math.Sqrt(rdNorm) < 1e-8 {
-				break
-			}
-
-			// Newton step using a simplified approach:
-			// Solve for dx using gradient descent on the KKT system.
-			// Step direction: dx[j] = -rd[j] * x[j]^2 / mu (approximate)
-			dx := make([]float64, totalVars)
-			for j := 0; j < totalVars; j++ {
-				if x[j] > 1e-15 {
-					dx[j] = -rd[j] * x[j] * x[j] / (mu + x[j]*x[j])
-				}
-			}
-
-			// Update lambda based on primal residual.
-			for i := 0; i < m; i++ {
-				lambda[i] += 0.1 * rp[i]
-			}
-
-			// Line search: ensure x + alpha*dx > 0.
-			alpha := 1.0
-			for j := 0; j < totalVars; j++ {
-				if dx[j] < 0 {
-					maxAlpha := -0.99 * x[j] / dx[j]
-					if maxAlpha < alpha {
-						alpha = maxAlpha
-					}
-				}
-			}
-			if alpha > 1.0 {
-				alpha = 1.0
-			}
-			if alpha < 1e-10 {
-				alpha = 1e-10
-			}
-
-			for j := 0; j < totalVars; j++ {
-				x[j] += alpha * dx[j]
-				if x[j] < 1e-15 {
-					x[j] = 1e-15
-				}
-			}
-		}
-	}
-
-	// Extract solution.
-	xSol := make([]float64, n)
-	copy(xSol, x[:n])
-	optVal := 0.0
-	for j := 0; j < n; j++ {
-		optVal += c[j] * xSol[j]
-	}
-
-	return xSol, optVal, nil
+	// QUARANTINED: the barrier iteration that was here was not a correct
+	// primal-dual interior-point method -- its "Newton step" was an ad-hoc
+	// approximation that does not solve the KKT system, so it diverged to
+	// NaN/garbage on essentially every LP while returning a nil error. Fail
+	// closed until it is replaced with a correct implementation.
+	return nil, 0, errors.New("optim.InteriorPoint: not a correct implementation (the barrier iteration diverged to NaN/garbage); use SimplexMethod")
 }
