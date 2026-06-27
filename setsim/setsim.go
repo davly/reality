@@ -35,34 +35,80 @@ package setsim
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-// dedup returns the set of distinct elements of s as a map. The map value is
-// an empty struct so the map carries no per-element payload (it is a set).
-func dedup[T comparable](s []T) map[T]struct{} {
-	m := make(map[T]struct{}, len(s))
+// elemSet is the distinct-element set of a slice with NaN canonicalised. Go maps
+// treat each NaN as a DISTINCT key (NaN != NaN under IEEE-754), so a raw map
+// would not collapse duplicate NaNs -- breaking the SET contract (e.g. J(s, s)
+// < 1 for an s containing NaN). NaN is instead tracked as a single canonical
+// element via hasNaN.
+type elemSet[T comparable] struct {
+	m      map[T]struct{}
+	hasNaN bool
+}
+
+// dedupSet returns the distinct-element set of s (NaN canonicalised).
+func dedupSet[T comparable](s []T) elemSet[T] {
+	es := elemSet[T]{m: make(map[T]struct{}, len(s))}
 	for _, v := range s {
-		m[v] = struct{}{}
+		if isNaNElem(v) {
+			es.hasNaN = true
+			continue
+		}
+		es.m[v] = struct{}{}
 	}
-	return m
+	return es
+}
+
+// size is the number of distinct elements (all NaNs count once).
+func (es elemSet[T]) size() int {
+	n := len(es.m)
+	if es.hasNaN {
+		n++
+	}
+	return n
+}
+
+// intersectionSize returns |A ∩ B| with all NaNs treated as one element.
+func intersectionSize[T comparable](a, b elemSet[T]) int {
+	small, large := a, b
+	if len(b.m) < len(a.m) {
+		small, large = b, a
+	}
+	inter := 0
+	for v := range small.m {
+		if _, ok := large.m[v]; ok {
+			inter++
+		}
+	}
+	if a.hasNaN && b.hasNaN {
+		inter++
+	}
+	return inter
+}
+
+// isNaNElem reports whether v is a NaN, for the float/complex element types Go
+// permits under `comparable`. (x != x is true only for NaN.)
+func isNaNElem[T comparable](v T) bool {
+	switch x := any(v).(type) {
+	case float64:
+		return x != x
+	case float32:
+		return x != x
+	case complex128:
+		return real(x) != real(x) || imag(x) != imag(x)
+	case complex64:
+		return real(x) != real(x) || imag(x) != imag(x)
+	}
+	return false
 }
 
 // counts returns |A ∩ B| and |A ∪ B| for the two slices treated as sets.
 // Both inputs are deduplicated first. The smaller distinct set is iterated for
 // the intersection probe. Union = |A| + |B| - |A ∩ B|.
 func counts[T comparable](a, b []T) (intersection, union int) {
-	setA := dedup(a)
-	setB := dedup(b)
-
-	// Probe the smaller set against the larger for the intersection.
-	small, large := setA, setB
-	if len(setB) < len(setA) {
-		small, large = setB, setA
-	}
-	for v := range small {
-		if _, ok := large[v]; ok {
-			intersection++
-		}
-	}
-	union = len(setA) + len(setB) - intersection
+	setA := dedupSet(a)
+	setB := dedupSet(b)
+	intersection = intersectionSize(setA, setB)
+	union = setA.size() + setB.size() - intersection
 	return intersection, union
 }
 
@@ -126,24 +172,13 @@ func SetJaccard[T comparable](a, b []T) float64 {
 //   - Sørensen T. (1948). "A method of establishing groups of equal amplitude
 //     in plant sociology based on similarity of species content."
 func SetDice[T comparable](a, b []T) float64 {
-	setA := dedup(a)
-	setB := dedup(b)
-	denom := len(setA) + len(setB)
+	setA := dedupSet(a)
+	setB := dedupSet(b)
+	denom := setA.size() + setB.size()
 	if denom == 0 {
 		return 0.0
 	}
-	// Intersection via the shared counts helper would re-dedup; compute it
-	// directly here against the sets we already built.
-	small, large := setA, setB
-	if len(setB) < len(setA) {
-		small, large = setB, setA
-	}
-	inter := 0
-	for v := range small {
-		if _, ok := large[v]; ok {
-			inter++
-		}
-	}
+	inter := intersectionSize(setA, setB)
 	return 2.0 * float64(inter) / float64(denom)
 }
 
@@ -161,25 +196,16 @@ func SetDice[T comparable](a, b []T) float64 {
 // Space complexity: O(|a| + |b|)
 // Reference: Szymkiewicz-Simpson overlap coefficient.
 func SetOverlapCoefficient[T comparable](a, b []T) float64 {
-	setA := dedup(a)
-	setB := dedup(b)
-	minLen := len(setA)
-	if len(setB) < minLen {
-		minLen = len(setB)
+	setA := dedupSet(a)
+	setB := dedupSet(b)
+	minLen := setA.size()
+	if setB.size() < minLen {
+		minLen = setB.size()
 	}
 	if minLen == 0 {
 		return 0.0
 	}
-	small, large := setA, setB
-	if len(setB) < len(setA) {
-		small, large = setB, setA
-	}
-	inter := 0
-	for v := range small {
-		if _, ok := large[v]; ok {
-			inter++
-		}
-	}
+	inter := intersectionSize(setA, setB)
 	return float64(inter) / float64(minLen)
 }
 
