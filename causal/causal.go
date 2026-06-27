@@ -4,7 +4,7 @@
 // must be adjusted for, then computes the adjusted average treatment effect
 // (ATE) by stratifying the observed data on that adjustment set.
 //
-// The problem it solves
+// # The problem it solves
 //
 // In observational data the naive association E[Y|X=1] - E[Y|X=0] is generally
 // a BIASED estimate of the causal effect of X on Y, because a confounder Z may
@@ -55,6 +55,8 @@ package causal
 
 import (
 	"errors"
+	"math"
+	"math/rand"
 	"sort"
 	"strings"
 
@@ -109,6 +111,64 @@ type Result struct {
 	// large value means the adjusted estimate covers only part of the
 	// population and should be read with caution.
 	PositivityDroppedMass float64
+
+	// Refutation holds optional robustness checks run on the *adjusted* estimate.
+	// It is the zero value (nil) unless BackdoorATEWithRefutation was used. These
+	// are falsification tests, NOT proofs of correctness: passing them raises
+	// confidence; failing them flags the estimate as fragile.
+	Refutation *Refutation
+}
+
+// Refutation reports DoWhy-style robustness checks for an identified back-door
+// estimate. Only the refuters that can actually move THIS estimator are
+// included: a random-common-cause refuter is deliberately omitted because the
+// adjustment set is derived from the graph (graph.BackdoorAdjustmentSet), never
+// from data columns, so an injected synthetic covariate is provably a no-op (it
+// can never enter the graph-derived adjustment set, so it can never be
+// stratified on, so it cannot move BackdoorATE). See BackdoorATEWithRefutation.
+type Refutation struct {
+	// PlaceboATE is the MEAN adjusted ATE over PlaceboTrials independent
+	// treatment-label permutations. Replacing the treatment with a randomly
+	// permuted label makes it independent of Y given Z, so a sound estimate must
+	// give PlaceboATE ≈ 0. A single permutation on a small sample is a noisy
+	// statistic (its own sampling spread can be sizeable), so the mean over
+	// several permutations is used as the discriminating quantity — exactly the
+	// "many placebo simulations" approach DoWhy takes. |PlaceboATE| far from 0
+	// (relative to the original BackdoorATE) indicates the estimate is driven by
+	// label structure rather than a real adjusted contrast.
+	PlaceboATE float64
+	// PlaceboTrials is the number of independent placebo permutations averaged
+	// into PlaceboATE.
+	PlaceboTrials int
+	// PlaceboPassed is true when |PlaceboATE| <= PlaceboTolerance.
+	PlaceboPassed bool
+	// PlaceboTolerance is the threshold used for PlaceboPassed.
+	PlaceboTolerance float64
+
+	// Resamples is the number of bootstrap draws performed.
+	Resamples int
+	// BootstrapMean is the mean of the adjusted ATE over the bootstrap draws.
+	BootstrapMean float64
+	// BootstrapStd is the population standard deviation of the adjusted ATE over
+	// the bootstrap draws. A tight band around the point estimate indicates a
+	// stable estimate.
+	BootstrapStd float64
+}
+
+// RefuteOptions configures the refutation run. The zero value gives sensible
+// defaults (Resamples=200, PlaceboTrials=100, Seed=1, PlaceboTolerance=0.05).
+type RefuteOptions struct {
+	// Resamples is the number of bootstrap draws; <=0 means use the default 200.
+	Resamples int
+	// PlaceboTrials is the number of placebo permutations averaged; <=0 means use
+	// the default 100. Averaging tames the single-permutation sampling noise so
+	// the placebo statistic actually concentrates near 0 for a sound estimate.
+	PlaceboTrials int
+	// Seed seeds the deterministic RNG; 0 means use the default 1.
+	Seed int64
+	// PlaceboTolerance is the |PlaceboATE| threshold for PlaceboPassed; 0 means
+	// use the default 0.05.
+	PlaceboTolerance float64
 }
 
 // ErrInsufficientData is returned when the naive contrast itself cannot be
@@ -203,6 +263,124 @@ func AdjustedOutcome(edges []graph.Edge, treatment, outcome string, doX int, dat
 	return val, true
 }
 
+// BackdoorATEWithRefutation runs BackdoorATE and, when the effect is
+// identifiable, attaches a Refutation (placebo-treatment + bootstrap-subset).
+//
+// The point estimate is produced by the SAME code path as BackdoorATE, so the
+// returned Result's Identifiable / BackdoorATE / AdjustedOutcome* / NaiveATE /
+// AdjustmentSet / PositivityDroppedMass fields are bit-identical to what
+// BackdoorATE returns for the same inputs; the only addition is the Refutation
+// pointer. When the effect is NOT identifiable (or an error occurs), the result
+// is returned unchanged with Refutation left nil — there is nothing to refute.
+//
+// Deliberately omitted: a random-common-cause refuter. Because the adjustment
+// set comes from graph.BackdoorAdjustmentSet (graph-derived, never from data
+// columns), a synthetic covariate injected into the data that is not a graph
+// node can never enter the adjustment set, can never be stratified on, and
+// therefore can never move BackdoorATE. Such a refuter would report "estimate
+// unchanged" by construction — it tests nothing — so it is not built.
+func BackdoorATEWithRefutation(edges []graph.Edge, treatment, outcome string, data []Observation, opts RefuteOptions) (Result, error) {
+	res, err := BackdoorATE(edges, treatment, outcome, data)
+	if err != nil || !res.Identifiable {
+		return res, err // not identifiable: nothing to refute, leave Refutation nil
+	}
+	if opts.Resamples <= 0 {
+		opts.Resamples = 200
+	}
+	if opts.PlaceboTrials <= 0 {
+		opts.PlaceboTrials = 100
+	}
+	if opts.Seed == 0 {
+		opts.Seed = 1
+	}
+	if opts.PlaceboTolerance == 0 {
+		opts.PlaceboTolerance = 0.05
+	}
+	rng := rand.New(rand.NewSource(opts.Seed))
+
+	z := res.AdjustmentSet // graph-derived; reuse, do not re-identify
+
+	// Placebo: permute the treatment column repeatedly, average the adjusted ATE.
+	placebo := placeboATE(rng, z, treatment, outcome, data, opts.PlaceboTrials)
+
+	// Bootstrap: resample N rows with replacement, re-estimate adjusted ATE.
+	mean, std := bootstrapATE(rng, z, treatment, outcome, data, opts.Resamples)
+
+	res.Refutation = &Refutation{
+		PlaceboATE:       placebo,
+		PlaceboTrials:    opts.PlaceboTrials,
+		PlaceboPassed:    math.Abs(placebo) <= opts.PlaceboTolerance,
+		PlaceboTolerance: opts.PlaceboTolerance,
+		Resamples:        opts.Resamples,
+		BootstrapMean:    mean,
+		BootstrapStd:     std,
+	}
+	return res, nil
+}
+
+// placeboATE runs `trials` independent placebo permutations and returns the MEAN
+// adjusted ATE across them. Each trial permutes the treatment labels across
+// observations (Fisher–Yates) and recomputes the back-door-adjusted ATE on the
+// SAME adjustment set z. With the treatment now independent of Y given Z, each
+// trial's contrast is noise centered on 0; averaging many trials concentrates
+// the statistic at ≈ 0 for a sound estimate, which is what makes the placebo a
+// usable discriminating check on a small sample.
+func placeboATE(rng *rand.Rand, z []string, treatment, outcome string, data []Observation, trials int) float64 {
+	if len(data) == 0 || trials <= 0 {
+		return 0
+	}
+	// Base labels and reusable deep-copied rows (Observation is a map, so each
+	// row must be copied to avoid mutating the caller's data).
+	labels := make([]int, len(data))
+	shuffled := make([]Observation, len(data))
+	for i, obs := range data {
+		labels[i] = binary(obs[treatment])
+		c := make(Observation, len(obs))
+		for k, v := range obs {
+			c[k] = v
+		}
+		shuffled[i] = c
+	}
+	var sum float64
+	for tr := 0; tr < trials; tr++ {
+		rng.Shuffle(len(labels), func(i, j int) { labels[i], labels[j] = labels[j], labels[i] })
+		for i := range shuffled {
+			shuffled[i][treatment] = labels[i]
+		}
+		out1, out0, _ := adjustedOutcomes(z, treatment, outcome, shuffled)
+		sum += out1 - out0
+	}
+	return sum / float64(trials)
+}
+
+// bootstrapATE draws `resamples` bootstrap samples (N rows with replacement) and
+// returns the mean and population std of the adjusted ATE across draws.
+func bootstrapATE(rng *rand.Rand, z []string, treatment, outcome string, data []Observation, resamples int) (mean, std float64) {
+	n := len(data)
+	if n == 0 || resamples == 0 {
+		return 0, 0
+	}
+	vals := make([]float64, 0, resamples)
+	sample := make([]Observation, n)
+	for r := 0; r < resamples; r++ {
+		for i := 0; i < n; i++ {
+			sample[i] = data[rng.Intn(n)]
+		}
+		out1, out0, _ := adjustedOutcomes(z, treatment, outcome, sample)
+		vals = append(vals, out1-out0)
+	}
+	for _, v := range vals {
+		mean += v
+	}
+	mean /= float64(len(vals))
+	for _, v := range vals {
+		d := v - mean
+		std += d * d
+	}
+	std = math.Sqrt(std / float64(len(vals)))
+	return mean, std
+}
+
 // naiveATE computes E[Y|X=1] - E[Y|X=0] from the data. The boolean is false if
 // either arm is empty (the contrast is undefined).
 func naiveATE(treatment, outcome string, data []Observation) (float64, bool) {
@@ -281,6 +459,20 @@ func tabulate(z []string, treatment, outcome string, data []Observation) (map[st
 	return strata, total
 }
 
+// sortedStratumKeys returns the keys of a strata map in ascending order, so
+// callers can accumulate a weighted sum over strata in a run-independent order.
+// This is what makes BackdoorATE (and therefore the refutation layer, which
+// re-estimates hundreds of times) bit-reproducible despite Go's randomized map
+// iteration order and the non-associativity of floating-point addition.
+func sortedStratumKeys(strata map[string]*stratumCounts) []string {
+	keys := make([]string, 0, len(strata))
+	for k := range strata {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
 // adjustedOutcomes computes BOTH adjusted potential outcomes
 // E[Y|do(X=1)] and E[Y|do(X=0)] and the positivity-dropped mass in one pass,
 // summing only over strata that have BOTH arms (so the within-stratum contrast
@@ -293,7 +485,14 @@ func adjustedOutcomes(z []string, treatment, outcome string, data []Observation)
 		return 0, 0, 0
 	}
 	denom := float64(total)
-	for _, sc := range strata {
+	// Accumulate over strata in a DETERMINISTIC order. Go map iteration order is
+	// randomized per run, and floating-point addition is non-associative, so
+	// summing in map order makes out1/out0/droppedMass vary in the low bits
+	// between runs (breaking the documented bit-reproducibility of BackdoorATE
+	// and the refutation layer, which sum this hundreds of times). Sorting the
+	// stratum keys pins the summation order.
+	for _, key := range sortedStratumKeys(strata) {
+		sc := strata[key]
 		if sc.n1 == 0 || sc.n0 == 0 {
 			// Positivity violation for this stratum: cannot form a contrast.
 			droppedMass += float64(sc.total) / denom
@@ -316,7 +515,10 @@ func adjustedOutcomeOneArm(z []string, treatment, outcome string, arm int, data 
 	}
 	denom := float64(total)
 	var out, droppedMass float64
-	for _, sc := range strata {
+	// Deterministic accumulation order (see adjustedOutcomes): map iteration is
+	// randomized and float addition is non-associative.
+	for _, key := range sortedStratumKeys(strata) {
+		sc := strata[key]
 		var sum float64
 		var n int
 		if arm == 1 {
