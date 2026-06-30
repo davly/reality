@@ -31,6 +31,7 @@ package fairness
 
 import (
 	"math"
+	"math/big"
 	"sort"
 )
 
@@ -138,6 +139,27 @@ func PassesFourFifths(air float64) bool {
 	return air >= FourFifthsThreshold
 }
 
+// PassesFourFifthsExact reports the EEOC four-fifths verdict using EXACT integer
+// arithmetic over the raw selection counts, eliminating the float-division seam in
+// PassesFourFifths that flips boundary verdicts. With min_rate = minSel/minTot and
+// max_rate = maxSel/maxTot (positive totals), the rule min_rate/max_rate >= 4/5 is
+// equivalent to the cross-multiplied integer inequality
+//
+//	5 * minSel * maxTot >= 4 * maxSel * minTot
+//
+// which is decided with no rounding. Example the float path gets WRONG: minSel/minTot =
+// 2/3, maxSel/maxTot = 5/6 gives AIR = 4/5 EXACTLY (a PASS), but float computes
+// 0.6667/0.8333 = 0.79999… < 0.80 and FAILS. math/big avoids any intermediate overflow.
+// Reference: EEOC four-fifths rule, 29 C.F.R. § 1607.4(D).
+func PassesFourFifthsExact(minSel, minTot, maxSel, maxTot int) bool {
+	if minTot <= 0 || maxTot <= 0 || maxSel <= 0 {
+		return false
+	}
+	lhs := new(big.Int).Mul(big.NewInt(5), new(big.Int).Mul(big.NewInt(int64(minSel)), big.NewInt(int64(maxTot))))
+	rhs := new(big.Int).Mul(big.NewInt(4), new(big.Int).Mul(big.NewInt(int64(maxSel)), big.NewInt(int64(minTot))))
+	return lhs.Cmp(rhs) >= 0
+}
+
 // WilsonScoreInterval returns the [low, high] Wilson score confidence interval
 // for a binomial proportion with `selected` successes out of `total` trials.
 //
@@ -214,6 +236,7 @@ func AdverseImpact(groups []GroupCount, z float64) AdverseImpactReport {
 
 	minRate, maxRate := math.Inf(1), math.Inf(-1)
 	var minLabel, maxLabel string
+	var minSel, minTot, maxSel, maxTot int
 	eligible := 0
 	for _, r := range rates {
 		if r.Total <= 0 {
@@ -223,10 +246,12 @@ func AdverseImpact(groups []GroupCount, z float64) AdverseImpactReport {
 		if r.SelectionRate < minRate {
 			minRate = r.SelectionRate
 			minLabel = r.Label
+			minSel, minTot = r.Selected, r.Total
 		}
 		if r.SelectionRate > maxRate {
 			maxRate = r.SelectionRate
 			maxLabel = r.Label
+			maxSel, maxTot = r.Selected, r.Total
 		}
 	}
 
@@ -238,7 +263,11 @@ func AdverseImpact(groups []GroupCount, z float64) AdverseImpactReport {
 	report.MinLabel = minLabel
 	report.MaxLabel = maxLabel
 	report.AIR = minRate / maxRate
-	report.Pass = PassesFourFifths(report.AIR)
+	// Pass is decided by EXACT integer arithmetic over the raw counts, not by the
+	// float AIR — the four-fifths boundary is a discrete regulatory verdict and must
+	// not be flipped by IEEE-754 rounding (e.g. 2/3 vs 5/6 = 4/5 exactly = PASS, which
+	// float wrongly fails). AIR above remains for display/reporting only.
+	report.Pass = PassesFourFifthsExact(minSel, minTot, maxSel, maxTot)
 	return report
 }
 
