@@ -1,0 +1,19 @@
+{
+  "function": "Statespace.LocalLevel",
+  "source": "Durbin & Koopman (2012), Time Series Analysis by State Space Methods, 2nd ed., section 2 (local level model). Series: the opening decade (1871-1880) of the annual Nile river flow at Aswan distributed with the book and R datasets::Nile. Parameters q=sigma^2_eta, r=sigma^2_eps at the book's local-level MLE (sigma^2_eps=15099, sigma^2_eta=1469.1). Filtered/smoothed outputs are the language-neutral contract reproduced by the first-principles recursion; independently anchored by the steady-state closed form and the scalar/matrix parity tests.",
+  "inputs": {
+    "y": [1120, 1160, 963, 1210, 1160, 1160, 813, 1230, 1370, 1140],
+    "q": 1469.1,
+    "r": 15099.0,
+    "x0": 1120.0,
+    "p0": 1.0e7
+  },
+  "expected": {
+    "loglik": -68.635685050523,
+    "filtered_mean": [1120.0000000000, 1140.9141202222, 1072.8133061726, 1117.3107567197, 1129.9721442269, 1138.4575474752, 1048.8589321637, 1098.0305319760, 1171.3012176537, 1162.9026776078],
+    "filtered_var": [15076.2363906737, 7894.5575308828, 5779.4973780062, 4897.4648128496, 4478.2777880446, 4266.7416752680, 4156.7617745652, 4098.6949808471, 4067.7877964977, 4051.2659142054],
+    "smoothed_mean": [1118.5459637589, 1118.4042755692, 1114.2154134765, 1124.7394836269, 1126.9678901834, 1125.9823439926, 1121.6869535445, 1147.4261351511, 1165.1310585385, 1162.9026776078],
+    "smoothed_var": [4049.6435515391, 3265.0737404405, 2850.8533207308, 2641.8499231105, 2554.7426280924, 2554.8053977383, 2642.0632556825, 2851.3022630092, 3265.9372669487, 4051.2659142054]
+  },
+  "tolerance": 1e-9
+}
