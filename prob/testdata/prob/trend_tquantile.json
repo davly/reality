@@ -1,0 +1,66 @@
+{
+  "function": "prob.StudentTQuantile",
+  "_source": "Student's t inverse CDF. Expected values computed independently at 40-digit precision (mpmath: t-CDF via regularized incomplete beta betainc, inverted with findroot). Cross-checked against standard t-tables (e.g. Abramowitz & Stegun 1964 Table 26.10): t_0.975,3=3.182, t_0.975,10=2.228, t_0.95,1=6.314, t_0.975,1=12.706.",
+  "cases": [
+    {
+      "description": "t_{0.975, 3} classic small-sample 95% two-sided",
+      "inputs": {"p": 0.975, "df": 3.0},
+      "expected": 3.18244630528370844,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "t_{0.975, 10}",
+      "inputs": {"p": 0.975, "df": 10.0},
+      "expected": 2.22813885198627422,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "t_{0.95, 1} Cauchy (df=1) heavy tail",
+      "inputs": {"p": 0.95, "df": 1.0},
+      "expected": 6.3137515146750374,
+      "tolerance": 1e-8
+    },
+    {
+      "description": "t_{0.975, 1} Cauchy 97.5%",
+      "inputs": {"p": 0.975, "df": 1.0},
+      "expected": 12.7062047361746933,
+      "tolerance": 1e-8
+    },
+    {
+      "description": "t_{0.995, 5} 99% two-sided",
+      "inputs": {"p": 0.995, "df": 5.0},
+      "expected": 4.03214298355522718,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "t_{0.75, 8} interquartile-scale upper",
+      "inputs": {"p": 0.75, "df": 8.0},
+      "expected": 0.7063866126448386,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "lower tail via symmetry t_{0.025, 3} = -t_{0.975, 3}",
+      "inputs": {"p": 0.025, "df": 3.0},
+      "expected": -3.18244630528370952,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "t_{0.90, 30} approaches normal 1.2816 as df grows",
+      "inputs": {"p": 0.90, "df": 30.0},
+      "expected": 1.31041502539139571,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "t_{0.975, 100} near normal 1.9600",
+      "inputs": {"p": 0.975, "df": 100.0},
+      "expected": 1.98397151852355189,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "median is exactly 0",
+      "inputs": {"p": 0.5, "df": 7.0},
+      "expected": 0.0,
+      "tolerance": 1e-12
+    }
+  ]
+}
