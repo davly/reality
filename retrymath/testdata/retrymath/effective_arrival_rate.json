@@ -1,0 +1,11 @@
+{
+  "function": "RetryMath.EffectiveArrivalRate",
+  "_source": "lambda_eff = lambda*A(p,k). Retry-inflated offered load. Hand-derived.",
+  "cases": [
+    {"description": "lambda=100 p=0.5 k=3 -> 100*1.75", "inputs": {"lambda": 100.0, "p": 0.5, "k": 3}, "expected": 175.0, "tolerance": 1e-9},
+    {"description": "no failures -> unchanged", "inputs": {"lambda": 100.0, "p": 0.0, "k": 5}, "expected": 100.0, "tolerance": 1e-9},
+    {"description": "lambda=50 p=0.9 k=3 -> 50*2.71", "inputs": {"lambda": 50.0, "p": 0.9, "k": 3}, "expected": 135.5, "tolerance": 1e-9},
+    {"description": "p=1 k=4 quadruples load", "inputs": {"lambda": 10.0, "p": 1.0, "k": 4}, "expected": 40.0, "tolerance": 1e-9},
+    {"description": "zero arrival stays zero", "inputs": {"lambda": 0.0, "p": 0.9, "k": 5}, "expected": 0.0, "tolerance": 1e-9}
+  ]
+}

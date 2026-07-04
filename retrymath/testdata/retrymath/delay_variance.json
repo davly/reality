@@ -1,0 +1,11 @@
+{
+  "function": "RetryMath.DelayVariance",
+  "_source": "Var of U(lo,hi) = (hi-lo)^2/12. family: 0=None,1=Full,2=Equal,3=Multiplicative. Hand-derived.",
+  "cases": [
+    {"description": "None n=3 -> deterministic, variance 0", "inputs": {"family": 0, "base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 3}, "expected": 0.0, "tolerance": 1e-12},
+    {"description": "Full n=3 -> 8^2/12", "inputs": {"family": 1, "base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 3}, "expected": 5.333333333333333, "tolerance": 1e-12},
+    {"description": "Equal n=3 -> 4^2/12", "inputs": {"family": 2, "base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 3}, "expected": 1.3333333333333333, "tolerance": 1e-12},
+    {"description": "Multiplicative n=3 -> 8^2/12", "inputs": {"family": 3, "base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 3}, "expected": 5.333333333333333, "tolerance": 1e-12},
+    {"description": "Full n=5 capped -> 30^2/12=75", "inputs": {"family": 1, "base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 5}, "expected": 75.0, "tolerance": 1e-12}
+  ]
+}
