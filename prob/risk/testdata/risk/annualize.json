@@ -1,0 +1,30 @@
+{
+  "function": "risk.AnnualizeReturn + AnnualizeVolatility",
+  "_source": "AnnualizeReturn geometric (1+r)^p-1: (0.01,12)=1.01^12-1=0.1268250301319697; (0.02,4)=1.02^4-1=0.08243216. AnnualizeVolatility sqrt-of-time r*sqrt(p): (0.01,252)=0.01*sqrt(252)=0.15874507866387544; (0.02,12)=0.02*sqrt(12)=0.06928203230275509.",
+  "cases": [
+    {
+      "description": "AnnualizeReturn 1% monthly geometric to annual = 1.01^12-1",
+      "inputs": {"perPeriodMean": 0.01, "periodsPerYear": 12},
+      "expected": 0.12682503013196973,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "AnnualizeReturn 2% quarterly to annual = 1.02^4-1",
+      "inputs": {"perPeriodMean": 0.02, "periodsPerYear": 4},
+      "expected": 0.08243216,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "AnnualizeVolatility 1% daily to annual = 0.01*sqrt(252)",
+      "inputs": {"perPeriodStdDev": 0.01, "periodsPerYear": 252},
+      "expected": 0.15874507866387544,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "AnnualizeVolatility 2% monthly to annual = 0.02*sqrt(12)",
+      "inputs": {"perPeriodStdDev": 0.02, "periodsPerYear": 12},
+      "expected": 0.06928203230275509,
+      "tolerance": 1e-12
+    }
+  ]
+}
