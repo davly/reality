@@ -52,6 +52,7 @@ Reality is the foundational math and science library for the Limitless ecosystem
 | Package | Description |
 |---------|-------------|
 | `gametheory` | Nash equilibrium, Shapley value, minimax, replicator dynamics |
+| `trust` | Subjective-logic opinions (belief/disbelief/uncertainty) + fusion + discounting; Dempster-Shafer with explicit conflict K (Jøsang 2016 / Zadeh 1984 goldens) |
 | `queue` | Queueing theory: M/M/1, M/M/c, M/G/1, Little's law, Erlang B/C |
 | `optim` | Optimisation: bisection, Newton, L-BFGS, simulated annealing, GA, simplex |
 | `optim/proximal` | Proximal-operator methods (LASSO closed-form witness; first consumer) |
