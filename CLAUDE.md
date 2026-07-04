@@ -8,7 +8,7 @@ Universal truth encoded in code. Pure math, physics, constants. Zero dependencie
 - **Go module:** `github.com/davly/reality`
 - **License:** Apache 2.0
 - **Port:** None (library, not a service)
-- **Packages:** 49 importable (32 top-level + audio/info/optim/prob/timeseries/topology sub-packages)
+- **Packages:** 50 importable (32 top-level + audio/info/optim/prob/timeseries/topology sub-packages)
 - **Public functions:** 584 exported
 - **Tests:** 2,400+ top-level `--- PASS` (3,322 invocations including subtests; all passing, zero failures)
 - **Golden fixtures:** 80 JSON files
@@ -16,7 +16,7 @@ Universal truth encoded in code. Pure math, physics, constants. Zero dependencie
 - **Review synthesis:** `C:/LimitlessGodfather/reviews/reality-review/SYNTHESIS.md`
 - **Context:** `CONTEXT.md` in this repo (read this for full background) — §11 is the canonical inventory of post-Session-25 additions
 
-## Packages (49)
+## Packages (50)
 
 > **Historical note:** v1.0 design target was 22 packages. Reality has shipped additively past that target through Sessions 22-26 + S55-S60 cohort work. CONTEXT.md §11 is the authoritative inventory.
 
@@ -63,6 +63,7 @@ Universal truth encoded in code. Pure math, physics, constants. Zero dependencie
 | `audio/spectrogram` | STFT + visualisation (Plasma/Magma/Viridis/Inferno colourmaps) (S56) |
 | `audio/tempo` | Tempo estimation (S56 audio cohort) |
 | `audio/vibration` | Mechanical vibration: fundamental, harmonic energy ratio (Dipstick + FW Torque) |
+| `prob/agreement` | Chance-corrected inter-rater agreement: Cohen kappa, weighted kappa (linear/quadratic), Fleiss kappa, Krippendorff alpha (nominal/ordinal/interval) |
 | `prob/conformal` | Conformal prediction (regulator-grade calibration; S55 L01 trio) |
 | `prob/copula` | Copula models: Gaussian, t, Archimedean — Clayton + Gumbel (S55 L13 trio) |
 | `optim/proximal` | Proximal-operator methods (LASSO closed-form witness; first consumer) |
@@ -91,7 +92,7 @@ reality/
   crypto/       em/           fluids/         forge/session40/
   gametheory/   geometry/     graph/          info/{lz,mdl}/
   infogeo/      linalg/       optim/{proximal,transport}/
-  orbital/      physics/      pkg/canonical/  prob/{conformal,copula}/
+  orbital/      physics/      pkg/canonical/  prob/{agreement,conformal,copula}/
   queue/        sequence/     signal/         testutil/
   timeseries/{dcc,garch}/     topology/persistent/         zkmark/
 ```
