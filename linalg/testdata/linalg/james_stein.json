@@ -1,0 +1,142 @@
+{
+  "function": "Linalg.JamesSteinShrink",
+  "source": "James & Stein (1961); positive-part Efron & Morris (1977)",
+  "cases": [
+    {
+      "description": "p=3 spread means var=1",
+      "inputs": {
+        "means": [
+          1.0,
+          2.0,
+          3.0
+        ],
+        "variance": 1.0
+      },
+      "expected": [
+        1.5,
+        2.0,
+        2.5
+      ],
+      "shrinkage": 0.5,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "p=5 var=0.5",
+      "inputs": {
+        "means": [
+          0.1,
+          0.2,
+          -0.1,
+          0.3,
+          0.0
+        ],
+        "variance": 0.5
+      },
+      "expected": [
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1
+      ],
+      "shrinkage": 1.0,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "p=4 large var forces full shrink",
+      "inputs": {
+        "means": [
+          1.0,
+          1.1,
+          0.9,
+          1.05
+        ],
+        "variance": 100.0
+      },
+      "expected": [
+        1.0125,
+        1.0125,
+        1.0125,
+        1.0125
+      ],
+      "shrinkage": 1.0,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "p=3 tiny var negligible shrink",
+      "inputs": {
+        "means": [
+          10.0,
+          -10.0,
+          5.0
+        ],
+        "variance": 0.001
+      },
+      "expected": [
+        9.99996153846154,
+        -9.999946153846153,
+        4.999984615384615
+      ],
+      "shrinkage": 4.615384615384615e-06,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "p=6 mixed",
+      "inputs": {
+        "means": [
+          2.0,
+          -1.0,
+          0.5,
+          3.0,
+          -2.0,
+          1.0
+        ],
+        "variance": 2.0
+      },
+      "expected": [
+        1.341404358353511,
+        -0.2639225181598064,
+        0.5387409200968523,
+        1.8765133171912831,
+        -0.7990314769975789,
+        0.8062953995157385
+      ],
+      "shrinkage": 0.4648910411622276,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "p=3 identical means (degenerate)",
+      "inputs": {
+        "means": [
+          4.0,
+          4.0,
+          4.0
+        ],
+        "variance": 1.0
+      },
+      "expected": [
+        4.0,
+        4.0,
+        4.0
+      ],
+      "shrinkage": 1.0,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "p=2 inadmissible returns raw",
+      "inputs": {
+        "means": [
+          1.0,
+          2.0
+        ],
+        "variance": 1.0
+      },
+      "expected": [
+        1.0,
+        2.0
+      ],
+      "shrinkage": 0.0,
+      "tolerance": 1e-12
+    }
+  ]
+}
