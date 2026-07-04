@@ -1,0 +1,11 @@
+{
+  "function": "RetryMath.SymmetricJitter",
+  "_source": "delay = e*(1+fr*(2u-1)), U((1-fr)e,(1+fr)e). nexus +/-JitterFraction convention. Hand-derived.",
+  "cases": [
+    {"description": "u=0.5 -> centre e regardless of fraction", "inputs": {"base": 1.0, "cap": 30.0, "factor": 2.0, "fraction": 0.2, "attempt": 3, "u": 0.5}, "expected": 8.0, "tolerance": 1e-12},
+    {"description": "u=0 -> lower edge (1-fr)e", "inputs": {"base": 1.0, "cap": 30.0, "factor": 2.0, "fraction": 0.2, "attempt": 3, "u": 0.0}, "expected": 6.4, "tolerance": 1e-12},
+    {"description": "u=0.25 at attempt 3, fr=0.2", "inputs": {"base": 1.0, "cap": 30.0, "factor": 2.0, "fraction": 0.2, "attempt": 3, "u": 0.25}, "expected": 7.2, "tolerance": 1e-12},
+    {"description": "fr=0.5 u=0.5 at attempt 2", "inputs": {"base": 1.0, "cap": 30.0, "factor": 2.0, "fraction": 0.5, "attempt": 2, "u": 0.5}, "expected": 4.0, "tolerance": 1e-12},
+    {"description": "fraction 0 is deterministic e", "inputs": {"base": 1.0, "cap": 30.0, "factor": 2.0, "fraction": 0.0, "attempt": 3, "u": 0.7}, "expected": 8.0, "tolerance": 1e-12}
+  ]
+}

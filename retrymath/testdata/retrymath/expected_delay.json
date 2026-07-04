@@ -1,0 +1,12 @@
+{
+  "function": "RetryMath.ExpectedDelay",
+  "_source": "Mean of U(lo,hi) = (lo+hi)/2 per fixed-shape family. family: 0=None,1=Full,2=Equal,3=Multiplicative. Hand-derived.",
+  "cases": [
+    {"description": "None n=3 -> e=8", "inputs": {"family": 0, "base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 3}, "expected": 8.0, "tolerance": 1e-12},
+    {"description": "Full n=3 -> e/2=4", "inputs": {"family": 1, "base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 3}, "expected": 4.0, "tolerance": 1e-12},
+    {"description": "Equal n=3 -> 3e/4=6", "inputs": {"family": 2, "base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 3}, "expected": 6.0, "tolerance": 1e-12},
+    {"description": "Multiplicative n=3 -> e=8 (centre)", "inputs": {"family": 3, "base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 3}, "expected": 8.0, "tolerance": 1e-12},
+    {"description": "Full n=5 capped -> 15", "inputs": {"family": 1, "base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 5}, "expected": 15.0, "tolerance": 1e-12},
+    {"description": "Equal n=0 -> 3*1/4=0.75", "inputs": {"family": 2, "base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 0}, "expected": 0.75, "tolerance": 1e-12}
+  ]
+}

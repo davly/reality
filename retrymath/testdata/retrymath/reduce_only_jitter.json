@@ -1,0 +1,11 @@
+{
+  "function": "RetryMath.ReduceOnlyJitter",
+  "_source": "delay = e*(1-fr*u), U((1-fr)e,e). switchyard reduce-by-fraction convention. Hand-derived.",
+  "cases": [
+    {"description": "u=0.5 fr=0.1 at attempt 3", "inputs": {"base": 1.0, "cap": 30.0, "factor": 2.0, "fraction": 0.1, "attempt": 3, "u": 0.5}, "expected": 7.6, "tolerance": 1e-12},
+    {"description": "u=0 -> no reduction, full e", "inputs": {"base": 1.0, "cap": 30.0, "factor": 2.0, "fraction": 0.1, "attempt": 3, "u": 0.0}, "expected": 8.0, "tolerance": 1e-12},
+    {"description": "u=1 -> max reduction (1-fr)e", "inputs": {"base": 1.0, "cap": 30.0, "factor": 2.0, "fraction": 0.1, "attempt": 3, "u": 1.0}, "expected": 7.2, "tolerance": 1e-12},
+    {"description": "fr=1 u=1 -> zero", "inputs": {"base": 1.0, "cap": 30.0, "factor": 2.0, "fraction": 1.0, "attempt": 3, "u": 1.0}, "expected": 0.0, "tolerance": 1e-12},
+    {"description": "fr=0.2 u=0.5 at attempt 2", "inputs": {"base": 1.0, "cap": 30.0, "factor": 2.0, "fraction": 0.2, "attempt": 2, "u": 0.5}, "expected": 3.6, "tolerance": 1e-12}
+  ]
+}

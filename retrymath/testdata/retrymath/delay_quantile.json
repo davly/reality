@@ -1,0 +1,12 @@
+{
+  "function": "RetryMath.DelayQuantile",
+  "_source": "Inverse CDF of U(lo,hi) = lo+q*(hi-lo). family: 0=None,1=Full,2=Equal,3=Multiplicative. Hand-derived.",
+  "cases": [
+    {"description": "Full n=3 p99", "inputs": {"family": 1, "base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 3, "q": 0.99}, "expected": 7.92, "tolerance": 1e-12},
+    {"description": "Full n=3 median", "inputs": {"family": 1, "base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 3, "q": 0.5}, "expected": 4.0, "tolerance": 1e-12},
+    {"description": "Equal n=3 p99", "inputs": {"family": 2, "base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 3, "q": 0.99}, "expected": 7.96, "tolerance": 1e-12},
+    {"description": "Multiplicative n=3 median -> centre e", "inputs": {"family": 3, "base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 3, "q": 0.5}, "expected": 8.0, "tolerance": 1e-12},
+    {"description": "Full n=5 p95 capped", "inputs": {"family": 1, "base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 5, "q": 0.95}, "expected": 28.5, "tolerance": 1e-12},
+    {"description": "None n=3 quantile is deterministic e", "inputs": {"family": 0, "base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 3, "q": 0.99}, "expected": 8.0, "tolerance": 1e-12}
+  ]
+}

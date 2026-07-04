@@ -1,0 +1,10 @@
+{
+  "function": "RetryMath.EffectiveUtilization",
+  "_source": "rho_eff = lambda*A(p,k)/(servers*mu). Retry-amplified utilization for the queue stability guard. Hand-derived.",
+  "cases": [
+    {"description": "lambda100 mu200 c1 p0.5 k3 -> 175/200", "inputs": {"lambda": 100.0, "mu": 200.0, "servers": 1, "p": 0.5, "k": 3}, "expected": 0.875, "tolerance": 1e-9},
+    {"description": "no retries -> naive rho 0.5", "inputs": {"lambda": 100.0, "mu": 200.0, "servers": 1, "p": 0.0, "k": 5}, "expected": 0.5, "tolerance": 1e-9},
+    {"description": "4 servers p0.5 k2 -> 150/200", "inputs": {"lambda": 100.0, "mu": 50.0, "servers": 4, "p": 0.5, "k": 2}, "expected": 0.75, "tolerance": 1e-9},
+    {"description": "unstable: amplified rho > 1", "inputs": {"lambda": 50.0, "mu": 100.0, "servers": 1, "p": 0.9, "k": 3}, "expected": 1.355, "tolerance": 1e-9}
+  ]
+}
