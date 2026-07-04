@@ -1,0 +1,15 @@
+{
+  "function": "taxlot.Classify",
+  "source": "IRS Publication 544, 'Holding Period'; IRC 1222; Rev. Rul. 66-7. Long-term requires MORE than one year (day-after-acquisition start rule): the one-year anniversary itself is short-term.",
+  "cases": [
+    {"description": "Pub 544: bought Feb 5, sold the following Feb 5 = held exactly one year = short-term", "acquisition_date": "2019-02-05", "disposal_date": "2020-02-05", "expected": "short-term"},
+    {"description": "Pub 544: sold Feb 6 (one year and a day) = long-term", "acquisition_date": "2019-02-05", "disposal_date": "2020-02-06", "expected": "long-term"},
+    {"description": "Same-day sale is short-term", "acquisition_date": "2023-03-01", "disposal_date": "2023-03-01", "expected": "short-term"},
+    {"description": "One day before anniversary is short-term", "acquisition_date": "2022-07-01", "disposal_date": "2023-06-30", "expected": "short-term"},
+    {"description": "Leap-year acquisition (Feb 29): anniversary clamps to Feb 28; sold on Feb 28 = anniversary = short-term", "acquisition_date": "2020-02-29", "disposal_date": "2021-02-28", "expected": "short-term"},
+    {"description": "Leap-year acquisition (Feb 29): sold Mar 1 = day after clamped anniversary = long-term", "acquisition_date": "2020-02-29", "disposal_date": "2021-03-01", "expected": "long-term"},
+    {"description": "Held more than two years is long-term", "acquisition_date": "2020-01-01", "disposal_date": "2022-06-15", "expected": "long-term"},
+    {"description": "Crossing a leap day within the year: bought 2023-03-01 sold 2024-03-01 spans Feb 29 2024 = exactly one year = short-term", "acquisition_date": "2023-03-01", "disposal_date": "2024-03-01", "expected": "short-term"},
+    {"description": "Crossing a leap day: bought 2023-03-01 sold 2024-03-02 = long-term", "acquisition_date": "2023-03-01", "disposal_date": "2024-03-02", "expected": "long-term"}
+  ]
+}

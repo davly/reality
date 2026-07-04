@@ -1,0 +1,59 @@
+{
+  "function": "taxlot.ApplyWashSale",
+  "source": "IRS Publication 550, 'Wash Sales'; IRC 1091, 1091(d), 1223(3); Treas. Reg. 1.1091-1(c). Money figures in cases 'pub550_partial' and 'full_disallowance' are legally pinned by the IRS worked example; 'multi_lot_apportionment' is a derived application of the same statute exercising per-lot cumulative rounding.",
+  "cases": [
+    {
+      "description": "IRS Pub 550 partial wash sale: bought 100 sh for $1,000, sold for $750 ($250 loss), bought 50 sh within 30 days for $800. Loss on 50 matched shares ($125) disallowed; $125 deductible; replacement basis $800 -> $925.",
+      "sale": {"shares": 100, "cost_basis_cents": 100000, "proceeds_cents": 75000, "acquisition_date": "2023-06-01", "sale_date": "2023-12-15"},
+      "replacements": [
+        {"shares": 50, "cost_basis_cents": 80000, "acquisition_date": "2023-12-20"}
+      ],
+      "expected": {
+        "shares_sold": 100,
+        "matched_shares": 50,
+        "total_loss_cents": 25000,
+        "disallowed_loss_cents": 12500,
+        "deductible_loss_cents": 12500,
+        "adjustments": [
+          {"lot_index": 0, "matched_shares": 50, "basis_increase_cents": 12500, "adjusted_cost_basis_cents": 92500, "tacked_acquisition_date": "2023-06-06"}
+        ]
+      }
+    },
+    {
+      "description": "Full disallowance: 100 sh sold at $400 loss, 120 replacement sh bought within window. matched=100, entire $400 loss disallowed, none deductible, full loss added to replacement basis, holding period tacked.",
+      "sale": {"shares": 100, "cost_basis_cents": 100000, "proceeds_cents": 60000, "acquisition_date": "2022-02-01", "sale_date": "2023-02-01"},
+      "replacements": [
+        {"shares": 120, "cost_basis_cents": 130000, "acquisition_date": "2023-02-10"}
+      ],
+      "expected": {
+        "shares_sold": 100,
+        "matched_shares": 100,
+        "total_loss_cents": 40000,
+        "disallowed_loss_cents": 40000,
+        "deductible_loss_cents": 0,
+        "adjustments": [
+          {"lot_index": 0, "matched_shares": 100, "basis_increase_cents": 40000, "adjusted_cost_basis_cents": 170000, "tacked_acquisition_date": "2022-02-10"}
+        ]
+      }
+    },
+    {
+      "description": "Multi-lot apportionment in acquisition order with cent-level rounding: 100 sh sold at $333.33 loss; two replacement lots supplied OUT of acquisition order (later lot first). matched=70, disallowed=$233.33 apportioned $100.00 to the earlier 30-sh lot and $133.33 to the later 40-sh lot (sums exactly to disallowed).",
+      "sale": {"shares": 100, "cost_basis_cents": 100000, "proceeds_cents": 66667, "acquisition_date": "2024-01-10", "sale_date": "2024-05-01"},
+      "replacements": [
+        {"shares": 40, "cost_basis_cents": 40000, "acquisition_date": "2024-05-20"},
+        {"shares": 30, "cost_basis_cents": 30000, "acquisition_date": "2024-05-05"}
+      ],
+      "expected": {
+        "shares_sold": 100,
+        "matched_shares": 70,
+        "total_loss_cents": 33333,
+        "disallowed_loss_cents": 23333,
+        "deductible_loss_cents": 10000,
+        "adjustments": [
+          {"lot_index": 1, "matched_shares": 30, "basis_increase_cents": 10000, "adjusted_cost_basis_cents": 40000, "tacked_acquisition_date": "2024-01-14"},
+          {"lot_index": 0, "matched_shares": 40, "basis_increase_cents": 13333, "adjusted_cost_basis_cents": 53333, "tacked_acquisition_date": "2024-01-29"}
+        ]
+      }
+    }
+  ]
+}
