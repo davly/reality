@@ -1,0 +1,149 @@
+{
+  "function": "hrp.HRPWeights",
+  "source": "Marcos Lopez de Prado, 'Building Diversified Portfolios that Outperform Out-of-Sample', Journal of Portfolio Management 42(4), 2016. Correlation distance d=sqrt((1-rho)/2); single-linkage clustering (Sibson 1973 / Lance-Williams 1967); quasi-diagonalization; recursive bisection.",
+  "provenance": "Expected values produced by an independent Python reference implementation (not the Go code under test) and cross-checked against a by-hand derivation. See build commit for the full hand-computation.",
+  "cases": [
+    {
+      "description": "4-asset two-cluster worked example: {0,1} correlated, {2,3} correlated, weak cross-correlation; no distance ties",
+      "note": "Independently computed by the scratchpad Python reference in the w34-hrp build; hand-derivation of every stage recorded in the commit message. Canonical Lopez de Prado (2016) correlation distance sqrt((1-rho)/2).",
+      "corr": [
+        [
+          1,
+          0.7,
+          0.2,
+          0.1
+        ],
+        [
+          0.7,
+          1,
+          0.15,
+          0.05
+        ],
+        [
+          0.2,
+          0.15,
+          1,
+          0.6
+        ],
+        [
+          0.1,
+          0.05,
+          0.6,
+          1
+        ]
+      ],
+      "cov": [
+        [
+          0.04000000000000001,
+          0.041999999999999996,
+          0.016000000000000004,
+          0.010000000000000002
+        ],
+        [
+          0.042,
+          0.09,
+          0.018,
+          0.0075
+        ],
+        [
+          0.016000000000000004,
+          0.018,
+          0.16000000000000003,
+          0.12
+        ],
+        [
+          0.010000000000000002,
+          0.0075,
+          0.12,
+          0.25
+        ]
+      ],
+      "expected_dist": [
+        [
+          0.0,
+          0.3872983346207417,
+          0.6324555320336759,
+          0.6708203932499369
+        ],
+        [
+          0.3872983346207417,
+          0.0,
+          0.6519202405202649,
+          0.689202437604511
+        ],
+        [
+          0.6324555320336759,
+          0.6519202405202649,
+          0.0,
+          0.4472135954999579
+        ],
+        [
+          0.6708203932499369,
+          0.689202437604511,
+          0.4472135954999579,
+          0.0
+        ]
+      ],
+      "expected_linkage": [
+        {
+          "A": 0,
+          "B": 1,
+          "Dist": 0.3872983346207417,
+          "Size": 2
+        },
+        {
+          "A": 2,
+          "B": 3,
+          "Dist": 0.4472135954999579,
+          "Size": 2
+        },
+        {
+          "A": 4,
+          "B": 5,
+          "Dist": 0.6324555320336759,
+          "Size": 4
+        }
+      ],
+      "expected_order": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "expected_weights": [
+        0.5347121336272692,
+        0.2376498371676752,
+        0.13880367634454607,
+        0.08883435286050953
+      ],
+      "tolerance": 1e-12
+    },
+    {
+      "description": "single asset takes the whole book",
+      "note": "HRPWeights n==1 fast path",
+      "corr": [
+        [
+          1.0
+        ]
+      ],
+      "cov": [
+        [
+          0.09
+        ]
+      ],
+      "expected_dist": [
+        [
+          0.0
+        ]
+      ],
+      "expected_linkage": [],
+      "expected_order": [
+        0
+      ],
+      "expected_weights": [
+        1.0
+      ],
+      "tolerance": 1e-15
+    }
+  ]
+}
