@@ -1,0 +1,83 @@
+{
+  "function": "Linalg.MarchenkoPasturBounds",
+  "source": "Marchenko & Pastur (1967): edges (1 +- sqrt(q))^2",
+  "cases": [
+    {
+      "description": "q=0.25",
+      "inputs": {
+        "q": 0.25
+      },
+      "expected": [
+        0.25,
+        2.25
+      ],
+      "tolerance": 1e-14
+    },
+    {
+      "description": "q=0.5",
+      "inputs": {
+        "q": 0.5
+      },
+      "expected": [
+        0.08578643762690492,
+        2.914213562373095
+      ],
+      "tolerance": 1e-14
+    },
+    {
+      "description": "q=1.0",
+      "inputs": {
+        "q": 1.0
+      },
+      "expected": [
+        0.0,
+        4.0
+      ],
+      "tolerance": 1e-14
+    },
+    {
+      "description": "q=2.0",
+      "inputs": {
+        "q": 2.0
+      },
+      "expected": [
+        0.17157287525381,
+        5.82842712474619
+      ],
+      "tolerance": 1e-14
+    },
+    {
+      "description": "q=0.1",
+      "inputs": {
+        "q": 0.1
+      },
+      "expected": [
+        0.46754446796632404,
+        1.732455532033676
+      ],
+      "tolerance": 1e-14
+    },
+    {
+      "description": "q=0.04",
+      "inputs": {
+        "q": 0.04
+      },
+      "expected": [
+        0.6400000000000001,
+        1.44
+      ],
+      "tolerance": 1e-14
+    },
+    {
+      "description": "q=0.75",
+      "inputs": {
+        "q": 0.75
+      },
+      "expected": [
+        0.01794919243112272,
+        3.482050807568877
+      ],
+      "tolerance": 1e-14
+    }
+  ]
+}
