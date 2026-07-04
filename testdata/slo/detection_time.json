@@ -1,0 +1,36 @@
+{
+  "function": "SLO.DetectionTime",
+  "_source": "Google SRE Workbook Ch.5 detection-time formula t = w * BR* / BR_actual for the recommended 1h/BR*14.4 and 6h/BR*6 tiers. Results in hours.",
+  "cases": [
+    {
+      "description": "1h window, BR* 14.4, actual exactly at threshold -> full window 1h",
+      "inputs": {"window": 1.0, "thresholdBurnRate": 14.4, "actualBurnRate": 14.4},
+      "expected": 1.0,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "1h window, BR* 14.4, actual 100 -> detect in 0.144h ~= 8.64 min",
+      "inputs": {"window": 1.0, "thresholdBurnRate": 14.4, "actualBurnRate": 100.0},
+      "expected": 0.144,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "1h window, BR* 14.4, actual 1000 (total outage) -> detect in 0.0144h ~= 51.84s",
+      "inputs": {"window": 1.0, "thresholdBurnRate": 14.4, "actualBurnRate": 1000.0},
+      "expected": 0.0144,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "6h window, BR* 6, actual exactly at threshold -> full window 6h",
+      "inputs": {"window": 6.0, "thresholdBurnRate": 6.0, "actualBurnRate": 6.0},
+      "expected": 6.0,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "6h window, BR* 6, actual 12 -> detect in 3h",
+      "inputs": {"window": 6.0, "thresholdBurnRate": 6.0, "actualBurnRate": 12.0},
+      "expected": 3.0,
+      "tolerance": 1e-9
+    }
+  ]
+}

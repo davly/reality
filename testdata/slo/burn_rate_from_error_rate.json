@@ -1,0 +1,30 @@
+{
+  "function": "SLO.BurnRateFromErrorRate",
+  "_source": "Google SRE Workbook Ch.5. BR = r / (1 - SLO). For a 99.9% SLO the base error rate is 0.1%; a 1%/10%/100% failure rate burns at 10/100/1000.",
+  "cases": [
+    {
+      "description": "at-SLO error rate 0.1% for 99.9% SLO burns at 1",
+      "inputs": {"errorRate": 0.001, "slo": 0.999},
+      "expected": 1.0,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "1% error rate for 99.9% SLO burns at 10 (budget gone in 3d)",
+      "inputs": {"errorRate": 0.01, "slo": 0.999},
+      "expected": 10.0,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "10% error rate for 99.9% SLO burns at 100",
+      "inputs": {"errorRate": 0.10, "slo": 0.999},
+      "expected": 100.0,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "total outage (100% errors) for 99.9% SLO burns at 1000",
+      "inputs": {"errorRate": 1.0, "slo": 0.999},
+      "expected": 1000.0,
+      "tolerance": 1e-9
+    }
+  ]
+}
