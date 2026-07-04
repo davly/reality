@@ -1,0 +1,42 @@
+{
+  "function": "risk.ParametricVaR + CornishFisherVaR + ParametricCVaR",
+  "_source": "Standard-normal quantiles Phi^-1(0.95)=1.6448536269514722 and Phi^-1(0.99)=2.3263478740408408 (published). ParametricVaR(mu,sigma,c)=sigma*z_c-mu: (0,1,0.95)=1.6448536269514722; (0.001,0.02,0.99)=0.02*2.3263478740408408-0.001=0.045526957480816816. CornishFisherVaR with skew=0,exKurt=0 reduces exactly to Phi^-1(c): (0,1,0.99)=2.3263478740408408. Non-normal case (0,1,skew=-0.5,exKurt=2.0,0.99): lower-tail z=-2.3263478740408408; Cornish-Fisher expansion z_cf = z + (z^2-1)/6*S + (z^3-3z)/24*K - (2z^3-5z)/36*S^2 = -3.0674966; VaR=-z_cf=3.0674966 (hand-derived, tol loosened for the multi-term expansion). ParametricCVaR standard-normal ES = phi(z_c)/(1-c): c=0.95 -> 2.0627128, c=0.99 -> 2.6652142 (published normal expected-shortfall values).",
+  "cases": [
+    {
+      "description": "ParametricVaR N(0,1) c=0.95 = z_0.95",
+      "inputs": {"mean": 0.0, "stdDev": 1.0, "confidence": 0.95},
+      "expected": 1.6448536269514722,
+      "tolerance": 1e-6
+    },
+    {
+      "description": "ParametricVaR mu=0.001 sigma=0.02 c=0.99",
+      "inputs": {"mean": 0.001, "stdDev": 0.02, "confidence": 0.99},
+      "expected": 0.045526957480816816,
+      "tolerance": 1e-6
+    },
+    {
+      "description": "CornishFisherVaR reduces to ParametricVaR when skew=exKurt=0",
+      "inputs": {"mean": 0.0, "stdDev": 1.0, "skew": 0.0, "excessKurtosis": 0.0, "confidence": 0.99},
+      "expected": 2.3263478740408408,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "CornishFisherVaR negative skew, fat tail widens VaR above Gaussian",
+      "inputs": {"mean": 0.0, "stdDev": 1.0, "skew": -0.5, "excessKurtosis": 2.0, "confidence": 0.99},
+      "expected": 3.0674966,
+      "tolerance": 1e-4
+    },
+    {
+      "description": "ParametricCVaR standard-normal ES c=0.95 = 2.0627128",
+      "inputs": {"mean": 0.0, "stdDev": 1.0, "confidence": 0.95},
+      "expected": 2.0627128,
+      "tolerance": 1e-6
+    },
+    {
+      "description": "ParametricCVaR standard-normal ES c=0.99 = 2.6652142",
+      "inputs": {"mean": 0.0, "stdDev": 1.0, "confidence": 0.99},
+      "expected": 2.6652142,
+      "tolerance": 1e-6
+    }
+  ]
+}

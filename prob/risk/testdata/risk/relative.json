@@ -1,0 +1,18 @@
+{
+  "function": "risk.InformationRatio + Beta",
+  "_source": "InformationRatio: portfolio [0.02,0.03,-0.01,0.04,0.01] minus benchmark [0.01,0.02,0.00,0.03,0.02] = active [0.01,0.01,-0.01,0.01,-0.01]; mean(active)=0.002; sample var (1/(N-1)) = 0.00048/4 = 0.00012, sample sd = sqrt(0.00012); IR = 0.002/sqrt(0.00012) = sqrt(1/30) = 0.18257418583505536. Beta: asset [0.02,0.03,-0.01,0.04,0.01], market [0.01,0.015,-0.005,0.02,0.005]; population cov = 0.00074/5 = 0.000148, population var(market) = 0.00037/5 = 0.000074; beta = 0.000148/0.000074 = 2.0.",
+  "cases": [
+    {
+      "description": "InformationRatio active mean 0.002 / tracking error = sqrt(1/30)",
+      "inputs": {"portfolio": [0.02,0.03,-0.01,0.04,0.01], "benchmark": [0.01,0.02,0.00,0.03,0.02]},
+      "expected": 0.18257418583505536,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "Beta cov/var = 2.0 (asset moves 2x the market)",
+      "inputs": {"asset": [0.02,0.03,-0.01,0.04,0.01], "market": [0.01,0.015,-0.005,0.02,0.005]},
+      "expected": 2.0,
+      "tolerance": 1e-12
+    }
+  ]
+}

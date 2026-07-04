@@ -1,0 +1,48 @@
+{
+  "function": "risk.DownsideDeviation + Sortino + Omega",
+  "_source": "Hand-derived from the 12-point monthly return series R = [0.03,-0.02,0.05,-0.01,0.02,0.04,-0.03,0.01,0.06,-0.02,0.03,0.02], MAR=0. mean(R)=0.18/12=0.015. Below-target squared shortfalls (the 4 negatives -0.02,-0.01,-0.03,-0.02): sum = 0.0004+0.0001+0.0009+0.0004 = 0.0018. DownsideDeviationFullSample = sqrt(0.0018/12) = sqrt(1.5e-4) = sqrt(1.5)/100. DownsideDeviationNegativesOnly = sqrt(0.0018/(4-1)) = sqrt(6e-4) = sqrt(6)/100. SortinoFull = 0.015/sqrt(1.5e-4) = sqrt(1.5); SortinoNeg = 0.015/sqrt(6e-4) = sqrt(0.375); the Full/Neg ratio is sqrt(N/(k-1))=sqrt(12/3)=2, the same convention gap the 2026-06-25 RD review measured (code 1.59 vs textbook 2.76). Omega(0): gains sum=0.26, losses sum=0.08, ratio=3.25; Omega(mean=0.015)=1.0 by construction.",
+  "cases": [
+    {
+      "description": "DownsideDeviationFullSample R MAR=0 = sqrt(1.5)/100",
+      "inputs": {"returns": [0.03,-0.02,0.05,-0.01,0.02,0.04,-0.03,0.01,0.06,-0.02,0.03,0.02], "mar": 0.0},
+      "expected": 0.01224744871391589,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "DownsideDeviationFullSample zero downside (all >= MAR) = 0",
+      "inputs": {"returns": [0.01,0.02,0.03], "mar": 0.0},
+      "expected": 0.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "DownsideDeviationNegativesOnly R MAR=0 = sqrt(6)/100",
+      "inputs": {"returns": [0.03,-0.02,0.05,-0.01,0.02,0.04,-0.03,0.01,0.06,-0.02,0.03,0.02], "mar": 0.0},
+      "expected": 0.02449489742783178,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "SortinoRatioFullSample R MAR=0 = sqrt(1.5)",
+      "inputs": {"returns": [0.03,-0.02,0.05,-0.01,0.02,0.04,-0.03,0.01,0.06,-0.02,0.03,0.02], "mar": 0.0},
+      "expected": 1.224744871391589,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "SortinoRatioNegativesOnly R MAR=0 = sqrt(0.375) (understates vs full-sample by factor 2)",
+      "inputs": {"returns": [0.03,-0.02,0.05,-0.01,0.02,0.04,-0.03,0.01,0.06,-0.02,0.03,0.02], "mar": 0.0},
+      "expected": 0.6123724356957945,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "OmegaRatio R threshold=0 = 0.26/0.08 = 3.25",
+      "inputs": {"returns": [0.03,-0.02,0.05,-0.01,0.02,0.04,-0.03,0.01,0.06,-0.02,0.03,0.02], "threshold": 0.0},
+      "expected": 3.25,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "OmegaRatio R threshold=mean(0.015) = 1.0 by construction",
+      "inputs": {"returns": [0.03,-0.02,0.05,-0.01,0.02,0.04,-0.03,0.01,0.06,-0.02,0.03,0.02], "threshold": 0.015},
+      "expected": 1.0,
+      "tolerance": 1e-12
+    }
+  ]
+}
