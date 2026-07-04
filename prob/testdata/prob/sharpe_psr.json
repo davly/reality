@@ -1,0 +1,198 @@
+{
+  "function": "prob.ProbabilisticSharpeRatio",
+  "_source": "Bailey & Lopez de Prado (2014), 'The Deflated Sharpe Ratio', J. Portfolio Mgmt 40(5):94-107. Expected values computed independently at 50-digit precision (mpmath: true normal CDF via ncdf, quantile via erfinv).",
+  "cases": [
+    {
+      "description": "PSR at observedSR == benchmark is exactly 0.5",
+      "inputs": {
+        "observedSR": 0.5,
+        "n": 100,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "benchmark": 0.5
+      },
+      "expected": 0.5,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "normal returns, SR=0.1, n=250, bench=0",
+      "inputs": {
+        "observedSR": 0.1,
+        "n": 250,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "benchmark": 0.0
+      },
+      "expected": 0.942261266719699,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "normal returns, SR=0.2, n=120, bench=0",
+      "inputs": {
+        "observedSR": 0.2,
+        "n": 120,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "benchmark": 0.0
+      },
+      "expected": 0.9846232193703627,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "normal returns, SR=0.5, n=60, bench=0",
+      "inputs": {
+        "observedSR": 0.5,
+        "n": 60,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "benchmark": 0.0
+      },
+      "expected": 0.9998532252336905,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "negative skew fattens left tail, lowers PSR",
+      "inputs": {
+        "observedSR": 0.15,
+        "n": 200,
+        "skew": -0.5,
+        "kurt": 4.0,
+        "benchmark": 0.0
+      },
+      "expected": 0.9785678280734285,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "positive skew raises PSR",
+      "inputs": {
+        "observedSR": 0.15,
+        "n": 200,
+        "skew": 0.5,
+        "kurt": 4.0,
+        "benchmark": 0.0
+      },
+      "expected": 0.9853832970002397,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "high (raw) kurtosis lowers PSR",
+      "inputs": {
+        "observedSR": 0.15,
+        "n": 200,
+        "skew": 0.0,
+        "kurt": 8.0,
+        "benchmark": 0.0
+      },
+      "expected": 0.9810318652554162,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "SR below benchmark gives PSR < 0.5",
+      "inputs": {
+        "observedSR": 0.05,
+        "n": 250,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "benchmark": 0.1
+      },
+      "expected": 0.215203892564034,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "SR above benchmark gives PSR > 0.5",
+      "inputs": {
+        "observedSR": 0.2,
+        "n": 250,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "benchmark": 0.1
+      },
+      "expected": 0.9409062221745196,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "small sample n=12 monthly, SR=0.4",
+      "inputs": {
+        "observedSR": 0.4,
+        "n": 12,
+        "skew": -0.2,
+        "kurt": 5.0,
+        "benchmark": 0.0
+      },
+      "expected": 0.8832451886822087,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "large sample n=2520 (10y daily), SR=0.05",
+      "inputs": {
+        "observedSR": 0.05,
+        "n": 2520,
+        "skew": 0.1,
+        "kurt": 3.5,
+        "benchmark": 0.0
+      },
+      "expected": 0.9940282000909061,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "annualized-scale SR=1.5, n=36, bench=1.0",
+      "inputs": {
+        "observedSR": 1.5,
+        "n": 36,
+        "skew": -0.3,
+        "kurt": 6.0,
+        "benchmark": 1.0
+      },
+      "expected": 0.9240360190424436,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "negative observed SR, bench 0",
+      "inputs": {
+        "observedSR": -0.1,
+        "n": 100,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "benchmark": 0.0
+      },
+      "expected": 0.16047458281555022,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "fat-tail crypto-like SR=0.3 kurt=12 skew=-1",
+      "inputs": {
+        "observedSR": 0.3,
+        "n": 365,
+        "skew": -1.0,
+        "kurt": 12.0,
+        "benchmark": 0.0
+      },
+      "expected": 0.9999978981316877,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "n=2 minimum sample",
+      "inputs": {
+        "observedSR": 0.5,
+        "n": 2,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "benchmark": 0.0
+      },
+      "expected": 0.6813240558830315,
+      "tolerance": 1e-10
+    },
+    {
+      "description": "high SR=0.8 n=250 bench=0.2",
+      "inputs": {
+        "observedSR": 0.8,
+        "n": 250,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "benchmark": 0.2
+      },
+      "expected": 0.9999999999999999,
+      "tolerance": 1e-10
+    }
+  ]
+}

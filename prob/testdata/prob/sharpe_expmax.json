@@ -1,0 +1,159 @@
+{
+  "function": "prob.ExpectedMaxSharpe",
+  "_source": "Bailey & Lopez de Prado (2014), 'The Deflated Sharpe Ratio', J. Portfolio Mgmt 40(5):94-107. Expected values computed independently at 50-digit precision (mpmath: true normal CDF via ncdf, quantile via erfinv).",
+  "cases": [
+    {
+      "description": "single trial returns 0 exactly",
+      "inputs": {
+        "nTrials": 1,
+        "srVariance": 0.25
+      },
+      "expected": 0.0,
+      "tolerance": 0.0
+    },
+    {
+      "description": "zero variance returns 0 exactly",
+      "inputs": {
+        "nTrials": 100,
+        "srVariance": 0.0
+      },
+      "expected": 0.0,
+      "tolerance": 0.0
+    },
+    {
+      "description": "N=2, V=1 unit variance",
+      "inputs": {
+        "nTrials": 2,
+        "srVariance": 1.0
+      },
+      "expected": 0.5197553442805939,
+      "tolerance": 1e-07
+    },
+    {
+      "description": "N=5, V=1",
+      "inputs": {
+        "nTrials": 5,
+        "srVariance": 1.0
+      },
+      "expected": 1.1925940010147893,
+      "tolerance": 1e-07
+    },
+    {
+      "description": "N=10, V=1",
+      "inputs": {
+        "nTrials": 10,
+        "srVariance": 1.0
+      },
+      "expected": 1.57459830134575,
+      "tolerance": 1e-07
+    },
+    {
+      "description": "N=20, V=1",
+      "inputs": {
+        "nTrials": 20,
+        "srVariance": 1.0
+      },
+      "expected": 1.9007079511811984,
+      "tolerance": 1e-07
+    },
+    {
+      "description": "N=50, V=1",
+      "inputs": {
+        "nTrials": 50,
+        "srVariance": 1.0
+      },
+      "expected": 2.2763030934203483,
+      "tolerance": 1e-07
+    },
+    {
+      "description": "N=100, V=1",
+      "inputs": {
+        "nTrials": 100,
+        "srVariance": 1.0
+      },
+      "expected": 2.530602893201682,
+      "tolerance": 1e-07
+    },
+    {
+      "description": "N=1000, V=1",
+      "inputs": {
+        "nTrials": 1000,
+        "srVariance": 1.0
+      },
+      "expected": 3.2551215136527256,
+      "tolerance": 1e-07
+    },
+    {
+      "description": "N=10000, V=1",
+      "inputs": {
+        "nTrials": 10000,
+        "srVariance": 1.0
+      },
+      "expected": 3.8606648555102643,
+      "tolerance": 1e-07
+    },
+    {
+      "description": "N=100 with small variance V=0.01",
+      "inputs": {
+        "nTrials": 100,
+        "srVariance": 0.01
+      },
+      "expected": 0.2530602893201682,
+      "tolerance": 1e-07
+    },
+    {
+      "description": "N=100 with variance V=0.25",
+      "inputs": {
+        "nTrials": 100,
+        "srVariance": 0.25
+      },
+      "expected": 1.265301446600841,
+      "tolerance": 1e-07
+    },
+    {
+      "description": "N=1000 realistic V=0.04",
+      "inputs": {
+        "nTrials": 1000,
+        "srVariance": 0.04
+      },
+      "expected": 0.6510243027305451,
+      "tolerance": 1e-07
+    },
+    {
+      "description": "N=50 V=0.09",
+      "inputs": {
+        "nTrials": 50,
+        "srVariance": 0.09
+      },
+      "expected": 0.6828909280261045,
+      "tolerance": 1e-07
+    },
+    {
+      "description": "N=3 V=1",
+      "inputs": {
+        "nTrials": 3,
+        "srVariance": 1.0
+      },
+      "expected": 0.8528044961506946,
+      "tolerance": 1e-07
+    },
+    {
+      "description": "N=500 V=1",
+      "inputs": {
+        "nTrials": 500,
+        "srVariance": 1.0
+      },
+      "expected": 3.0525275745280833,
+      "tolerance": 1e-07
+    },
+    {
+      "description": "N=1000000 large trial count V=1",
+      "inputs": {
+        "nTrials": 1000000,
+        "srVariance": 1.0
+      },
+      "expected": 4.867860037837305,
+      "tolerance": 1e-07
+    }
+  ]
+}
