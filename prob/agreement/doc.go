@@ -1,6 +1,11 @@
-// Package agreement implements chance-corrected inter-rater agreement
-// statistics: Cohen's kappa, Cohen's weighted kappa (linear + quadratic),
-// Fleiss' kappa, and Krippendorff's alpha (nominal, ordinal, interval).
+// Package agreement implements paired-design inference over the shared
+// repeated-measures shape common to every eval harness in the estate (same
+// items, two arms/judges/subjects): chance-corrected inter-rater agreement
+// statistics — Cohen's kappa, Cohen's weighted kappa (linear + quadratic),
+// Fleiss' kappa, and Krippendorff's alpha (nominal, ordinal, interval) — plus
+// the two paired-difference hypothesis tests that operate on the same paired
+// data: McNemar's exact/mid-p test for binary matched pairs, and the exact
+// paired permutation (randomization) test for numeric matched pairs.
 //
 // # Why this exists in Reality
 //
@@ -39,9 +44,25 @@
 //     raters, any of Nominal/Ordinal/Interval metrics, native missing-data
 //     handling (NaN entries).
 //
-// All four are pure, deterministic, allocation-light closed-form
-// computations over integer/float64 slices — no I/O, zero non-stdlib
-// dependencies (only "errors", "math", "sort").
+// Paired-difference hypothesis tests (do the two arms/judges DIFFER, the
+// question kappa/alpha cannot answer):
+//
+//   - McNemarExact(b, c int) / McNemarMidP(b, c int) — exact conditional and
+//     mid-p two-sided tests of marginal homogeneity for binary matched pairs,
+//     given the two discordant cell counts (the only informative pairs).
+//   - DiscordantCounts(x, y []int) — derives (b, c) from raw paired 0/1
+//     slices (e.g. per-item correct/incorrect for two subjects).
+//   - PairedPermutationTest(x, y []float64) — exact two-sided paired
+//     permutation test by complete deterministic enumeration of all 2^n
+//     sign-flips (no RNG, no seed); the assumption-free counterpart to the
+//     paired t-test.
+//
+// All are pure, deterministic, allocation-light computations over
+// integer/float64 slices — no I/O, zero non-stdlib dependencies (only
+// "errors", "math", "math/big", "sort"). McNemarExact forms its dyadic
+// tail probability with exact big-integer/rational arithmetic (single final
+// float64 rounding, no 2^-n underflow); PairedPermutationTest enumerates the
+// full null distribution exactly.
 //
 // # Golden-file provenance
 //
@@ -65,6 +86,13 @@
 //     missing data (nominal = 0.743, ordinal = 0.815, interval = 0.849),
 //     plus its smaller 2-observer nominal (0.692) and binary (0.095)
 //     examples.
+//   - McNemarExact / McNemarMidP: Fagerland, Lydersen & Laake (2013), the
+//     airway hyper-responsiveness matched-pairs data, discordant counts
+//     (1, 7): exact = 0.0703125, mid-p = 0.0390625.
+//   - PairedPermutationTest: Darwin's Zea mays data as used by Fisher (1935),
+//     15 paired height differences (sum = 314): 863 of 32768 arrangements
+//     reach the observed one tail, so two-sided p = 1726/32768 = 0.052674
+//     (also Ernst 2004); plus a fully hand-enumerable (1,2,3) case, p = 0.25.
 //
 // # References
 //
@@ -80,4 +108,13 @@
 //   - Hayes, A. F., & Krippendorff, K. (2007). Answering the call for a
 //     standard reliability measure for coding data. Communication Methods
 //     and Measures 1: 77-89.
+//   - McNemar, Q. (1947). Note on the sampling error of the difference
+//     between correlated proportions or percentages. Psychometrika 12(2):
+//     153-157.
+//   - Fagerland, M. W., Lydersen, S., & Laake, P. (2013). The McNemar test
+//     for binary matched-pairs data: mid-p and asymptotic are better than
+//     exact conditional. BMC Medical Research Methodology 13: 91.
+//   - Fisher, R. A. (1935). The Design of Experiments. Oliver & Boyd. §21.
+//   - Ernst, M. D. (2004). Permutation methods: a basis for exact inference.
+//     Statistical Science 19(4): 676-685.
 package agreement

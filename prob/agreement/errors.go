@@ -24,6 +24,19 @@ var ErrRaggedRows = errors.New("agreement: ratings rows must be rectangular and 
 // ErrNegativeCount is returned when a FleissKappa rating count is negative.
 var ErrNegativeCount = errors.New("agreement: rating counts must be non-negative")
 
+// ErrNotBinary is returned by DiscordantCounts when a paired rating slice
+// contains an entry that is neither 0 nor 1 — McNemar's discordant-cell
+// extraction is defined only for binary (two-outcome) matched pairs.
+var ErrNotBinary = errors.New("agreement: McNemar paired ratings must each be 0 or 1")
+
+// ErrSampleTooLargeForExact is returned by PairedPermutationTest when the
+// number of paired observations exceeds MaxExactPermN, so the full 2^n
+// sign-flip null distribution cannot be enumerated exactly. This
+// deterministic, seed-free implementation does not fall back to Monte-Carlo
+// sampling (which would require a random number generator), so it reports
+// this error rather than silently returning an approximate p-value.
+var ErrSampleTooLargeForExact = errors.New("agreement: paired sample too large for exact permutation enumeration (see MaxExactPermN)")
+
 // ErrDegenerateChanceAgreement is returned when chance-expected agreement
 // is 1, or the weighted-disagreement denominator is 0 — the kappa/alpha
 // ratio is mathematically undefined (0/0) because there is no variability
