@@ -1,0 +1,80 @@
+{
+  "function": "reliability.SeriesAvailability",
+  "cases": [
+    {
+      "description": "two components 0.9,0.8 (Rausand&Hoyland 2004 ex 4.2)",
+      "inputs": {
+        "a": [
+          0.9,
+          0.8
+        ]
+      },
+      "expected": 0.7200000000000001,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "three components 0.95,0.99,0.90",
+      "inputs": {
+        "a": [
+          0.95,
+          0.99,
+          0.9
+        ]
+      },
+      "expected": 0.84645,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "single component 0.999",
+      "inputs": {
+        "a": [
+          0.999
+        ]
+      },
+      "expected": 0.999,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "empty product = identity 1.0",
+      "inputs": {
+        "a": []
+      },
+      "expected": 1.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "one perfect component 1.0 is neutral",
+      "inputs": {
+        "a": [
+          1.0,
+          0.95
+        ]
+      },
+      "expected": 0.95,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "one dead component 0.0 sinks series",
+      "inputs": {
+        "a": [
+          0.0,
+          0.99
+        ]
+      },
+      "expected": 0.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "five nines chain of three",
+      "inputs": {
+        "a": [
+          0.99999,
+          0.99999,
+          0.99999
+        ]
+      },
+      "expected": 0.9999700002999992,
+      "tolerance": 1e-12
+    }
+  ]
+}

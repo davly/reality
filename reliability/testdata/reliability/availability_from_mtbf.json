@@ -1,0 +1,41 @@
+{
+  "function": "reliability.AvailabilityFromMTBF",
+  "cases": [
+    {
+      "description": "MTBF 999h MTTR 1h -> 0.999",
+      "inputs": {
+        "mtbf": 999.0,
+        "mttr": 1.0
+      },
+      "expected": 0.999,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "MTBF 8760h MTTR 4h annual",
+      "inputs": {
+        "mtbf": 8760.0,
+        "mttr": 4.0
+      },
+      "expected": 0.9995435874030123,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "zero repair time -> 1.0",
+      "inputs": {
+        "mtbf": 100.0,
+        "mttr": 0.0
+      },
+      "expected": 1.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "equal up/down -> 0.5",
+      "inputs": {
+        "mtbf": 50.0,
+        "mttr": 50.0
+      },
+      "expected": 0.5,
+      "tolerance": 1e-15
+    }
+  ]
+}
