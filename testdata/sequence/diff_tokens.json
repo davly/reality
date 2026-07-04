@@ -1,0 +1,829 @@
+{
+  "function": "Sequence.DiffTokens",
+  "cases": [
+    {
+      "description": "both empty",
+      "a": [],
+      "b": [],
+      "expected": []
+    },
+    {
+      "description": "empty to three tokens (all insert)",
+      "a": [],
+      "b": [
+        "a",
+        "b",
+        "c"
+      ],
+      "expected": [
+        [
+          "insert",
+          "a"
+        ],
+        [
+          "insert",
+          "b"
+        ],
+        [
+          "insert",
+          "c"
+        ]
+      ]
+    },
+    {
+      "description": "three tokens to empty (all delete)",
+      "a": [
+        "a",
+        "b",
+        "c"
+      ],
+      "b": [],
+      "expected": [
+        [
+          "delete",
+          "a"
+        ],
+        [
+          "delete",
+          "b"
+        ],
+        [
+          "delete",
+          "c"
+        ]
+      ]
+    },
+    {
+      "description": "identical single token",
+      "a": [
+        "hello"
+      ],
+      "b": [
+        "hello"
+      ],
+      "expected": [
+        [
+          "equal",
+          "hello"
+        ]
+      ]
+    },
+    {
+      "description": "identical sentence",
+      "a": [
+        "the",
+        "cat",
+        "sat"
+      ],
+      "b": [
+        "the",
+        "cat",
+        "sat"
+      ],
+      "expected": [
+        [
+          "equal",
+          "the"
+        ],
+        [
+          "equal",
+          "cat"
+        ],
+        [
+          "equal",
+          "sat"
+        ]
+      ]
+    },
+    {
+      "description": "single deletion in middle",
+      "a": [
+        "a",
+        "b",
+        "c"
+      ],
+      "b": [
+        "a",
+        "c"
+      ],
+      "expected": [
+        [
+          "equal",
+          "a"
+        ],
+        [
+          "delete",
+          "b"
+        ],
+        [
+          "equal",
+          "c"
+        ]
+      ]
+    },
+    {
+      "description": "single insertion in middle",
+      "a": [
+        "a",
+        "c"
+      ],
+      "b": [
+        "a",
+        "b",
+        "c"
+      ],
+      "expected": [
+        [
+          "equal",
+          "a"
+        ],
+        [
+          "insert",
+          "b"
+        ],
+        [
+          "equal",
+          "c"
+        ]
+      ]
+    },
+    {
+      "description": "insertion at head",
+      "a": [
+        "cat",
+        "sat"
+      ],
+      "b": [
+        "the",
+        "cat",
+        "sat"
+      ],
+      "expected": [
+        [
+          "insert",
+          "the"
+        ],
+        [
+          "equal",
+          "cat"
+        ],
+        [
+          "equal",
+          "sat"
+        ]
+      ]
+    },
+    {
+      "description": "insertion at tail",
+      "a": [
+        "the",
+        "cat"
+      ],
+      "b": [
+        "the",
+        "cat",
+        "sat"
+      ],
+      "expected": [
+        [
+          "equal",
+          "the"
+        ],
+        [
+          "equal",
+          "cat"
+        ],
+        [
+          "insert",
+          "sat"
+        ]
+      ]
+    },
+    {
+      "description": "deletion at head",
+      "a": [
+        "the",
+        "cat",
+        "sat"
+      ],
+      "b": [
+        "cat",
+        "sat"
+      ],
+      "expected": [
+        [
+          "delete",
+          "the"
+        ],
+        [
+          "equal",
+          "cat"
+        ],
+        [
+          "equal",
+          "sat"
+        ]
+      ]
+    },
+    {
+      "description": "deletion at tail",
+      "a": [
+        "the",
+        "cat",
+        "sat"
+      ],
+      "b": [
+        "the",
+        "cat"
+      ],
+      "expected": [
+        [
+          "equal",
+          "the"
+        ],
+        [
+          "equal",
+          "cat"
+        ],
+        [
+          "delete",
+          "sat"
+        ]
+      ]
+    },
+    {
+      "description": "substitution as delete+insert",
+      "a": [
+        "the",
+        "cat",
+        "sat"
+      ],
+      "b": [
+        "the",
+        "dog",
+        "sat"
+      ],
+      "expected": [
+        [
+          "equal",
+          "the"
+        ],
+        [
+          "delete",
+          "cat"
+        ],
+        [
+          "insert",
+          "dog"
+        ],
+        [
+          "equal",
+          "sat"
+        ]
+      ]
+    },
+    {
+      "description": "repeated token collapse xxx to x",
+      "a": [
+        "x",
+        "x",
+        "x"
+      ],
+      "b": [
+        "x"
+      ],
+      "expected": [
+        [
+          "equal",
+          "x"
+        ],
+        [
+          "delete",
+          "x"
+        ],
+        [
+          "delete",
+          "x"
+        ]
+      ]
+    },
+    {
+      "description": "repeated token expand x to xxx",
+      "a": [
+        "x"
+      ],
+      "b": [
+        "x",
+        "x",
+        "x"
+      ],
+      "expected": [
+        [
+          "equal",
+          "x"
+        ],
+        [
+          "insert",
+          "x"
+        ],
+        [
+          "insert",
+          "x"
+        ]
+      ]
+    },
+    {
+      "description": "published Myers example ABCABBA to CBABAC",
+      "a": [
+        "A",
+        "B",
+        "C",
+        "A",
+        "B",
+        "B",
+        "A"
+      ],
+      "b": [
+        "C",
+        "B",
+        "A",
+        "B",
+        "A",
+        "C"
+      ],
+      "expected": [
+        [
+          "delete",
+          "A"
+        ],
+        [
+          "insert",
+          "C"
+        ],
+        [
+          "equal",
+          "B"
+        ],
+        [
+          "delete",
+          "C"
+        ],
+        [
+          "equal",
+          "A"
+        ],
+        [
+          "equal",
+          "B"
+        ],
+        [
+          "delete",
+          "B"
+        ],
+        [
+          "equal",
+          "A"
+        ],
+        [
+          "insert",
+          "C"
+        ]
+      ]
+    },
+    {
+      "description": "classic abcabba/cbabac lowercase",
+      "a": [
+        "a",
+        "b",
+        "c",
+        "a",
+        "b",
+        "b",
+        "a"
+      ],
+      "b": [
+        "c",
+        "b",
+        "a",
+        "b",
+        "a",
+        "c"
+      ],
+      "expected": [
+        [
+          "delete",
+          "a"
+        ],
+        [
+          "insert",
+          "c"
+        ],
+        [
+          "equal",
+          "b"
+        ],
+        [
+          "delete",
+          "c"
+        ],
+        [
+          "equal",
+          "a"
+        ],
+        [
+          "equal",
+          "b"
+        ],
+        [
+          "delete",
+          "b"
+        ],
+        [
+          "equal",
+          "a"
+        ],
+        [
+          "insert",
+          "c"
+        ]
+      ]
+    },
+    {
+      "description": "reorder A causes B / B causes A",
+      "a": [
+        "A",
+        "causes",
+        "B"
+      ],
+      "b": [
+        "B",
+        "causes",
+        "A"
+      ],
+      "expected": [
+        [
+          "delete",
+          "A"
+        ],
+        [
+          "delete",
+          "causes"
+        ],
+        [
+          "equal",
+          "B"
+        ],
+        [
+          "insert",
+          "causes"
+        ],
+        [
+          "insert",
+          "A"
+        ]
+      ]
+    },
+    {
+      "description": "grammar fix their/they are",
+      "a": [
+        "Their",
+        "going",
+        "too",
+        "the",
+        "shops"
+      ],
+      "b": [
+        "They",
+        "are",
+        "going",
+        "to",
+        "the",
+        "shops"
+      ],
+      "expected": [
+        [
+          "insert",
+          "They"
+        ],
+        [
+          "insert",
+          "are"
+        ],
+        [
+          "delete",
+          "Their"
+        ],
+        [
+          "equal",
+          "going"
+        ],
+        [
+          "delete",
+          "too"
+        ],
+        [
+          "insert",
+          "to"
+        ],
+        [
+          "equal",
+          "the"
+        ],
+        [
+          "equal",
+          "shops"
+        ]
+      ]
+    },
+    {
+      "description": "case change tuesday to Tuesday",
+      "a": [
+        "on",
+        "tuesday"
+      ],
+      "b": [
+        "on",
+        "Tuesday"
+      ],
+      "expected": [
+        [
+          "equal",
+          "on"
+        ],
+        [
+          "delete",
+          "tuesday"
+        ],
+        [
+          "insert",
+          "Tuesday"
+        ]
+      ]
+    },
+    {
+      "description": "prefix shared long tail changed",
+      "a": [
+        "the",
+        "quick",
+        "brown",
+        "fox"
+      ],
+      "b": [
+        "the",
+        "quick",
+        "red",
+        "fox",
+        "jumps"
+      ],
+      "expected": [
+        [
+          "equal",
+          "the"
+        ],
+        [
+          "equal",
+          "quick"
+        ],
+        [
+          "delete",
+          "brown"
+        ],
+        [
+          "insert",
+          "red"
+        ],
+        [
+          "equal",
+          "fox"
+        ],
+        [
+          "insert",
+          "jumps"
+        ]
+      ]
+    },
+    {
+      "description": "all different short",
+      "a": [
+        "a",
+        "b",
+        "c"
+      ],
+      "b": [
+        "x",
+        "y",
+        "z"
+      ],
+      "expected": [
+        [
+          "delete",
+          "a"
+        ],
+        [
+          "delete",
+          "b"
+        ],
+        [
+          "delete",
+          "c"
+        ],
+        [
+          "insert",
+          "x"
+        ],
+        [
+          "insert",
+          "y"
+        ],
+        [
+          "insert",
+          "z"
+        ]
+      ]
+    },
+    {
+      "description": "interleaved edits",
+      "a": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e"
+      ],
+      "b": [
+        "a",
+        "x",
+        "c",
+        "y",
+        "e"
+      ],
+      "expected": [
+        [
+          "equal",
+          "a"
+        ],
+        [
+          "delete",
+          "b"
+        ],
+        [
+          "insert",
+          "x"
+        ],
+        [
+          "equal",
+          "c"
+        ],
+        [
+          "delete",
+          "d"
+        ],
+        [
+          "insert",
+          "y"
+        ],
+        [
+          "equal",
+          "e"
+        ]
+      ]
+    },
+    {
+      "description": "insertion run",
+      "a": [
+        "a",
+        "d"
+      ],
+      "b": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "expected": [
+        [
+          "equal",
+          "a"
+        ],
+        [
+          "insert",
+          "b"
+        ],
+        [
+          "insert",
+          "c"
+        ],
+        [
+          "equal",
+          "d"
+        ]
+      ]
+    },
+    {
+      "description": "deletion run",
+      "a": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "b": [
+        "a",
+        "d"
+      ],
+      "expected": [
+        [
+          "equal",
+          "a"
+        ],
+        [
+          "delete",
+          "b"
+        ],
+        [
+          "delete",
+          "c"
+        ],
+        [
+          "equal",
+          "d"
+        ]
+      ]
+    },
+    {
+      "description": "single token substitution",
+      "a": [
+        "hello"
+      ],
+      "b": [
+        "world"
+      ],
+      "expected": [
+        [
+          "delete",
+          "hello"
+        ],
+        [
+          "insert",
+          "world"
+        ]
+      ]
+    },
+    {
+      "description": "empty vs single",
+      "a": [],
+      "b": [
+        "solo"
+      ],
+      "expected": [
+        [
+          "insert",
+          "solo"
+        ]
+      ]
+    },
+    {
+      "description": "duplicate words woven",
+      "a": [
+        "thanks",
+        "to",
+        "the",
+        "volunteers"
+      ],
+      "b": [
+        "thanks",
+        "to",
+        "all",
+        "the",
+        "great",
+        "volunteers"
+      ],
+      "expected": [
+        [
+          "equal",
+          "thanks"
+        ],
+        [
+          "equal",
+          "to"
+        ],
+        [
+          "insert",
+          "all"
+        ],
+        [
+          "equal",
+          "the"
+        ],
+        [
+          "insert",
+          "great"
+        ],
+        [
+          "equal",
+          "volunteers"
+        ]
+      ]
+    }
+  ]
+}
