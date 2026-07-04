@@ -79,6 +79,7 @@ Universal truth encoded in code. Pure math, physics, constants. Zero dependencie
 | `zkmark` | ZK-Mirror-Mark substrate (cryptographic provenance) |
 | `forge/session40` | Bedrock corpus + canonical situation hashing (Session 40 forge lift) |
 | `pkg/canonical` | Canonical encoding helpers |
+| `trust` | Subjective-logic opinions (belief/disbelief/uncertainty/base-rate) + cumulative/averaging fusion + trust discounting; Dempster-Shafer combination with explicit conflict mass K (Yager alternative). Jøsang 2016 / Zadeh 1984 goldens |
 
 ## Architecture
 
@@ -93,7 +94,7 @@ reality/
   gametheory/   geometry/     graph/          info/{lz,mdl}/
   infogeo/      linalg/       optim/{proximal,transport}/
   orbital/      physics/      pkg/canonical/  prob/{agreement,conformal,copula}/
-  queue/        sequence/     signal/         testutil/
+  queue/        sequence/     signal/         testutil/     trust/
   timeseries/{dcc,garch}/     topology/persistent/         zkmark/
 ```
 
