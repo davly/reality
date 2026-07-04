@@ -1,0 +1,22 @@
+{
+  "function": "numclaim.NumericEquivalent",
+  "note": "Language-neutral contract. options match numclaim.DefaultOptions(). Ported implementations must reproduce matched/transform/roundDP exactly.",
+  "options": {"maxRoundDP": 2, "percentScale": true, "tolerance": 1e-9},
+  "cases": [
+    {"description": "52.60 vs 52.6: trailing-zero decimal, exact after parse", "claim": 52.6, "truth": 52.6, "matched": true, "transform": "exact", "roundDP": -1},
+    {"description": "'about £53' rounds the table's £52.60 to whole pounds", "claim": 53, "truth": 52.6, "matched": true, "transform": "rounded", "roundDP": 0},
+    {"description": "'0.4%' extracted as 0.4 vs fraction 0.004", "claim": 0.4, "truth": 0.004, "matched": true, "transform": "percent_to_fraction", "roundDP": -1},
+    {"description": "weight 0.45 stated as '45%'", "claim": 45, "truth": 0.45, "matched": true, "transform": "percent_to_fraction", "roundDP": -1},
+    {"description": "7,500 vs 7500: thousands separator stripped app-side", "claim": 7500, "truth": 7500, "matched": true, "transform": "exact", "roundDP": -1},
+    {"description": "ADVERSARIAL: decimal shift 526.0 vs 52.60 must NOT match", "claim": 526.0, "truth": 52.6, "matched": false, "transform": "", "roundDP": -1},
+    {"description": "LIMITS.md example: prose '£520' vs table '£52.60' must be caught", "claim": 520, "truth": 52.6, "matched": false, "transform": "", "roundDP": -1},
+    {"description": "expense ratio 0.0003 stated as '0.03%'", "claim": 0.03, "truth": 0.0003, "matched": true, "transform": "percent_to_fraction", "roundDP": -1},
+    {"description": "weight 0.80 stated as '80%'", "claim": 80, "truth": 0.8, "matched": true, "transform": "percent_to_fraction", "roundDP": -1},
+    {"description": "fees £188.80 stated exactly", "claim": 188.8, "truth": 188.8, "matched": true, "transform": "exact", "roundDP": -1},
+    {"description": "'£189 a year' rounds the table's £188.80", "claim": 189, "truth": 188.8, "matched": true, "transform": "rounded", "roundDP": 0},
+    {"description": "sign preserved: -50 vs -0.5 via percent scale", "claim": -50, "truth": -0.5, "matched": true, "transform": "percent_to_fraction", "roundDP": -1},
+    {"description": "other direction: fraction 0.45 vs percent 45", "claim": 0.45, "truth": 45, "matched": true, "transform": "fraction_to_percent", "roundDP": -1},
+    {"description": "ADVERSARIAL: 45% vs 0.46 (one pence-point off) must NOT match", "claim": 45, "truth": 0.46, "matched": false, "transform": "", "roundDP": -1},
+    {"description": "zero vs zero", "claim": 0, "truth": 0, "matched": true, "transform": "exact", "roundDP": -1}
+  ]
+}

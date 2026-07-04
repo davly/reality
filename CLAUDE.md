@@ -65,6 +65,7 @@ Universal truth encoded in code. Pure math, physics, constants. Zero dependencie
 | `audio/vibration` | Mechanical vibration: fundamental, harmonic energy ratio (Dipstick + FW Torque) |
 | `prob/agreement` | Chance-corrected inter-rater agreement: Cohen kappa, weighted kappa (linear/quadratic), Fleiss kappa, Krippendorff alpha (nominal/ordinal/interval) |
 | `prob/conformal` | Conformal prediction (regulator-grade calibration; S55 L01 trio) |
+| `prob/numclaim` | Deterministic numeric-claim consistency / invented-value detection: equivalence under rounding + percent<->fraction scaling (portfolio-intelligence number gate) |
 | `prob/copula` | Copula models: Gaussian, t, Archimedean — Clayton + Gumbel (S55 L13 trio) |
 | `optim/proximal` | Proximal-operator methods (LASSO closed-form witness; first consumer) |
 | `optim/transport` | Optimal transport (Sinkhorn, Wasserstein) |
