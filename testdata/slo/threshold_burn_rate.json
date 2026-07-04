@@ -1,0 +1,24 @@
+{
+  "function": "SLO.ThresholdBurnRate",
+  "_source": "Google SRE Workbook, Ch.5 'Alerting on SLOs', recommended multiwindow parameter table for a 30-day SLO. Period expressed in hours (30d = 720h). BR* = f * P / w.",
+  "cases": [
+    {
+      "description": "2% of budget in 1h over 30d -> page fast-burn threshold 14.4 (Workbook headline)",
+      "inputs": {"budgetFraction": 0.02, "window": 1.0, "period": 720.0},
+      "expected": 14.4,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "5% of budget in 6h over 30d -> page threshold 6",
+      "inputs": {"budgetFraction": 0.05, "window": 6.0, "period": 720.0},
+      "expected": 6.0,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "10% of budget in 3d(72h) over 30d -> ticket threshold 1",
+      "inputs": {"budgetFraction": 0.10, "window": 72.0, "period": 720.0},
+      "expected": 1.0,
+      "tolerance": 1e-9
+    }
+  ]
+}

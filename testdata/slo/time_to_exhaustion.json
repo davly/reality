@@ -1,0 +1,36 @@
+{
+  "function": "SLO.TimeToExhaustion",
+  "_source": "Google SRE Workbook Ch.5 burn-rate/time-to-exhaustion table for a 30-day (720h) budget. t = remaining * P / BR. Results in hours.",
+  "cases": [
+    {
+      "description": "full budget at burn rate 1 lasts the whole 30d = 720h",
+      "inputs": {"remainingBudgetFraction": 1.0, "burnRate": 1.0, "period": 720.0},
+      "expected": 720.0,
+      "tolerance": 1e-6
+    },
+    {
+      "description": "full budget at burn rate 10 exhausts in 3d = 72h",
+      "inputs": {"remainingBudgetFraction": 1.0, "burnRate": 10.0, "period": 720.0},
+      "expected": 72.0,
+      "tolerance": 1e-6
+    },
+    {
+      "description": "full budget at burn rate 100 exhausts in 7.2h",
+      "inputs": {"remainingBudgetFraction": 1.0, "burnRate": 100.0, "period": 720.0},
+      "expected": 7.2,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "full budget at burn rate 1000 (total outage) exhausts in 0.72h ~= 43.2 min",
+      "inputs": {"remainingBudgetFraction": 1.0, "burnRate": 1000.0, "period": 720.0},
+      "expected": 0.72,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "half the budget left at burn rate 14.4 exhausts in 25h",
+      "inputs": {"remainingBudgetFraction": 0.5, "burnRate": 14.4, "period": 720.0},
+      "expected": 25.0,
+      "tolerance": 1e-9
+    }
+  ]
+}
