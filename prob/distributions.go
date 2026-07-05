@@ -61,7 +61,12 @@ func NormalCDF(x, mu, sigma float64) float64 {
 // normal quantile (probit function).
 // Valid range: p in (0, 1), sigma > 0
 // Returns: NaN if p <= 0, p >= 1, or sigma <= 0
-// Precision: maximum relative error < 1.15e-9 across all p in (0, 1)
+// Precision: maximum relative error < 1.15e-9 for p bounded away from 1
+// (validated on p in [1e-12, 0.5], worst observed 1.12e-9, confirming the
+// published Acklam figure). The upper-tail branch (p -> 1) computes
+// sqrt(-2*ln(1-p)), which suffers catastrophic cancellation in (1-p) and
+// can reach ~1.10e-6 at p = 1-1e-12 (~960x the bound). Prefer evaluating
+// 1 - NormalQuantile(1-p, ...) when p is very close to 1.
 // Reference: Acklam, P.J. (2004) "An algorithm for computing the inverse
 // normal cumulative distribution function"
 func NormalQuantile(p, mu, sigma float64) float64 {

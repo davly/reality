@@ -48,8 +48,8 @@ Reality is a single Go module (`github.com/davly/reality`) containing ~32 sub-pa
 | Package | Purpose | Notable types/functions | Depends on |
 |---|---|---|---|
 | `constants` | Mathematical + physical + unit constants. Six-tier truth taxonomy (`Pi` as `const`, `GravitationalConst` as `var` with uncertainty). | `Pi`, `E`, `Phi`, `Avogadro`, `Planck`, `SpeedOfLight`, `StandardGravity`, `GasConstant`, `StefanBoltzmann`, unit conversion tables. | stdlib `math` |
-| `linalg` | Linear algebra: vectors, matrices, decompositions, PCA, sparse. | `CosineSimilarity`, `EncodingDistance`, `DimensionWeightedDistance`, `MatMul`, `MatSub`, `Trace`, `FrobeniusNorm`, `LUDecompose`, `LUSolve`, `CholeskyDecompose`, `CholeskySolve`, `QRAlgorithm` (eigenvalues via QR iteration), `PCA`, `PearsonCorrelation`. | stdlib |
-| `calculus` | Numerical differentiation and integration. | `Derivative`, `Simpsons`, `Trapezoidal`, `GaussLegendre`, `RK4`, `Brent`. | stdlib |
+| `linalg` | Linear algebra: vectors, matrices, decompositions, PCA, sparse. | `CosineSimilarity`, `EncodingDistance`, `DimensionWeightedDistance`, `MatMul`, `MatSub`, `Trace`, `L2Norm`, `LUDecompose`, `LUSolve`, `CholeskyDecompose`, `CholeskySolve`, `QRAlgorithm` (eigenvalues via QR iteration), `PCA`, `PearsonCorrelation`. | stdlib |
+| `calculus` | Numerical differentiation and integration. | `NumericalDerivative`, `NumericalGradient`, `TrapezoidalRule`, `SimpsonsRule`, `GaussLegendre`, `MonteCarloIntegrate`. (RK4 lives in `chaos` as `RK4Step`; there is no Brent's-method root finder in this repo.) | stdlib |
 | `prob` | Probability distributions, hypothesis tests, Bayesian update, time series, information theory. | `NormalPDF/CDF/Quantile` (Acklam), `BetaPDF`, `Poisson`, `Binomial`, `GammaPDF/CDF`, `BayesianUpdate`, `BrierScore`, `KLDivergence`, `TTest`, `ChiSquared`, `FisherExactTest`, `MannWhitneyU`, `BenjaminiHochberg`, `LinearRegression`, `MarkovChain`. | stdlib |
 | `crypto` | Number theory + hash functions + PRNGs. **Holds the canonical ecosystem FNV-1a.** | `FNV1a32`, `FNV1a64`, `MurmurHash3_32`, `MillerRabin`, `ModPow`, `EEAD`, `MersenneTwister`, `XorShift64`. | stdlib |
 | `geometry` | Quaternions, SDF primitives, curves (Bezier, B-spline), convex hull, projective geometry. | `QuaternionSlerp`, `SDFSphere`, `SDFBox`, `BezierCurve`, `ConvexHull`. | stdlib |
@@ -74,7 +74,7 @@ Reality is a single Go module (`github.com/davly/reality`) containing ~32 sub-pa
 |---|---|---|
 | `gametheory` | Nash equilibrium (2×2 and n×m), Shapley value, minimax, replicator dynamics, Gale-Shapley stable matching, multi-armed bandits, Kelly criterion, voting power. | `NashEquilibrium2x2`, `ShapleyValue`, `GaleShapley`, `Minimax`, `KellyFraction`, `BanditUCB`. |
 | `queue` | Queueing theory: M/M/1, M/M/c, M/G/1, Erlang B/C, Jackson networks, Little's law. | `MM1`, `MMc`, `MG1`, `ErlangB`, `ErlangC`, `LittlesLaw`, `JacksonNetwork`. |
-| `optim` | Optimisation: bisection, Newton, Brent, gradient descent, L-BFGS, simulated annealing, genetic algorithm, simplex method, interpolation. | `Bisection`, `NewtonRoot`, `GradientDescent`, `LBFGS`, `SimulatedAnnealing`, `GeneticAlgorithm`, `SimplexMethod`, `LinearInterp`, `CubicSpline`. |
+| `optim` | Optimisation: bisection, Newton-Raphson, gradient descent, L-BFGS, simulated annealing, genetic algorithm, simplex method, interpolation. | `BisectionMethod`, `NewtonRaphson`, `GoldenSectionSearch`, `GradientDescent`, `LBFGS`, `SimulatedAnnealing`, `GeneticAlgorithm`, `SimplexMethod`, `LinearInterpolate`, `CubicSplineNatural`. (There is no Brent's-method root finder in this repo.) |
 | `combinatorics` | Permutations, combinations, Catalan, Stirling (first + second kind), Bell, integer partitions. | `Factorial`, `Binomial`, `Catalan`, `Stirling1`, `Stirling2`, `BellNumber`, `IntegerPartitions`. |
 | `compression` | Lossless compression primitives: Shannon entropy, run-length encoding, delta, Huffman, LZ77, quantisation. | `ShannonEntropy`, `RunLengthEncode`, `Huffman`, `LZ77Encode`. |
 | `color` | Color science: 8 color spaces (sRGB/XYZ/Lab/LCH/HSL/HSV/CMYK/OKLab), CIEDE2000, WCAG contrast, Bradford chromatic adaptation, blackbody colour. | `SRGBToLinear`, `DeltaE2000`, `WCAGContrastRatio`, `BradfordAdapt`, `BlackbodyXYZ`. |
@@ -265,7 +265,7 @@ This section lists the public types and functions that are stable enough to cite
 - `EncodingDistance(a, b []float64) float64`
 - `DimensionWeightedDistance(a, b, weights []float64) float64`
 - `MatMul(a, b, out []float64, rowsA, colsA, colsB int)`
-- `MatSub`, `Trace`, `FrobeniusNorm`
+- `MatSub`, `Trace`, `L2Norm` (no dedicated matrix `FrobeniusNorm` function exists — apply `L2Norm` to the flattened matrix slice for the equivalent)
 - `LUDecompose(A []float64, n int, L, U []float64, perm []int) bool` — out-buffer style, returns `false` on singular pivot
 - `LUSolve(L, U []float64, n int, perm []int, b, x []float64)`
 - `CholeskyDecompose(A []float64, n int, L []float64) bool`

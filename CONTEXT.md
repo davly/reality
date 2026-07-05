@@ -476,6 +476,13 @@ The golden files are the proof. Start there. The functions will follow.
 
 ## 11. Session 25 State (2026-04-08)
 
+> **2026-07-05 note:** this section is preserved as history and is NOT the
+> current inventory — it was frozen at the 2026-04-08 (Session 25) / 2026-05-01
+> (audio cohort) snapshot and was never updated through the later Wave 2 and
+> Wave 3/4 landings. **`CLAUDE.md` is the current, derived-from-repo package
+> and function inventory** (regenerated 2026-07-05); read it for today's
+> counts. This section stays as-is below for provenance / session history.
+
 This section is the living "current state" layer on top of the v1.0 design above. The earlier sections describe the architecture as-decided; this section describes the repository as-built on 2026-04-08.
 
 ### Version and build
