@@ -3,6 +3,7 @@ package crypto
 import (
 	"errors"
 	"math/big"
+	"math/bits"
 )
 
 // ---------------------------------------------------------------------------
@@ -121,10 +122,18 @@ func ChineseRemainder(residues, moduli []uint64) (uint64, error) {
 		_ = i
 	}
 
-	// Compute M = product of all moduli.
+	// Compute M = product of all moduli, detecting uint64 overflow. The previous
+	// code accumulated M *= m and silently wrapped once the product exceeded
+	// 2^64, after which every modular step used the wrong M and the function
+	// returned a value congruent to NONE of the inputs with a nil error. We now
+	// fail honestly; callers needing a larger M must use a big-integer CRT.
 	M := uint64(1)
 	for _, m := range moduli {
-		M *= m
+		hi, lo := bits.Mul64(M, m)
+		if hi != 0 {
+			return 0, errors.New("crypto.ChineseRemainder: product of moduli overflows uint64 (M must be < 2^64); use a big-integer CRT for larger systems")
+		}
+		M = lo
 	}
 
 	var result uint64

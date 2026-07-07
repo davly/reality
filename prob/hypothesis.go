@@ -182,8 +182,11 @@ func ChiSquaredTest(observed, expected []float64) (chiSq, pValue float64) {
 	}
 
 	df := float64(len(observed) - 1)
-	// p-value = 1 - CDF of chi-squared distribution at chiSq with df degrees of freedom.
-	pValue = 1.0 - chiSquaredCDF(chiSq, df)
+	// p-value = upper tail of the chi-squared distribution = Q(df/2, chiSq/2),
+	// the upper regularized incomplete gamma. Computed directly (not as
+	// 1 - chiSquaredCDF) so that small, highly-significant p-values in the right
+	// tail are not destroyed by cancellation or by the lower series' iteration cap.
+	pValue = regularizedGammaQ(df/2.0, chiSq/2.0)
 	if pValue < 0 {
 		pValue = 0
 	}

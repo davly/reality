@@ -124,14 +124,24 @@ func PCA(data []float64, nSamples, nFeatures, nComponents int, components, expla
 		}
 
 		if ok {
-			// Start with a random-ish vector (all ones).
-			for i := 0; i < nf; i++ {
-				bvec[i] = 1.0
-			}
+			// Start from a vector orthogonal to the components already found, chosen
+			// to be non-degenerate after deflation. For a repeated (degenerate)
+			// eigenvalue inverse iteration has no preferred direction (the shifted
+			// matrix is ~scalar*I), so it returns the start direction; deflating the
+			// start forces a DISTINCT eigenvector in the eigenspace instead of
+			// collapsing onto a previously-found one (the old code Gram-Schmidt'd the
+			// all-ones vector — itself parallel to the first component — leaving a
+			// ~1e-16 residual that re-normalization blew back up into a +/- parallel
+			// vector, so PCA returned non-orthogonal components on isotropic data).
+			deflatedStart(bvec, components, c, nf)
 
 			// Iterate.
 			for iter := 0; iter < 50; iter++ {
 				LUSolve(L, U, nf, perm, bvec, xvec)
+
+				// Re-deflate each step so the iterate stays in the orthogonal
+				// complement of the previously-found components.
+				orthoDeflate(xvec, components, c, nf)
 
 				// Normalize.
 				norm := 0.0
@@ -211,5 +221,51 @@ func PCA(data []float64, nSamples, nFeatures, nComponents int, components, expla
 		cumVar += explained[i]
 	}
 	return cumVar
+}
+
+// deflatedStart fills dst with a unit-length-ish vector orthogonal to the first
+// c components, chosen to be non-degenerate: it tries the all-ones vector first
+// (good for generic data), then the standard basis vectors e_0..e_{nf-1}, and
+// keeps the first whose Gram-Schmidt residual against the found components has a
+// healthy norm. Because c < nf, at least one basis vector lies outside the span
+// of the found components, so a non-degenerate start always exists.
+func deflatedStart(dst, components []float64, c, nf int) {
+	for cand := 0; cand <= nf; cand++ {
+		for i := 0; i < nf; i++ {
+			switch {
+			case cand == 0:
+				dst[i] = 1.0 // all-ones
+			case i == cand-1:
+				dst[i] = 1.0 // e_{cand-1}
+			default:
+				dst[i] = 0.0
+			}
+		}
+		orthoDeflate(dst, components, c, nf)
+		n := 0.0
+		for i := 0; i < nf; i++ {
+			n += dst[i] * dst[i]
+		}
+		if math.Sqrt(n) > 1e-3 {
+			return
+		}
+	}
+}
+
+// orthoDeflate subtracts from v its projection onto each of the first c rows of
+// components (each a unit-norm eigenvector stored row-major, length nf), i.e. a
+// Gram-Schmidt step that leaves v in the orthogonal complement of the
+// already-found components. Used to keep degenerate-eigenvalue inverse-iteration
+// converging to mutually orthogonal eigenvectors.
+func orthoDeflate(v, components []float64, c, nf int) {
+	for prev := 0; prev < c; prev++ {
+		dot := 0.0
+		for i := 0; i < nf; i++ {
+			dot += v[i] * components[prev*nf+i]
+		}
+		for i := 0; i < nf; i++ {
+			v[i] -= dot * components[prev*nf+i]
+		}
+	}
 }
 

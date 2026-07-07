@@ -43,6 +43,13 @@ const modulePrefix = "github.com/davly/reality/"
 // The key is the module-relative slash path of the file.
 var netHTTPAllowlist = map[string]bool{
 	"conduit/emit.go": true,
+	// cmd/reality-compute is an executable entry point (not the pure-math
+	// library): the Nexus MCP HTTP server that exposes reality's producers over
+	// /mcp/tools (documented in docs/NEXUS_CAPABILITY_EXPOSURE.md). Serving the
+	// pure substrate over HTTP is the correct architectural boundary — the
+	// library stays HTTP-free; the cmd/ shim is where net/http lives.
+	"cmd/reality-compute/main.go":   true,
+	"cmd/reality-compute/server.go": true,
 }
 
 // TestImportPurity codifies ARCHITECTURE.md:27, which states:

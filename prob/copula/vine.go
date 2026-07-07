@@ -138,17 +138,17 @@ func (v *DVine) EdgeCount() int {
 	return v.dim * (v.dim - 1) / 2
 }
 
-// HFunctionPass applies one tree of h-function transforms to the
-// supplied row of pseudo-observations, returning the next tree's
-// pseudo-observations.
+// HFunctionPass applies the h-function of each edge in tree T_k to adjacent
+// inputs, returning only the h(left|right) direction:
 //
-// For tree T_k with input u (length dim - k + 1) and tree-T_k edges
-// e_0..e_{n-k-1}, the output row has length dim - k:
+//	out[i] = h_{e_i}(u[i] | u[i+1])    (length dim - k for input length dim - k + 1)
 //
-//	out[i] = h_{e_i}(u[i] | u[i+1])
-//
-// where h_{e_i} is the h-function for edge e_i. This matches Aas-Czado
-// 2009 Algorithm 4 step "compute v_{k+1, i}".
+// NOTE: this is the one-directional h(left|right) building block, NOT the complete
+// D-vine pseudo-observation set for tree T_{k+1}. The correct D-vine recursion also
+// needs the h(right|left) direction so that conditional pairs are conditioned on the
+// SHARED variable (Aas-Czado 2009 Algorithm 3's doubled v_{j,2i-1}/v_{j,2i} array);
+// LogPDF assembles that conditioning directly. Do NOT feed HFunctionPass output back
+// as T_{k+1} input expecting the joint density to decompose correctly.
 //
 // Returns an error if any edge's h-function fails (invalid theta — but
 // validation in NewDVine ensures this is unreachable in practice).
@@ -200,40 +200,62 @@ func (v *DVine) LogPDF(u []float64) (float64, error) {
 		}
 	}
 
-	// Accumulate log-density edge by edge. Track current "row" of
-	// pseudo-observations as we ascend the trees.
+	// This minimal D-vine evaluates the log joint density exactly for dim <= 3.
+	// For dim >= 4 the pseudo-observation recursion requires BOTH h-directions
+	// (the doubled v_{j,2i-1}/v_{j,2i} array of Aas-Czado 2009 Algorithm 3); the
+	// single-array form used previously cannot represent it and silently produced
+	// a WRONG density there, so dim >= 4 now returns an honest error until the
+	// full recursion is implemented.
+	if v.dim >= 4 {
+		return 0, fmt.Errorf("copula: D-vine LogPDF is implemented for dim <= 3; "+
+			"dim %d needs the full Aas-Czado 2009 Algorithm 3 pseudo-observation "+
+			"recursion (both h-directions), not yet implemented", v.dim)
+	}
+
 	logL := 0.0
-	current := make([]float64, len(u))
-	copy(current, u)
 
-	for k := 0; k < v.dim-1; k++ {
-		tree := v.Trees[k]
-		// Sum log c for each edge in the current tree.
-		next := make([]float64, len(tree)) // next-tree pseudo-obs row
-		for i, edge := range tree {
-			logPdf, err := LogPDFFnForFamily(edge.Family, edge.Theta)
-			if err != nil {
-				return 0, fmt.Errorf("tree T_%d edge %d log-pdf: %w", k+1, i, err)
-			}
-			ui := current[i]
-			vi := current[i+1]
-			contrib := logPdf(ui, vi)
-			if math.IsInf(contrib, -1) {
-				return math.Inf(-1), nil
-			}
-			logL += contrib
-
-			// Compute next-tree pseudo-observation via the same edge's
-			// h-function (only if there is a next tree to feed).
-			if k+1 < v.dim-1 {
-				hfn, err := HFnForFamily(edge.Family, edge.Theta)
-				if err != nil {
-					return 0, fmt.Errorf("tree T_%d edge %d h-fn: %w", k+1, i, err)
-				}
-				next[i] = hfn(ui, vi)
-			}
+	// Tree T_1: each edge couples raw observations (u[e], u[e+1]).
+	for e, edge := range v.Trees[0] {
+		logPdf, err := LogPDFFnForFamily(edge.Family, edge.Theta)
+		if err != nil {
+			return 0, fmt.Errorf("tree T_1 edge %d log-pdf: %w", e, err)
 		}
-		current = next
+		contrib := logPdf(u[e], u[e+1])
+		if math.IsInf(contrib, -1) {
+			return math.Inf(-1), nil
+		}
+		logL += contrib
+	}
+
+	// Tree T_2 (dim == 3 only): the single conditional edge c_{13|2} couples the
+	// pseudo-observations h(u1|u2) and h(u3|u2) — BOTH conditioned on the SHARED
+	// middle variable u2 (Aas-Czado 2009 §3.2: c_{13|2}(F(u1|u2), F(u3|u2))). The
+	// corrected second argument is h(u3|u2) = hRight(u3, u2); the previous code
+	// used h(u2|u3), which is wrong at every non-symmetric point.
+	if v.dim == 3 {
+		left := v.Trees[0][0]  // edge (1,2)
+		right := v.Trees[0][1] // edge (2,3)
+		hLeft, err := HFnForFamily(left.Family, left.Theta)
+		if err != nil {
+			return 0, fmt.Errorf("tree T_1 edge 0 h-fn: %w", err)
+		}
+		hRight, err := HFnForFamily(right.Family, right.Theta)
+		if err != nil {
+			return 0, fmt.Errorf("tree T_1 edge 1 h-fn: %w", err)
+		}
+		p0 := hLeft(u[0], u[1])  // h(u1|u2)
+		p1 := hRight(u[2], u[1]) // h(u3|u2) — conditioned on the shared middle u2
+
+		edge := v.Trees[1][0]
+		logPdf, err := LogPDFFnForFamily(edge.Family, edge.Theta)
+		if err != nil {
+			return 0, fmt.Errorf("tree T_2 edge 0 log-pdf: %w", err)
+		}
+		contrib := logPdf(p0, p1)
+		if math.IsInf(contrib, -1) {
+			return math.Inf(-1), nil
+		}
+		logL += contrib
 	}
 
 	return logL, nil

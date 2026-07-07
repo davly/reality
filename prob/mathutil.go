@@ -280,3 +280,24 @@ func regularizedGammaP(a, x float64) float64 {
 	}
 	return p
 }
+
+// regularizedGammaQ computes the upper regularized incomplete gamma function
+// Q(a, x) = 1 - P(a, x) = Gamma(a, x) / Gamma(a) for a > 0, x >= 0.
+//
+// Q is evaluated in whichever regime is accurate so a small upper tail is never
+// formed as 1 - P (which cancels catastrophically): the continued fraction is
+// used directly for x >= a+1, the series complement for x < a+1. Returns Q in
+// [0, 1]. Callers needing an upper-tail p-value (e.g. ChiSquaredTest, PoissonCDF
+// survival) should use this rather than 1 - regularizedGammaP.
+func regularizedGammaQ(a, x float64) float64 {
+	if a <= 0 {
+		return math.NaN()
+	}
+	if x <= 0 {
+		return 1.0
+	}
+	if x < a+1.0 {
+		return 1.0 - regularizedGammaLowerSeries(a, x)
+	}
+	return regularizedGammaUpperCF(a, x)
+}
