@@ -57,7 +57,7 @@ func MondrianQuantile(scores []float64, strata []int, alpha float64) (map[int]fl
 	for k, ss := range byStratum {
 		sort.Float64s(ss)
 		n := len(ss)
-		rank := int(math.Ceil((float64(n) + 1.0) * (1.0 - alpha)))
+		rank := conformalRank(n, alpha)
 		if rank > n {
 			out[k] = math.Inf(1)
 			continue

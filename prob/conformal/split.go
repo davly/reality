@@ -48,7 +48,7 @@ func SplitQuantile(scores []float64, alpha float64) (float64, error) {
 		}
 	}
 	n := len(scores)
-	rank := int(math.Ceil((float64(n) + 1.0) * (1.0 - alpha)))
+	rank := conformalRank(n, alpha)
 	if rank > n {
 		return math.Inf(1), nil
 	}
@@ -112,7 +112,7 @@ func SplitIntervalSignedResiduals(yhat float64, signedResiduals []float64, alpha
 	// rank > n down to n (returns the maximum) rather than +Inf, to
 	// match the FW reference impl byte-for-byte.
 	n := len(abs)
-	rank := int(math.Ceil((float64(n) + 1.0) * (1.0 - alpha)))
+	rank := conformalRank(n, alpha)
 	if rank > n {
 		rank = n
 	}
@@ -155,7 +155,7 @@ func CqrInterval(qLoHat, qHiHat float64, calibrationScores []float64, alpha floa
 		}
 	}
 	n := len(calibrationScores)
-	rank := int(math.Ceil((float64(n) + 1.0) * (1.0 - alpha)))
+	rank := conformalRank(n, alpha)
 	if rank > n {
 		return math.Inf(-1), math.Inf(1), nil
 	}
@@ -202,4 +202,34 @@ func MarginalCoverageBounds(n int, alpha float64) (lo, hi float64, err error) {
 		return 0, 0, ErrEmptyCalibration
 	}
 	return 1.0 - alpha, 1.0 - alpha + 1.0/float64(n+1), nil
+}
+
+// conformalRank computes the Lei et al (2018) order-statistic index
+//
+//	rank = ceil((n+1)(1-alpha))
+//
+// robustly against IEEE-754 rounding.  The naive
+// `math.Ceil(float64(n+1)*(1-alpha))` is off-by-one whenever the true
+// product is an exact integer k but the float product evaluates to
+// k + epsilon (e.g. n=124, alpha=0.176 gives a float product of
+// 103.00000000000001 -> Ceil 104, but the exact rank is 103).  That
+// off-by-one silently selects a HIGHER order statistic (a wider,
+// mis-calibrated band) or spuriously trips the rank>n too-thin branch.
+// We snap a product that sits within a tight relative epsilon ABOVE an
+// integer back down to that integer before taking the ceiling, which
+// yields the mathematically-exact rank on every input while changing
+// none of the values the float path already gets right (so
+// cross-substrate parity on the test corpus is preserved).
+//
+// Ported from the gridlock vendoring of this canonical (gridlock
+// ec7c239, `internal/conformal/conformal.go` conformalRank).
+func conformalRank(n int, alpha float64) int {
+	prod := (float64(n) + 1.0) * (1.0 - alpha)
+	// Snap to a near-integer from above so float fuzz never inflates the rank.
+	nearest := math.Round(prod)
+	const eps = 1e-9
+	if math.Abs(prod-nearest) <= eps*math.Max(1.0, math.Abs(prod)) {
+		prod = nearest
+	}
+	return int(math.Ceil(prod))
 }

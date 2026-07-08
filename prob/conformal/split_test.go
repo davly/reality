@@ -359,3 +359,71 @@ func TestCrossSubstratePrecision_FwCorpus_EmpiricalCoverageAtLeast90Percent(t *t
 		t.Errorf("coverage %d/1000 below FW slack floor 880", covered)
 	}
 }
+
+// =========================================================================
+// conformalRank — IEEE-754 off-by-one regression guard (gridlock ec7c239)
+// =========================================================================
+
+// exactRankFromMilliAlpha computes ceil((n+1)*(1-alpha)) EXACTLY for
+// alpha = alphaMilli/1000 using integer arithmetic.  The rank formula
+// is defined on the decimal alpha the caller wrote (e.g. 0.176), so
+// the Go float path must agree with the decimal-exact rank — that is
+// precisely what the float off-by-one violated and conformalRank's
+// near-integer snap restores.
+func exactRankFromMilliAlpha(n, alphaMilli int) int {
+	// (n+1)*(1 - alphaMilli/1000) = (n+1)*(1000-alphaMilli)/1000.
+	num := (n + 1) * (1000 - alphaMilli)
+	rank := num / 1000
+	if num%1000 != 0 {
+		rank++ // ceil
+	}
+	return rank
+}
+
+// TestConformalRank_NoFloatOffByOne is the regression guard for the
+// floating-point off-by-one in the order-statistic index.  The naive
+// `int(math.Ceil((float64(n)+1)*(1-alpha)))` selects the WRONG (higher)
+// order statistic whenever the true product is an exact integer k but
+// the float product evaluates to k+epsilon — e.g. n=124, alpha=0.176
+// where exact rank=103 but naive float gives 104.  Cases are the
+// empirically-discovered failing pairs from the gridlock suite
+// (donor: gridlock ec7c239); this test FAILS on the pre-fix code and
+// PASSES after.
+func TestConformalRank_NoFloatOffByOne(t *testing.T) {
+	cases := []struct {
+		n          int
+		alphaMilli int // alpha = alphaMilli/1000
+	}{
+		{124, 176},
+		{124, 184},
+		{149, 180},
+		{249, 172},
+		{299, 190},
+		{499, 172},
+	}
+	for _, c := range cases {
+		alpha := float64(c.alphaMilli) / 1000.0
+		scores := make([]float64, c.n)
+		for i := range scores {
+			scores[i] = float64(i + 1) // 1..n
+		}
+		wantRank := exactRankFromMilliAlpha(c.n, c.alphaMilli)
+		if wantRank < 1 {
+			wantRank = 1
+		}
+		var want float64
+		if wantRank > c.n {
+			want = math.Inf(1)
+		} else {
+			want = float64(wantRank) // scores[wantRank-1] == wantRank
+		}
+		got, err := SplitQuantile(scores, alpha)
+		if err != nil {
+			t.Fatalf("n=%d alpha=%.4f: %v", c.n, alpha, err)
+		}
+		if got != want {
+			t.Errorf("n=%d alpha=%.4f: SplitQuantile = %v (float rank %d), want %v (decimal-exact rank %d)",
+				c.n, alpha, got, int(got), want, wantRank)
+		}
+	}
+}
