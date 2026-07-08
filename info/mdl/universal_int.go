@@ -2,70 +2,60 @@ package mdl
 
 import "math"
 
-// rissanenLogStarConstant is Rissanen's constant log(2.865...)
-// evaluated in nats: the additive normaliser of the universal
-// integer code log*(n) = log(n) + log(log(n)) + ... + log(2.865).
-// Per Rissanen (1983) "A universal prior for integers and
-// estimation by minimum description length", Annals of Statistics
-// 11(2): 416-431.  The constant 2.865 is computed as the unique
-// value making sum_{n>=1} 2^{-log*(n)} = 1, ensuring log*(n) is
-// a valid Kraft-inequality-satisfying codelength.
+// rissanenLogStarConstantBits is Rissanen's constant log2(2.865064...): the
+// additive normaliser of the universal integer code, in BITS. Per Rissanen
+// (1983) "A universal prior for integers and estimation by minimum description
+// length", Annals of Statistics 11(2): 416-431. The constant 2.865064 is the
+// value making sum_{n>=1} 2^{-log*(n)} = 1 for the BASE-2 iterated logarithm,
+// so the codelength must be computed with log2 throughout to satisfy Kraft.
 //
-// Stored as a math.Log of 2.865064... (the value cited in
-// Rissanen's original paper); the bit-equivalent constant is
-// log_2(2.865) ≈ 1.5189.  We work in nats throughout and convert
-// at API boundaries when requested.
-//
-// Defined as a `var` to allow internal numerical fine-tuning in
-// future revisions; downstream callers should treat it as a
-// constant and not mutate it.
-var rissanenLogStarConstant = math.Log(2.865064)
+// (Previously this code iterated the NATURAL log and rescaled by 1/ln2, which
+// does NOT reproduce the base-2 iterated log — the iterated logarithm is not
+// homogeneous under a change of base — so the resulting code violated Kraft:
+// sum 2^{-bits} exceeded 1 and large integers were under-coded by ~2 bits.)
+var rissanenLogStarConstantBits = math.Log2(2.865064)
 
-// UniversalIntegerCodeLength returns the codelength in nats of a
-// positive integer n under Rissanen's 1983 universal prior:
+// UniversalIntegerCodeLengthBits returns the codelength in BITS of a positive
+// integer n under Rissanen's 1983 universal prior, computed natively in base 2:
 //
-//	log*(n) = log(n) + log(log(n)) + log(log(log(n))) + ...
-//	          + log(2.865064)
+//	log*(n) = log2(n) + log2(log2(n)) + log2(log2(log2(n))) + ...
+//	          + log2(2.865064)
 //
-// where the iteration continues while the inner log term remains
-// positive and the final additive constant ensures Kraft's
-// inequality is satisfied (sum_{n>=1} 2^{-log*(n)} = 1).
+// where the iteration continues while the inner log2 term remains positive and
+// the additive constant ensures Kraft's inequality holds (sum_{n>=1} 2^{-log*(n)}
+// = 1). This is the canonical Rissanen code; it MUST be evaluated in base 2,
+// because the iterated logarithm is not homogeneous under a change of base
+// (log2(log2(n)) != ln(ln(n))/ln2, and the two even differ in their number of
+// iteration terms).
 //
-// The codelength gives the bits-per-symbol cost of encoding "the
-// integer n is required to describe the model" without committing
-// to a specific upper bound on n in advance — the canonical
-// solution to the integer-prior problem in two-part MDL.
+// Returns ErrInvalidUniversalInt for n < 1. For n = 1 the result is
+// rissanenLogStarConstantBits (the bare additive constant; log2(1)=0 terminates
+// the recursion immediately).
 //
-// Returns ErrInvalidUniversalInt for n < 1.  For n = 1 the result
-// is rissanenLogStarConstant (the bare additive constant; log(1)
-// terminates the recursion immediately).
-//
-// Reference: Rissanen, J. (1983).  A universal prior for integers
-// and estimation by minimum description length.  Annals of
-// Statistics 11(2): 416-431.
-func UniversalIntegerCodeLength(n int) (float64, error) {
+// Reference: Rissanen, J. (1983). A universal prior for integers and estimation
+// by minimum description length. Annals of Statistics 11(2): 416-431.
+func UniversalIntegerCodeLengthBits(n int) (float64, error) {
 	if n < 1 {
 		return 0, ErrInvalidUniversalInt
 	}
 
-	total := rissanenLogStarConstant
-	x := math.Log(float64(n))
+	total := rissanenLogStarConstantBits
+	x := math.Log2(float64(n))
 	for x > 0 {
 		total += x
-		x = math.Log(x)
+		x = math.Log2(x)
 	}
 	return total, nil
 }
 
-// UniversalIntegerCodeLengthBits is the bit-equivalent of
-// UniversalIntegerCodeLength: divide the nat-codelength by ln(2).
-// This is what callers want when comparing codelengths to AIC/BIC
-// scores reported in bits or to the LZ76 word-count interpretation
-// in bits.
-func UniversalIntegerCodeLengthBits(n int) (float64, error) {
-	nats, err := UniversalIntegerCodeLength(n)
+// UniversalIntegerCodeLength returns the same Rissanen universal-prior codelength
+// in NATS — i.e. the bits codelength times ln(2). It is a pure unit conversion of
+// UniversalIntegerCodeLengthBits, not a separate (natural-log-iterated) code, so
+// the Kraft-valid base-2 codelength is preserved.
+func UniversalIntegerCodeLength(n int) (float64, error) {
+	bits, err := UniversalIntegerCodeLengthBits(n)
 	if err != nil {
 		return 0, err
 	}
-	return nats / math.Ln2, nil
+	return bits * math.Ln2, nil
 }

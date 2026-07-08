@@ -1,0 +1,24 @@
+{
+  "function": "SLO.ShortWindow",
+  "_source": "Google SRE Workbook Ch.5 '1/12 rule': short confirmation window = long / 12. The recommended table's 1h/6h/3d long windows map to 5min/30min/6h short windows. Values in hours.",
+  "cases": [
+    {
+      "description": "1h long window -> 5 min short window (1/12 h)",
+      "inputs": {"longWindow": 1.0},
+      "expected": 0.08333333333333333,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "6h long window -> 30 min short window (0.5 h)",
+      "inputs": {"longWindow": 6.0},
+      "expected": 0.5,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "3d (72h) long window -> 6h short window",
+      "inputs": {"longWindow": 72.0},
+      "expected": 6.0,
+      "tolerance": 1e-12
+    }
+  ]
+}

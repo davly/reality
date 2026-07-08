@@ -1,0 +1,12 @@
+{
+  "function": "RetryMath.DecorrelatedUncappedMean",
+  "_source": "m_n = base*(2*1.5^n - 1), exact mean of the UNCAPPED decorrelated recurrence (upper bound on the capped mean). Hand-derived from m_{n+1}=base/2 + 1.5 m_n, m_0=base.",
+  "cases": [
+    {"description": "n=0 -> base", "inputs": {"base": 1.0, "attempt": 0}, "expected": 1.0, "tolerance": 1e-12},
+    {"description": "n=1 -> 2", "inputs": {"base": 1.0, "attempt": 1}, "expected": 2.0, "tolerance": 1e-12},
+    {"description": "n=2 -> 3.5", "inputs": {"base": 1.0, "attempt": 2}, "expected": 3.5, "tolerance": 1e-12},
+    {"description": "n=3 -> 5.75", "inputs": {"base": 1.0, "attempt": 3}, "expected": 5.75, "tolerance": 1e-12},
+    {"description": "n=4 -> 9.125", "inputs": {"base": 1.0, "attempt": 4}, "expected": 9.125, "tolerance": 1e-12},
+    {"description": "base=2 scales linearly (n=3)", "inputs": {"base": 2.0, "attempt": 3}, "expected": 11.5, "tolerance": 1e-12}
+  ]
+}

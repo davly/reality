@@ -18,9 +18,11 @@ import "math"
 //
 // Formula: n! = 1 * 2 * 3 * ... * n
 // Valid range: n >= 0 (negative n returns 1)
-// Precision: exact for n <= 20 (fits in uint64); float64 mantissa limits
-// exact integer representation to about n <= 22; relative error < 1e-15
-// for n <= 170.
+// Precision: exact (bit-exact) for n <= 20 via the direct-multiply path.
+// For 21 <= n <= 170 the exp(lgamma(n+1)) path carries relative error
+// < 1e-13 (worst observed 1.30e-13 at n=166): lgamma's ~1e-15 relative
+// error is amplified through exponentiation by ln(n!) (~745 at n=166),
+// not the < 1e-15 the exact-integer path below n=21 achieves.
 // Reference: fundamental counting principle; Knuth, TAOCP vol. 1
 func Factorial(n int) float64 {
 	if n <= 0 {
@@ -45,7 +47,10 @@ func Factorial(n int) float64 {
 //
 // Formula: exp(lgamma(n+1) - lgamma(k+1) - lgamma(n-k+1))
 // Valid range: 0 <= k <= n
-// Precision: relative error < 1e-12 for typical inputs
+// Precision: relative error < 1e-12 for n <= 200 (worst observed 3.09e-13).
+// For large n in the high hundreds the accumulated lgamma error can exceed
+// this bound (worst observed 2.45e-12 at C(990,86)) — "typical inputs"
+// scopes out that large-n regime.
 // Reference: Knuth, TAOCP vol. 1; using log-gamma avoids intermediate
 // overflow that direct factorial computation would cause for large n.
 func BinomialCoeff(n, k int) float64 {

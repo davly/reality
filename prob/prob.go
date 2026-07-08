@@ -25,6 +25,13 @@ const MaxProb = 0.99
 // Precision: exact
 // Reference: standard numerical safeguard for log-odds computation
 func ClampProbability(p float64) float64 {
+	// Go's math.Max/math.Min PROPAGATE NaN, so without this guard a NaN passes straight
+	// through — contradicting the documented contract above (NaN -> MinProb) and letting a
+	// NaN leak through every caller that clamps here (LogOddsToProb, the averages, Wilson,
+	// LogOddsPool). Fail closed to the floor.
+	if math.IsNaN(p) {
+		return MinProb
+	}
 	return math.Max(MinProb, math.Min(MaxProb, p))
 }
 
@@ -41,13 +48,10 @@ func ClampProbability(p float64) float64 {
 //
 // Source: extracted from aicore/parallaxmath.ConfidenceFromPValue.
 func ConfidenceFromPValue(pValue float64) float64 {
-	c := 1.0 - pValue
-	if c < 0 {
-		c = 0
-	} else if c > 1 {
-		c = 1
-	}
-	return c
+	// Reuse the NaN-safe clamp01: the manual clamp below leaked NaN (every Go comparison
+	// with NaN is False), contradicting the documented "result is always in [0, 1]".
+	// clamp01 already guards NaN -> 0; ConfidenceFromPValue did not.
+	return clamp01(1.0 - pValue)
 }
 
 // ProbToLogOdds converts a probability to log-odds (logit function).
@@ -251,6 +255,49 @@ func WilsonConfidenceInterval(p float64, n int, z float64) (low, high float64) {
 	margin := (z * math.Sqrt((p*(1.0-p)+z2/(4.0*nf))/nf)) / denominator
 
 	return ClampProbability(centre - margin), ClampProbability(centre + margin)
+}
+
+// clamp01 clamps x into the MATHEMATICAL probability range [0,1] (unlike
+// ClampProbability, which clamps into the epistemic forecast band
+// [MinProb,MaxProb]=[0.01,0.99]). NaN maps to 0 so no caller can propagate a NaN.
+func clamp01(x float64) float64 {
+	switch {
+	case math.IsNaN(x):
+		return 0
+	case x < 0:
+		return 0
+	case x > 1:
+		return 1
+	default:
+		return x
+	}
+}
+
+// WilsonScoreInterval is WilsonConfidenceInterval for confidence-INTERVAL
+// reporting: it lets the bounds reach the true mathematical limits 0 and 1 (the
+// whole point of a Wilson score interval at extreme proportions) instead of
+// clamping into the forecast band [0.01,0.99]. Use this on surfaces that REPORT
+// an interval (e.g. win-rate odds CIs, species-rate CIs) — e.g. 99/100 wins
+// yields a high of ~0.998, not a flat 0.99, and 100/100 yields exactly 1.0.
+// WilsonConfidenceInterval is left unchanged for callers that intentionally want
+// the clamped epistemic band (log-odds inputs). p is clamped into [0,1] first so
+// an out-of-range or NaN input can never produce a NaN bound.
+func WilsonScoreInterval(p float64, n int, z float64) (low, high float64) {
+	p = clamp01(p)
+	if n <= 0 {
+		return clamp01(p - 0.3), clamp01(p + 0.3)
+	}
+	if z <= 0 {
+		z = 1.96
+	}
+
+	nf := float64(n)
+	z2 := z * z
+	denominator := 1.0 + z2/nf
+	centre := (p + z2/(2.0*nf)) / denominator
+	margin := (z * math.Sqrt((p*(1.0-p)+z2/(4.0*nf))/nf)) / denominator
+
+	return clamp01(centre - margin), clamp01(centre + margin)
 }
 
 // SimpleAverage computes the arithmetic mean of values.

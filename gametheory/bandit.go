@@ -34,6 +34,10 @@ import "math"
 //
 // Reference: Auer, P., Cesa-Bianchi, N., Fischer, P. (2002) "Finite-time
 // Analysis of the Multiarmed Bandit Problem", Machine Learning 47(2-3).
+//
+// Note: rewards must be cumulative SUMS, never per-arm means — passing
+// means divides by the count twice and collapses the exploitation term.
+// New callers should prefer UCB1FromArms, which makes the unit explicit.
 func UCB1(counts []int, rewards []float64, totalPulls int) int {
 	n := len(counts)
 	if n == 0 {
@@ -48,7 +52,18 @@ func UCB1(counts []int, rewards []float64, totalPulls int) int {
 	}
 
 	// All arms explored — use UCB1 formula.
-	logTotal := math.Log(float64(totalPulls))
+	// Guard degenerate input: log(totalPulls) is only finite & non-negative for
+	// totalPulls >= 1. A caller that derives totalPulls from a counter separate
+	// from the per-arm counts could pass totalPulls < 1 (or < sum(counts)); then
+	// log(0)=-Inf / log(neg)=NaN makes every score NaN, and `NaN > bestScore` is
+	// always false, so bestArm would silently stay 0 (least-index-wins, ignoring
+	// reward). At totalPulls < 1 we drop the exploration bonus (logTotal=0,
+	// matching the math at totalPulls==1). Consistent callers (totalPulls already
+	// == sum(counts) >= 1) are byte-identical.
+	logTotal := 0.0
+	if totalPulls >= 1 {
+		logTotal = math.Log(float64(totalPulls))
+	}
 
 	bestArm := 0
 	bestScore := -math.MaxFloat64
@@ -56,6 +71,11 @@ func UCB1(counts []int, rewards []float64, totalPulls int) int {
 		avgReward := rewards[i] / float64(counts[i])
 		exploration := math.Sqrt(2 * logTotal / float64(counts[i]))
 		score := avgReward + exploration
+		// A non-finite score (e.g. from an Inf/NaN reward) must never silently
+		// win the max — skip it so selection stays reward-ordered and finite.
+		if math.IsNaN(score) || math.IsInf(score, 0) {
+			continue
+		}
 		if score > bestScore {
 			bestScore = score
 			bestArm = i
@@ -85,6 +105,10 @@ func UCB1(counts []int, rewards []float64, totalPulls int) int {
 // Reference: Thompson, W.R. (1933) "On the Likelihood that One Unknown
 // Probability Exceeds Another in View of the Evidence of Two Samples",
 // Biometrika 25(3-4):285-294.
+//
+// Note: for Bernoulli rewards tracked as Arm{Count, RewardSum}, new callers
+// should prefer ThompsonFromArmsBernoulli, which documents and enforces the
+// successes/failures mapping.
 func ThompsonSampling(successes, failures []int, rng interface{ Float64() float64 }) int {
 	n := len(successes)
 	if n == 0 {
@@ -192,6 +216,9 @@ func sampleStdNormal(rng interface{ Float64() float64 }) float64 {
 //
 // Reference: Sutton, R.S. & Barto, A.G. (2018) "Reinforcement Learning:
 // An Introduction", 2nd edition, Chapter 2.
+//
+// Note: rewards must be cumulative SUMS, never per-arm means. New callers
+// should prefer EpsilonGreedyFromArms, which makes the unit explicit.
 func EpsilonGreedy(rewards []float64, counts []int, epsilon float64, rng interface{ Float64() float64 }) int {
 	n := len(rewards)
 	if n == 0 {

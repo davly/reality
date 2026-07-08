@@ -15,6 +15,13 @@ import (
 // All functions are self-contained with zero external dependencies.
 // ---------------------------------------------------------------------------
 
+// simplexMaxIter caps the number of simplex pivots before SimplexMethod
+// declares non-convergence. With Bland's anti-cycling rule the method is
+// finite, so this is a defensive ceiling against pathological / numerically
+// degenerate inputs. It is a package variable (rather than a const) so tests
+// can lower it to exercise the non-convergence guard.
+var simplexMaxIter = 10000
+
 // SimplexMethod solves a standard-form linear program using the revised simplex
 // method with Bland's anti-cycling rule.
 //
@@ -25,6 +32,10 @@ import (
 //
 // where A is m x n, b is m x 1, c is n x 1. Slack variables are added
 // internally to convert to the equality form Ax + s = b, s >= 0.
+//
+// Requires b >= 0: this single-phase method starts from the all-slack basis
+// (s = b), so a constraint with b_i < 0 returns an error rather than being
+// silently negated (negating the row would flip <= into >=, a different LP).
 //
 // Returns the optimal solution x (length n), the optimal objective value, and
 // an error if the problem is infeasible or unbounded.
@@ -47,20 +58,21 @@ func SimplexMethod(c []float64, A [][]float64, b []float64) ([]float64, float64,
 		}
 	}
 
-	// Check that b >= 0 (standard form requirement after adding slacks).
-	// If b[i] < 0, multiply the row by -1.
+	// This single-phase method starts from the all-slack basis (s = b), which is
+	// feasible only when b >= 0. A constraint A_i x <= b_i with b_i < 0 cannot be
+	// reduced to that form: negating the row to make b positive turns A_i x <= b_i
+	// into A_i x >= b_i, which silently solves a DIFFERENT LP. Reject it explicitly
+	// -- a b<0 (or >=) constraint needs a two-phase / Big-M simplex, not provided
+	// here. (Previously the row was negated, returning a wrong answer with nil err.)
 	aCopy := make([][]float64, m)
 	bCopy := make([]float64, m)
 	for i := 0; i < m; i++ {
+		if b[i] < 0 {
+			return nil, 0, errors.New("optim.SimplexMethod: requires b >= 0; a constraint with b_i < 0 (e.g. an encoded >= constraint) needs a two-phase/Big-M simplex, not implemented here")
+		}
 		aCopy[i] = make([]float64, n)
 		copy(aCopy[i], A[i])
 		bCopy[i] = b[i]
-		if bCopy[i] < 0 {
-			for j := 0; j < n; j++ {
-				aCopy[i][j] = -aCopy[i][j]
-			}
-			bCopy[i] = -bCopy[i]
-		}
 	}
 
 	// Build the full tableau: m rows x (n + m) columns (original + slack).
@@ -84,7 +96,8 @@ func SimplexMethod(c []float64, A [][]float64, b []float64) ([]float64, float64,
 	}
 
 	// Simplex iterations with Bland's rule.
-	const maxIter = 10000
+	maxIter := simplexMaxIter
+	converged := false
 	for iter := 0; iter < maxIter; iter++ {
 		// Compute reduced costs: rc[j] = c[j] - c_B' * A_j.
 		// Find entering variable (Bland: smallest index with rc < 0).
@@ -101,6 +114,7 @@ func SimplexMethod(c []float64, A [][]float64, b []float64) ([]float64, float64,
 		}
 		if entering == -1 {
 			// Optimal.
+			converged = true
 			break
 		}
 
@@ -141,6 +155,13 @@ func SimplexMethod(c []float64, A [][]float64, b []float64) ([]float64, float64,
 		basis[leaving] = entering
 	}
 
+	// Guard: the loop exhausted its pivot budget without reaching optimality
+	// (entering == -1 was never observed). Returning the current tableau would
+	// be a silent non-optimal result, so report a non-nil error instead.
+	if !converged {
+		return nil, 0, errors.New("optim.SimplexMethod: did not converge within iteration limit")
+	}
+
 	// Extract solution.
 	x := make([]float64, n)
 	optVal := 0.0
@@ -154,19 +175,14 @@ func SimplexMethod(c []float64, A [][]float64, b []float64) ([]float64, float64,
 	return x, optVal, nil
 }
 
-// InteriorPoint solves a standard-form linear program using a primal-dual
-// interior point (barrier) method.
+// InteriorPoint is QUARANTINED and currently returns an error.
 //
-// Problem:
-//
-//	minimize   c'x
-//	subject to Ax <= b, x >= 0
-//
-// The method converts to equality form with slacks and applies a log-barrier
-// approach, iteratively reducing the barrier parameter mu toward zero.
-//
-// Returns the optimal solution x (length n), the optimal objective value, and
-// an error if the problem cannot be solved.
+// The previous primal-dual barrier implementation was not correct: its "Newton
+// step" was an ad-hoc approximation that did not solve the KKT system, so it
+// diverged to NaN/garbage on essentially every well-posed LP while returning a
+// nil error (a silently-wrong result). Rather than mislead callers, it now fails
+// closed. Use SimplexMethod for linear programs until a correct primal-dual
+// method is implemented here.
 //
 // Reference: Wright, "Primal-Dual Interior-Point Methods," SIAM, 1997.
 func InteriorPoint(c []float64, A [][]float64, b []float64) ([]float64, float64, error) {
@@ -179,138 +195,10 @@ func InteriorPoint(c []float64, A [][]float64, b []float64) ([]float64, float64,
 		return nil, 0, errors.New("optim.InteriorPoint: len(b) != len(A)")
 	}
 
-	// Equality form: [A | I] [x; s] = b, x >= 0, s >= 0.
-	// Variables: x (n), s (m). Total = n + m.
-	totalVars := n + m
-
-	// Initialize strictly feasible interior point.
-	x := make([]float64, totalVars)
-	for i := range x {
-		x[i] = 1.0
-	}
-	// Adjust slacks so A*x_orig + s = b (approximately).
-	for i := 0; i < m; i++ {
-		ax := 0.0
-		for j := 0; j < n; j++ {
-			ax += A[i][j] * x[j]
-		}
-		slack := b[i] - ax
-		if slack < 0.1 {
-			slack = 0.1
-		}
-		x[n+i] = slack
-	}
-
-	// Dual variables.
-	lambda := make([]float64, m)
-	mu := 10.0
-
-	const maxOuter = 50
-	const maxInner = 30
-	const sigma = 0.2 // centering parameter
-
-	for outer := 0; outer < maxOuter; outer++ {
-		// Reduce barrier.
-		mu *= sigma
-
-		if mu < 1e-12 {
-			break
-		}
-
-		for inner := 0; inner < maxInner; inner++ {
-			// Compute residuals.
-			// Primal residual: A_eq * x - b
-			rp := make([]float64, m)
-			for i := 0; i < m; i++ {
-				sum := 0.0
-				for j := 0; j < n; j++ {
-					sum += A[i][j] * x[j]
-				}
-				sum += x[n+i] // slack
-				rp[i] = sum - b[i]
-			}
-
-			// Dual residual: c_ext - A_eq' * lambda - diag(1/x)*mu*e
-			// For original vars: c[j] - sum_i(A[i][j]*lambda[i]) - mu/x[j]
-			// For slack vars:    0 - lambda[i] - mu/x[n+i]
-			rd := make([]float64, totalVars)
-			for j := 0; j < n; j++ {
-				rd[j] = c[j]
-				for i := 0; i < m; i++ {
-					rd[j] -= A[i][j] * lambda[i]
-				}
-				if x[j] > 1e-15 {
-					rd[j] -= mu / x[j]
-				}
-			}
-			for i := 0; i < m; i++ {
-				rd[n+i] = -lambda[i]
-				if x[n+i] > 1e-15 {
-					rd[n+i] -= mu / x[n+i]
-				}
-			}
-
-			// Check convergence.
-			rpNorm := 0.0
-			for _, v := range rp {
-				rpNorm += v * v
-			}
-			rdNorm := 0.0
-			for _, v := range rd {
-				rdNorm += v * v
-			}
-			if math.Sqrt(rpNorm) < 1e-8 && math.Sqrt(rdNorm) < 1e-8 {
-				break
-			}
-
-			// Newton step using a simplified approach:
-			// Solve for dx using gradient descent on the KKT system.
-			// Step direction: dx[j] = -rd[j] * x[j]^2 / mu (approximate)
-			dx := make([]float64, totalVars)
-			for j := 0; j < totalVars; j++ {
-				if x[j] > 1e-15 {
-					dx[j] = -rd[j] * x[j] * x[j] / (mu + x[j]*x[j])
-				}
-			}
-
-			// Update lambda based on primal residual.
-			for i := 0; i < m; i++ {
-				lambda[i] += 0.1 * rp[i]
-			}
-
-			// Line search: ensure x + alpha*dx > 0.
-			alpha := 1.0
-			for j := 0; j < totalVars; j++ {
-				if dx[j] < 0 {
-					maxAlpha := -0.99 * x[j] / dx[j]
-					if maxAlpha < alpha {
-						alpha = maxAlpha
-					}
-				}
-			}
-			if alpha > 1.0 {
-				alpha = 1.0
-			}
-			if alpha < 1e-10 {
-				alpha = 1e-10
-			}
-
-			for j := 0; j < totalVars; j++ {
-				x[j] += alpha * dx[j]
-				if x[j] < 1e-15 {
-					x[j] = 1e-15
-				}
-			}
-		}
-	}
-
-	// Extract solution.
-	xSol := make([]float64, n)
-	copy(xSol, x[:n])
-	optVal := 0.0
-	for j := 0; j < n; j++ {
-		optVal += c[j] * xSol[j]
-	}
-
-	return xSol, optVal, nil
+	// QUARANTINED: the barrier iteration that was here was not a correct
+	// primal-dual interior-point method -- its "Newton step" was an ad-hoc
+	// approximation that does not solve the KKT system, so it diverged to
+	// NaN/garbage on essentially every LP while returning a nil error. Fail
+	// closed until it is replaced with a correct implementation.
+	return nil, 0, errors.New("optim.InteriorPoint: not a correct implementation (the barrier iteration diverged to NaN/garbage); use SimplexMethod")
 }

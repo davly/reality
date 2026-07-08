@@ -1,0 +1,24 @@
+{
+  "function": "SLO.BudgetFractionConsumed",
+  "_source": "Google SRE Workbook Ch.5. Exact inverse of ThresholdBurnRate: f = BR * w / P, 30d = 720h. Reproduces the same recommended-table rows.",
+  "cases": [
+    {
+      "description": "BR 14.4 over 1h of 30d consumes 2% of budget",
+      "inputs": {"burnRate": 14.4, "window": 1.0, "period": 720.0},
+      "expected": 0.02,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "BR 6 over 6h of 30d consumes 5% of budget",
+      "inputs": {"burnRate": 6.0, "window": 6.0, "period": 720.0},
+      "expected": 0.05,
+      "tolerance": 1e-9
+    },
+    {
+      "description": "BR 1 over 3d(72h) of 30d consumes 10% of budget",
+      "inputs": {"burnRate": 1.0, "window": 72.0, "period": 720.0},
+      "expected": 0.10,
+      "tolerance": 1e-9
+    }
+  ]
+}

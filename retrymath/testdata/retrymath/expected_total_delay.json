@@ -1,0 +1,11 @@
+{
+  "function": "RetryMath.ExpectedTotalDelay",
+  "_source": "Sum of per-attempt means over n=0..k-1 (linearity of expectation). family: 0=None,1=Full,2=Equal,3=Multiplicative. Hand-derived.",
+  "cases": [
+    {"description": "Full k=4: 0.5+1+2+4", "inputs": {"family": 1, "base": 1.0, "cap": 30.0, "factor": 2.0, "k": 4}, "expected": 7.5, "tolerance": 1e-9},
+    {"description": "Full k=6: adds 8+15 (cap) to 7.5", "inputs": {"family": 1, "base": 1.0, "cap": 30.0, "factor": 2.0, "k": 6}, "expected": 30.5, "tolerance": 1e-9},
+    {"description": "None k=4: 1+2+4+8", "inputs": {"family": 0, "base": 1.0, "cap": 30.0, "factor": 2.0, "k": 4}, "expected": 15.0, "tolerance": 1e-9},
+    {"description": "Equal k=4: 0.75+1.5+3+6", "inputs": {"family": 2, "base": 1.0, "cap": 30.0, "factor": 2.0, "k": 4}, "expected": 11.25, "tolerance": 1e-9},
+    {"description": "k=0 -> no waits", "inputs": {"family": 1, "base": 1.0, "cap": 30.0, "factor": 2.0, "k": 0}, "expected": 0.0, "tolerance": 1e-9}
+  ]
+}

@@ -155,7 +155,11 @@ func QuatFromAxisAngle(axis [3]float64, angle float64) [4]float64 {
 //	angle = 2 * acos(w)
 //	axis  = (x, y, z) / sin(angle/2)
 //
-// Precision: 1e-12 (transcendental functions).
+// Precision: 1e-12 for angles bounded away from 0 and pi (validated on
+// [0.05, pi-0.05], worst observed 4.70e-15). Near-degenerate angles
+// (angle -> 0 or pi) divide by a vanishing sin(angle/2), so the axis is
+// ill-conditioned: round-trip error can reach ~4.43e-11 for angles as
+// close as 1e-6 rad from 0/pi (~44x the bound).
 func QuatToAxisAngle(q [4]float64) (axis [3]float64, angle float64) {
 	// Ensure w is in [-1, 1] for acos safety.
 	w := q[0]

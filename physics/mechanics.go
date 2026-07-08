@@ -128,6 +128,12 @@ func ElasticCollision(m1, v1, m2, v2 float64) (v1f, v2f float64) {
 // Reference: nonlinear pendulum equation; see Thornton & Marion
 // "Classical Dynamics of Particles and Systems" ch. 3
 func Pendulum(theta, L, g, damping float64) float64 {
+	if L == 0 {
+		// Singular input: honor the documented "Returns NaN if L == 0" contract
+		// rather than -(g/0)*sin(theta), which is -Inf for most theta (and NaN
+		// only when sin(theta) is exactly 0), so a math.IsNaN guard slips through.
+		return math.NaN()
+	}
 	return -(g/L)*math.Sin(theta) - damping*math.Sin(theta)
 }
 

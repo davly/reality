@@ -1,0 +1,162 @@
+{
+  "function": "prob.DeflatedSharpeRatio",
+  "_source": "Bailey & Lopez de Prado (2014), 'The Deflated Sharpe Ratio', J. Portfolio Mgmt 40(5):94-107. Expected values computed independently at 50-digit precision (mpmath: true normal CDF via ncdf, quantile via erfinv).",
+  "cases": [
+    {
+      "description": "nTrials=1 reduces to PSR against zero benchmark",
+      "inputs": {
+        "observedSR": 0.2,
+        "n": 250,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "nTrials": 1,
+        "srVariance": 0.09
+      },
+      "expected": 0.9991105301385781,
+      "tolerance": 1e-06
+    },
+    {
+      "description": "V=0 reduces to PSR against zero benchmark",
+      "inputs": {
+        "observedSR": 0.2,
+        "n": 250,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "nTrials": 100,
+        "srVariance": 0.0
+      },
+      "expected": 0.9991105301385781,
+      "tolerance": 1e-06
+    },
+    {
+      "description": "many trials inflate bar, DSR drops",
+      "inputs": {
+        "observedSR": 0.2,
+        "n": 250,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "nTrials": 100,
+        "srVariance": 0.04
+      },
+      "expected": 8.638820101616245e-07,
+      "tolerance": 1e-06
+    },
+    {
+      "description": "more trials -> lower DSR (1000 trials)",
+      "inputs": {
+        "observedSR": 0.2,
+        "n": 250,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "nTrials": 1000,
+        "srVariance": 0.04
+      },
+      "expected": 9.145867823965541e-13,
+      "tolerance": 1e-06
+    },
+    {
+      "description": "strong genuine edge survives deflation",
+      "inputs": {
+        "observedSR": 0.5,
+        "n": 500,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "nTrials": 100,
+        "srVariance": 0.04
+      },
+      "expected": 0.4487167940431269,
+      "tolerance": 1e-06
+    },
+    {
+      "description": "overfit: modest SR, many trials, high var",
+      "inputs": {
+        "observedSR": 0.15,
+        "n": 250,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "nTrials": 1000,
+        "srVariance": 0.09
+      },
+      "expected": 9.078207237647021e-39,
+      "tolerance": 1e-06
+    },
+    {
+      "description": "fat-tailed strategy deflated, N=50",
+      "inputs": {
+        "observedSR": 0.4,
+        "n": 365,
+        "skew": -0.8,
+        "kurt": 9.0,
+        "nTrials": 50,
+        "srVariance": 0.06
+      },
+      "expected": 0.009447325031396732,
+      "tolerance": 1e-06
+    },
+    {
+      "description": "short track, many trials collapses DSR",
+      "inputs": {
+        "observedSR": 0.6,
+        "n": 24,
+        "skew": -0.3,
+        "kurt": 6.0,
+        "nTrials": 500,
+        "srVariance": 0.25
+      },
+      "expected": 0.0002512656197421222,
+      "tolerance": 1e-06
+    },
+    {
+      "description": "long daily track, few trials, clear edge",
+      "inputs": {
+        "observedSR": 0.12,
+        "n": 2520,
+        "skew": 0.0,
+        "kurt": 3.5,
+        "nTrials": 10,
+        "srVariance": 0.02
+      },
+      "expected": 1.4446504121900448e-07,
+      "tolerance": 1e-06
+    },
+    {
+      "description": "N=100 V=0.09 SR=0.35 n=250",
+      "inputs": {
+        "observedSR": 0.35,
+        "n": 250,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "nTrials": 100,
+        "srVariance": 0.09
+      },
+      "expected": 1.8324489202285442e-10,
+      "tolerance": 1e-06
+    },
+    {
+      "description": "N=200 V=0.16 SR=0.5 n=120 skewed",
+      "inputs": {
+        "observedSR": 0.5,
+        "n": 120,
+        "skew": -0.5,
+        "kurt": 7.0,
+        "nTrials": 200,
+        "srVariance": 0.16
+      },
+      "expected": 1.0648960969236596e-07,
+      "tolerance": 1e-06
+    },
+    {
+      "description": "borderline SR=0.25 n=250 N=100 V=0.04",
+      "inputs": {
+        "observedSR": 0.25,
+        "n": 250,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "nTrials": 100,
+        "srVariance": 0.04
+      },
+      "expected": 3.448541297269531e-05,
+      "tolerance": 1e-06
+    }
+  ]
+}

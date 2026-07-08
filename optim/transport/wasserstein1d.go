@@ -84,32 +84,45 @@ func Wasserstein1D(u, v []float64, p float64) (float64, error) {
 		return math.Pow(mean, 1.0/p), nil
 	}
 
-	// Unequal-size case: linear interpolation on a (k + 0.5)/n grid
-	// with n = max(|u|, |v|).  This recovers the equal-size closed
-	// form exactly when the two lengths match; for |u| != |v| it is
-	// the convention RubberDuck adopted (and the convention POT
-	// follows under `wasserstein_1d` for unequal-size inputs).
-	n := len(sortedU)
-	if len(sortedV) > n {
-		n = len(sortedV)
-	}
+	// Unequal-size case: the EXACT 1-D Wasserstein-p distance via the
+	// quantile-function integral W_p^p = integral_0^1 |F_u^{-1}(t)-F_v^{-1}(t)|^p dt.
+	// Each empirical CDF is a step function with weights 1/n and 1/m; merge their
+	// step breakpoints and integrate the (constant) integrand on each sub-interval.
+	// The previous (k+0.5)/max(n,m) interpolated-quantile grid was NOT the true W_p
+	// — it could return 0 for genuinely different distributions, violating the
+	// identity-of-indiscernibles metric axiom this package relies on.
+	n, m := len(sortedU), len(sortedV)
+	i, j := 0, 0
+	pos := 0.0
 	total := 0.0
-	for k := 0; k < n; k++ {
-		q := (float64(k) + 0.5) / float64(n)
-		uVal := quantileFromSorted(sortedU, q)
-		vVal := quantileFromSorted(sortedV, q)
-		diff := math.Abs(uVal - vVal)
-		if p == 1 {
-			total += diff
-		} else {
-			total += math.Pow(diff, p)
+	for i < n && j < m {
+		nextU := float64(i+1) / float64(n)
+		nextV := float64(j+1) / float64(m)
+		t := nextU
+		if nextV < t {
+			t = nextV
+		}
+		w := t - pos
+		if w > 0 {
+			diff := math.Abs(sortedU[i] - sortedV[j])
+			if p == 1 {
+				total += diff * w
+			} else {
+				total += math.Pow(diff, p) * w
+			}
+		}
+		pos = t
+		if nextU <= nextV {
+			i++
+		}
+		if nextV <= nextU {
+			j++
 		}
 	}
-	mean := total / float64(n)
 	if p == 1 {
-		return mean, nil
+		return total, nil
 	}
-	return math.Pow(mean, 1.0/p), nil
+	return math.Pow(total, 1.0/p), nil
 }
 
 // Wasserstein1DDetailed returns Wasserstein-1 with full diagnostics

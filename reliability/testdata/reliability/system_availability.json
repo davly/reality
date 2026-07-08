@@ -1,0 +1,122 @@
+{
+  "function": "reliability.SystemAvailability",
+  "cases": [
+    {
+      "description": "series chain service->db->disk",
+      "inputs": {
+        "edges": [
+          [
+            "service",
+            "db"
+          ],
+          [
+            "db",
+            "disk"
+          ]
+        ],
+        "avail": {
+          "service": 0.999,
+          "db": 0.99,
+          "disk": 0.9995
+        },
+        "target": "service"
+      },
+      "expected": 0.988515495,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "leaf disk only depends on itself",
+      "inputs": {
+        "edges": [
+          [
+            "service",
+            "db"
+          ],
+          [
+            "db",
+            "disk"
+          ]
+        ],
+        "avail": {
+          "service": 0.999,
+          "db": 0.99,
+          "disk": 0.9995
+        },
+        "target": "disk"
+      },
+      "expected": 0.9995,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "diamond app->{A,B}->db shared db counted ONCE",
+      "inputs": {
+        "edges": [
+          [
+            "app",
+            "A"
+          ],
+          [
+            "app",
+            "B"
+          ],
+          [
+            "A",
+            "db"
+          ],
+          [
+            "B",
+            "db"
+          ]
+        ],
+        "avail": {
+          "app": 0.99,
+          "A": 0.995,
+          "B": 0.995,
+          "db": 0.98
+        },
+        "target": "app"
+      },
+      "expected": 0.960522255,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "isolated target no deps = own availability",
+      "inputs": {
+        "edges": [
+          [
+            "x",
+            "y"
+          ]
+        ],
+        "avail": {
+          "x": 0.9,
+          "y": 0.8
+        },
+        "target": "y"
+      },
+      "expected": 0.8,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "missing availability treated as 1.0 (series identity, optimistic)",
+      "inputs": {
+        "edges": [
+          [
+            "service",
+            "db"
+          ],
+          [
+            "db",
+            "disk"
+          ]
+        ],
+        "avail": {
+          "service": 0.99
+        },
+        "target": "service"
+      },
+      "expected": 0.99,
+      "tolerance": 1e-12
+    }
+  ]
+}

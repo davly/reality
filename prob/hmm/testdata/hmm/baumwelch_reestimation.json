@@ -1,0 +1,23 @@
+{
+  "function": "Hmm.BaumWelch",
+  "source": "Deterministic Baum-Welch (EM) re-estimation contract (Rabiner 1989 §III.C). A fixed 2-state / 2-symbol initial model and a fixed 20-symbol sequence are re-estimated for exactly maxIter=5 steps with tol=0, so the run is fully deterministic and non-degenerate. The fitted Pi/A/B and final log-likelihood are the language-neutral reproducibility contract; the EM guarantee (non-decreasing log-likelihood) and determinism are separately asserted as invariants in the test suite.",
+  "inputs": {
+    "N": 2,
+    "M": 2,
+    "init_Pi": [0.5, 0.5],
+    "init_A": [0.6, 0.4, 0.4, 0.6],
+    "init_B": [0.7, 0.3, 0.3, 0.7],
+    "obs": [0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1],
+    "maxIter": 5,
+    "tol": 0.0
+  },
+  "expected": {
+    "iterations": 5,
+    "converged": false,
+    "Pi": [0.994906475684, 0.005093524316],
+    "A": [0.523240315575, 0.476759684425, 0.367117800456, 0.632882199544],
+    "B": [0.758379761965, 0.241620238035, 0.270989592108, 0.729010407892],
+    "final_loglik": -13.389276037339
+  },
+  "tolerance": 1e-9
+}

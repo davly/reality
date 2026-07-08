@@ -191,6 +191,15 @@ func BarrierOptionReflection(s0, k, r, sigma, t, barrier float64, n int) float64
 	logU := math.Log(u)
 	hFloat := logRatio / logU
 	h := int(math.Ceil(hFloat))
+	// Floating-point correction: log-space ceil overshoots by one when the
+	// barrier sits ~exactly on a binomial node (log gives m + ~1e-16, so
+	// ceil = m+1), which fails to knock out paths reaching that node even though
+	// s0*u^m == barrier breaches per the contract. Snap h down while the exact
+	// node price s0*u^(h-1) still reaches the barrier (using the same >= node
+	// comparison as the brute-force semantics).
+	for h > 0 && s0*math.Pow(u, float64(h-1)) >= barrier {
+		h--
+	}
 	if h <= 0 {
 		return 0
 	}

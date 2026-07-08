@@ -1,0 +1,105 @@
+{
+  "function": "reliability.KofN",
+  "cases": [
+    {
+      "description": "2-of-3 TMR at a=0.9 (Trivedi 2001) = 0.972",
+      "inputs": {
+        "k": 2,
+        "n": 3,
+        "a": 0.9
+      },
+      "expected": 0.9720000000000001,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "2-of-3 TMR at a=0.95",
+      "inputs": {
+        "k": 2,
+        "n": 3,
+        "a": 0.95
+      },
+      "expected": 0.99275,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "1-of-3 equals parallel 1-(1-a)^3 at 0.9 = 0.999",
+      "inputs": {
+        "k": 1,
+        "n": 3,
+        "a": 0.9
+      },
+      "expected": 0.999,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "3-of-3 equals series a^3 at 0.9 = 0.729",
+      "inputs": {
+        "k": 3,
+        "n": 3,
+        "a": 0.9
+      },
+      "expected": 0.7290000000000001,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "3-of-5 majority at a=0.8",
+      "inputs": {
+        "k": 3,
+        "n": 5,
+        "a": 0.8
+      },
+      "expected": 0.94208,
+      "tolerance": 1e-12
+    },
+    {
+      "description": "k=0 always satisfied -> 1.0",
+      "inputs": {
+        "k": 0,
+        "n": 3,
+        "a": 0.5
+      },
+      "expected": 1.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "k>n impossible -> 0.0",
+      "inputs": {
+        "k": 4,
+        "n": 3,
+        "a": 0.9
+      },
+      "expected": 0.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "a=1 all up -> 1.0 for feasible k",
+      "inputs": {
+        "k": 2,
+        "n": 3,
+        "a": 1.0
+      },
+      "expected": 1.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "a=0 all down, k>=1 -> 0.0",
+      "inputs": {
+        "k": 1,
+        "n": 3,
+        "a": 0.0
+      },
+      "expected": 0.0,
+      "tolerance": 1e-15
+    },
+    {
+      "description": "2-of-4 at a=0.99",
+      "inputs": {
+        "k": 2,
+        "n": 4,
+        "a": 0.99
+      },
+      "expected": 0.9999960299999999,
+      "tolerance": 1e-12
+    }
+  ]
+}

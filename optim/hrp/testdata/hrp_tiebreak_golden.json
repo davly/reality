@@ -1,0 +1,86 @@
+{
+  "function": "hrp.SingleLinkage.tiebreak",
+  "source": "Deterministic tie-break contract; see hrp.go SingleLinkage doc comment.",
+  "cases": [
+    {
+      "description": "3-asset symmetric chain with a distance tie between pairs (0,1) and (1,2); deterministic tie-break selects the lexicographically smallest pair (0,1)",
+      "note": "Exercises the deterministic ascending-cluster-id tie-break contract of SingleLinkage. d(0,1)=d(1,2)=0.5 tie; smallest-id pair (0,1) merges first. This case is intentionally excluded from any exact cross-substrate parity with RubberDuck, whose HashSet tie-break is nondeterministic.",
+      "corr": [
+        [
+          1,
+          0.5,
+          0.2
+        ],
+        [
+          0.5,
+          1,
+          0.5
+        ],
+        [
+          0.2,
+          0.5,
+          1
+        ]
+      ],
+      "cov": [
+        [
+          0.04000000000000001,
+          0.020000000000000004,
+          0.008000000000000002
+        ],
+        [
+          0.020000000000000004,
+          0.04000000000000001,
+          0.020000000000000004
+        ],
+        [
+          0.008000000000000002,
+          0.020000000000000004,
+          0.04000000000000001
+        ]
+      ],
+      "expected_dist": [
+        [
+          0.0,
+          0.5,
+          0.6324555320336759
+        ],
+        [
+          0.5,
+          0.0,
+          0.5
+        ],
+        [
+          0.6324555320336759,
+          0.5,
+          0.0
+        ]
+      ],
+      "expected_linkage": [
+        {
+          "A": 0,
+          "B": 1,
+          "Dist": 0.5,
+          "Size": 2
+        },
+        {
+          "A": 2,
+          "B": 3,
+          "Dist": 0.5,
+          "Size": 3
+        }
+      ],
+      "expected_order": [
+        2,
+        0,
+        1
+      ],
+      "expected_weights": [
+        0.2857142857142857,
+        0.2857142857142857,
+        0.42857142857142855
+      ],
+      "tolerance": 1e-12
+    }
+  ]
+}

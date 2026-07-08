@@ -40,7 +40,10 @@ func Div(a, b *Variable) *Variable {
 	aVal, bVal := a.Val, b.Val
 	return a.Tape.register(aVal/bVal, func(g float64, grads []float64) {
 		grads[aID] += g / bVal
-		grads[bID] += -g * aVal / (bVal * bVal)
+		// -g*a/b^2, but compute as (-g*a/b)/b: forming b*b overflows to +Inf for
+		// |b| > sqrt(MaxFloat64) ~= 1.34e154 and collapses the gradient to 0 even
+		// when -a/b^2 is finite and representable.
+		grads[bID] += -g * (aVal / bVal) / bVal
 	})
 }
 

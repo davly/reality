@@ -1,0 +1,36 @@
+{
+  "function": "numclaim.ClaimConsistency",
+  "note": "Language-neutral contract. options match numclaim.DefaultOptions(). Ported implementations must reproduce matched/transform/roundDP/truthIndex/truth exactly; relError is advisory and Go-only.",
+  "options": {"maxRoundDP": 2, "percentScale": true, "tolerance": 1e-9},
+  "cases": [
+    {
+      "description": "mixed report claims vs a truth pool: one rounded, one percent, one invented (nearest miss reported)",
+      "claims": [53, 45, 520],
+      "truths": [52.6, 0.45, 188.8, 0.0003],
+      "verdicts": [
+        {"claimIndex": 0, "claim": 53, "matched": true, "transform": "rounded", "roundDP": 0, "truthIndex": 0, "truth": 52.6},
+        {"claimIndex": 1, "claim": 45, "matched": true, "transform": "percent_to_fraction", "roundDP": -1, "truthIndex": 1, "truth": 0.45},
+        {"claimIndex": 2, "claim": 520, "matched": false, "transform": "", "roundDP": -1, "truthIndex": 2, "truth": 188.8}
+      ]
+    },
+    {
+      "description": "look-through weights all stated as percentages",
+      "claims": [80, 15, 5],
+      "truths": [0.8, 0.15, 0.05],
+      "verdicts": [
+        {"claimIndex": 0, "claim": 80, "matched": true, "transform": "percent_to_fraction", "roundDP": -1, "truthIndex": 0, "truth": 0.8},
+        {"claimIndex": 1, "claim": 15, "matched": true, "transform": "percent_to_fraction", "roundDP": -1, "truthIndex": 1, "truth": 0.15},
+        {"claimIndex": 2, "claim": 5, "matched": true, "transform": "percent_to_fraction", "roundDP": -1, "truthIndex": 2, "truth": 0.05}
+      ]
+    },
+    {
+      "description": "adversarial invented value: right figure passes, decimal-shifted figure flagged with nearest miss",
+      "claims": [52.6, 526.0],
+      "truths": [52.6, 100.0],
+      "verdicts": [
+        {"claimIndex": 0, "claim": 52.6, "matched": true, "transform": "exact", "roundDP": -1, "truthIndex": 0, "truth": 52.6},
+        {"claimIndex": 1, "claim": 526.0, "matched": false, "transform": "", "roundDP": -1, "truthIndex": 1, "truth": 100.0}
+      ]
+    }
+  ]
+}

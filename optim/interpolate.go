@@ -1,5 +1,7 @@
 package optim
 
+import "math"
+
 // ---------------------------------------------------------------------------
 // Interpolation
 //
@@ -14,8 +16,14 @@ package optim
 //
 // Definition: y = y0 + (y1 - y0) * (x - x0) / (x1 - x0)
 // Precision: exact for IEEE 754 float64.
-// Panics if x0 == x1 (degenerate interval).
+// Returns NaN if x0 == x1 (degenerate interval — the slope is undefined). The
+// previous docstring claimed a panic, but the bare division returned NaN (x==x0)
+// or +/-Inf (x!=x0); NaN is now returned consistently as a clear "undefined"
+// signal without crashing the caller.
 func LinearInterpolate(x0, y0, x1, y1, x float64) float64 {
+	if x0 == x1 {
+		return math.NaN()
+	}
 	return y0 + (y1-y0)*(x-x0)/(x1-x0)
 }
 

@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"strconv"
 	"sync/atomic"
 	"time"
 )
@@ -26,9 +27,22 @@ import (
 // by the CONDUIT_URL environment variable.
 const DefaultURL = "http://localhost:8200/v1/events"
 
-// SampleRate is the default 1-in-N sampling rate for hot-path math
-// primitives. Can be tuned by setting the REALITY_CONDUIT_SAMPLE env var.
-const SampleRate = 10000
+// SampleRate is the 1-in-N sampling rate for hot-path math primitives. Defaults
+// to 10000 and can be tuned by setting the REALITY_CONDUIT_SAMPLE env var to a
+// positive integer at process start (invalid or unset values keep the default).
+var SampleRate = sampleRateFromEnv()
+
+// sampleRateFromEnv reads the REALITY_CONDUIT_SAMPLE override once at init,
+// falling back to the 10000 default for an unset, non-integer, or non-positive
+// value.
+func sampleRateFromEnv() int {
+	if s := os.Getenv("REALITY_CONDUIT_SAMPLE"); s != "" {
+		if n, err := strconv.Atoi(s); err == nil && n > 0 {
+			return n
+		}
+	}
+	return 10000
+}
 
 // Event is the minimal Conduit ingest payload. Field tags MUST match
 // store.ForgeLifecycleEvent in the Conduit repo.
@@ -92,7 +106,7 @@ func Emit(ctx context.Context, e Event) {
 // the Conduit bus while still keeping cross-pollination observable.
 func EmitSampled(ctx context.Context, e Event) {
 	n := sampleCounter.Add(1)
-	if n%SampleRate != 0 {
+	if n%uint64(SampleRate) != 0 {
 		return
 	}
 	e.ObservationCount = int(n)

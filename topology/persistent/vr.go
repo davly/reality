@@ -186,6 +186,14 @@ func validateVRInput(points [][]float64, maxRadius float64, maxDim int) error {
 		if len(p) != d {
 			return ErrInconsistentDim
 		}
+		for _, v := range p {
+			if math.IsNaN(v) || math.IsInf(v, 0) {
+				// A non-finite coordinate poisons every distance to this point
+				// (d = NaN), so edges silently fail to form and the barcode is
+				// wrong with no error -- reject it up front.
+				return ErrNonFinitePoint
+			}
+		}
 	}
 	return nil
 }

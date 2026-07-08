@@ -242,9 +242,19 @@ func (tf *TransferFunction) IsStable() bool {
 		return true
 	}
 
+	// A pole must lie strictly in the open left half-plane (Re < 0). The root
+	// finder (Durand-Kerner) has finite accuracy and places a pole that is truly
+	// ON the imaginary axis (Re = 0, a marginally-stable / non-BIBO-stable case)
+	// at a tiny nonzero Re of either sign due to FP noise -- e.g. the origin pole
+	// of s(s+1)(s+2) lands at Re ~ -1e-38, and a zero-tolerance `real(p) >= 0`
+	// test then mis-classifies that marginal system as stable (inconsistently with
+	// the degree-2 path, which correctly calls s(s+1) unstable). Require a small
+	// negative margin so a pole within root-finder noise of the axis is treated as
+	// NOT strictly stable (a genuine pole this close to the axis is marginal anyway).
+	const stabilityMargin = 1e-9
 	poles := tf.Poles()
 	for _, p := range poles {
-		if real(p) >= 0 {
+		if real(p) >= -stabilityMargin {
 			return false
 		}
 	}

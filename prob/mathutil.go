@@ -188,7 +188,7 @@ func chiSquaredCDF(x float64, df float64) float64 {
 	if x <= 0 || df <= 0 {
 		return 0
 	}
-	return regularizedGammaLowerSeries(df/2.0, x/2.0)
+	return regularizedGammaP(df/2.0, x/2.0)
 }
 
 // regularizedGammaLowerSeries computes the lower regularized incomplete
@@ -222,4 +222,82 @@ func regularizedGammaLowerSeries(a, x float64) float64 {
 	}
 
 	return math.Exp(lnPrefix) * sum
+}
+
+// regularizedGammaUpperCF computes the upper regularized incomplete gamma
+// Q(a, x) = Gamma(a, x) / Gamma(a) via the modified Lentz continued fraction.
+// Accurate for x >= a+1, where the lower series suffers catastrophic
+// cancellation. Reference: Numerical Recipes 3e, §6.2 (gcf).
+func regularizedGammaUpperCF(a, x float64) float64 {
+	const maxIter = 300
+	const eps = 1e-14
+	const fpmin = 1e-300
+
+	lnPrefix := -x + a*math.Log(x) - LogGamma(a)
+	b := x + 1.0 - a
+	c := 1.0 / fpmin
+	d := 1.0 / b
+	h := d
+	for i := 1; i <= maxIter; i++ {
+		an := -float64(i) * (float64(i) - a)
+		b += 2.0
+		d = an*d + b
+		if math.Abs(d) < fpmin {
+			d = fpmin
+		}
+		c = b + an/c
+		if math.Abs(c) < fpmin {
+			c = fpmin
+		}
+		d = 1.0 / d
+		del := d * c
+		h *= del
+		if math.Abs(del-1.0) < eps {
+			break
+		}
+	}
+	return math.Exp(lnPrefix) * h
+}
+
+// regularizedGammaP computes the lower regularized incomplete gamma
+// P(a, x) = gamma(a, x) / Gamma(a), choosing the numerically stable method:
+// the Taylor series for x < a+1, and 1 - Q(a,x) (continued fraction) for
+// x >= a+1, where the series cancels catastrophically (Numerical Recipes §6.2).
+// Using the series alone (the old behaviour) makes P(a,x) wrong / non-monotone
+// for large x, corrupting GammaCDF, PoissonCDF and chi-squared p-values.
+func regularizedGammaP(a, x float64) float64 {
+	if x <= 0 || a <= 0 {
+		return 0
+	}
+	if x < a+1.0 {
+		return regularizedGammaLowerSeries(a, x)
+	}
+	p := 1.0 - regularizedGammaUpperCF(a, x)
+	if p < 0 {
+		p = 0
+	} else if p > 1 {
+		p = 1
+	}
+	return p
+}
+
+// regularizedGammaQ computes the upper regularized incomplete gamma function
+// Q(a, x) = 1 - P(a, x) = Gamma(a, x) / Gamma(a) for a > 0, x >= 0.
+//
+// Q is evaluated in whichever regime is accurate so a small upper tail is never
+// formed as 1 - P (which cancels catastrophically): the continued fraction is
+// used directly for x >= a+1, the series complement for x < a+1. Returns Q in
+// [0, 1]. Callers needing an upper-tail p-value (e.g. ChiSquaredTest, PoissonCDF
+// survival) should use this rather than 1 - regularizedGammaP.
+func regularizedGammaQ(a, x float64) float64 {
+	if a <= 0 {
+		return math.NaN()
+	}
+	if x <= 0 {
+		return 1.0
+	}
+	if x < a+1.0 {
+		return 1.0 - regularizedGammaLowerSeries(a, x)
+	}
+	return regularizedGammaUpperCF(a, x)
 }

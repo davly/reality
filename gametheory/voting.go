@@ -207,7 +207,11 @@ func shapleySampled(n int, charFunc func(coalition []bool) float64, iterations i
 
 		// Walk through the permutation, computing marginal contributions.
 		coalition := make([]bool, n)
-		prevVal := 0.0
+		// v(empty) -- NOT hardcoded 0. shapleyExact subtracts the true v(empty)
+		// for the first player's marginal; hardcoding 0 here mis-attributes the
+		// whole v(empty) base onto early-permutation players and disagrees with the
+		// exact path / the documented formula whenever v(empty) != 0.
+		prevVal := charFunc(coalition)
 		for _, player := range perm {
 			coalition[player] = true
 			newVal := charFunc(coalition)

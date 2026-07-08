@@ -407,3 +407,43 @@ func TestFit_LearningRateZero_StillConverges_AtValidWarmStart(t *testing.T) {
 		t.Errorf("LR=0 from valid warm-start should still converge (no-op), got Iter=%d", res.Iter)
 	}
 }
+
+// TestFit_DivergedFit_ReturnsError is a regression for the silent-garbage
+// defect (immune-system convergence-guards review, 2026-06-13): a diverged
+// GARCH fit could leave the final iterate outside the stationarity region
+// (here a huge learning rate on a heavy-tailed series drives theta_omega to
+// -Inf so omega -> exp(-Inf) = 0) yet Fit still returned that model with a
+// nil error. Validate() was applied to the *initial* guess but never to the
+// *final* fitted params before the nil return.
+//
+// Post-fix (fit.go): the final params are run through Validate() before
+// return; an invalid (non-finite / non-stationary) fit yields a non-nil
+// error instead of silent garbage. A non-converged but still-valid fit
+// (TestFit_MaxIterRespectsCap) continues to return nil — non-convergence is
+// reported via the Converged flag, not as an error.
+//
+// Without the fix this test fails: err is nil and the returned model carries
+// omega == 0 (which Validate rejects).
+func TestFit_DivergedFit_ReturnsError(t *testing.T) {
+	rng := rand.New(rand.NewSource(99))
+	const n = 100
+	eps := make([]float64, n)
+	for i := range eps {
+		eps[i] = rng.NormFloat64() * math.Pow(10, float64(i%20)) // explosive heavy tails
+	}
+	// A wildly oversized learning rate makes the unconstrained iterate blow up.
+	final, _, err := Fit(eps, Model{}, FitConfig{
+		MaxIter:        500,
+		LearningRate:   1e6,
+		AbsTol:         1e-12,
+		TikhonovLambda: 0,
+	})
+	if err == nil {
+		t.Fatalf("diverged fit should return a non-nil error; got nil with final=%+v", final)
+	}
+	// And the surfaced error must be the genuine invalid-parameter signal, not
+	// some unrelated failure.
+	if final.Validate() == nil {
+		t.Errorf("test no longer exercises the guard: final params %+v are valid", final)
+	}
+}

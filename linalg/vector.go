@@ -17,7 +17,9 @@ import "math"
 //
 // Definition: cos(a, b) = (a . b) / (||a|| * ||b||)
 // Result range: [-1, 1] for unit vectors; [0, 1] for non-negative vectors.
-// Precision: exact for IEEE 754 float64 inputs (no iterative steps).
+// Precision: subject to accumulated float64 rounding in the dot/norm sums
+// (~O(n)*eps) and to catastrophic cancellation in the dot product; not bit-exact
+// for n > 1.
 //
 // Source: extracted from aicore/echomath.CosineSimilarity.
 func CosineSimilarity(a, b []float64) float64 {
@@ -42,7 +44,8 @@ func CosineSimilarity(a, b []float64) float64 {
 //
 // Definition: d(a, b) = sqrt(sum((a_i - b_i)^2)) / sqrt(n)
 // Valid input range: any finite float64 values; n > 0.
-// Precision: exact for IEEE 754 float64.
+// Precision: accumulated float64 rounding (~O(n)*eps), not bit-exact for n > 1;
+// the sum of squares can also overflow to +Inf for very large components.
 //
 // Source: extracted from aicore/echomath.EncodingDistance.
 func EncodingDistance(a, b []float64) float64 {
@@ -65,7 +68,8 @@ func EncodingDistance(a, b []float64) float64 {
 //
 // Definition: d(a, b, w) = sqrt(sum(w_i * (a_i - b_i)^2) / sum(w_i))
 // Valid input range: any finite float64; weights > 0 are used.
-// Precision: exact for IEEE 754 float64.
+// Precision: accumulated float64 rounding (~O(n)*eps), not bit-exact for n > 1;
+// the weighted sum of squares can also overflow for very large components.
 //
 // Source: extracted from aicore/echomath.DimensionWeightedDistance.
 func DimensionWeightedDistance(a, b, weights []float64) float64 {
@@ -92,7 +96,8 @@ func DimensionWeightedDistance(a, b, weights []float64) float64 {
 //
 // Definition: v_i = v_i / ||v||_2
 // Valid input range: any finite float64 slice with at least one non-zero element.
-// Precision: exact for IEEE 754 float64.
+// Precision: accumulated float64 rounding (~O(n)*eps) in the norm, not bit-exact
+// for n > 1; the sum of squares can also overflow to +Inf for very large components.
 //
 // Source: extracted from aicore/echomath.L2Normalize.
 func L2Normalize(vec []float64) bool {
@@ -130,7 +135,8 @@ func Clamp(v, lo, hi float64) float64 {
 // Returns 0 if vectors differ in length or are empty.
 //
 // Definition: a . b = sum(a_i * b_i)
-// Precision: exact for IEEE 754 float64.
+// Precision: subject to accumulated float64 rounding (~O(n)*eps); not bit-exact
+// for n > 1 (the products are exact, but the running sum is not).
 func DotProduct(a, b []float64) float64 {
 	if len(a) != len(b) || len(a) == 0 {
 		return 0
@@ -146,7 +152,9 @@ func DotProduct(a, b []float64) float64 {
 //
 // Definition: ||v||_2 = sqrt(sum(v_i^2))
 // Returns 0 for empty vectors.
-// Precision: exact for IEEE 754 float64.
+// Precision: accumulated float64 rounding (~O(n)*eps), not bit-exact for n > 1;
+// the sum of squares can also overflow to +Inf for very large components (this
+// is the plain definition, not a hypot-scaled overflow-safe norm).
 func L2Norm(v []float64) float64 {
 	var sumSq float64
 	for _, x := range v {
@@ -159,7 +167,8 @@ func L2Norm(v []float64) float64 {
 //
 // Definition: ||v||_1 = sum(|v_i|)
 // Returns 0 for empty vectors.
-// Precision: exact for IEEE 754 float64.
+// Precision: subject to accumulated float64 rounding (~O(n)*eps); not bit-exact
+// for n > 1 (each |v_i| is exact, but the running sum is not).
 func L1Norm(v []float64) float64 {
 	var sum float64
 	for _, x := range v {

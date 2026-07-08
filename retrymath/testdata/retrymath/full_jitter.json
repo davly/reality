@@ -1,0 +1,12 @@
+{
+  "function": "RetryMath.FullJitter",
+  "_source": "delay = u*e(n), U(0,e). Brooker (AWS 2015) 'Full Jitter'. Hand-derived.",
+  "cases": [
+    {"description": "u=0.5 at attempt 0", "inputs": {"base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 0, "u": 0.5}, "expected": 0.5, "tolerance": 1e-12},
+    {"description": "u=0.5 at attempt 3 (e=8)", "inputs": {"base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 3, "u": 0.5}, "expected": 4.0, "tolerance": 1e-12},
+    {"description": "u=0 gives zero wait", "inputs": {"base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 3, "u": 0.0}, "expected": 0.0, "tolerance": 1e-12},
+    {"description": "u=0.25 at attempt 3", "inputs": {"base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 3, "u": 0.25}, "expected": 2.0, "tolerance": 1e-12},
+    {"description": "u=0.5 in capped region (e=30)", "inputs": {"base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 5, "u": 0.5}, "expected": 15.0, "tolerance": 1e-12},
+    {"description": "u=0.75 at attempt 2 (e=4)", "inputs": {"base": 1.0, "cap": 30.0, "factor": 2.0, "attempt": 2, "u": 0.75}, "expected": 3.0, "tolerance": 1e-12}
+  ]
+}

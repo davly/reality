@@ -62,13 +62,16 @@ func BlackbodyToXYZ(T float64) (X, Y, Z float64) {
 	return
 }
 
-// ToneMapReinhard applies the Reinhard global tone mapping operator to
-// linear RGB values. This compresses high dynamic range values to [0, 1].
+// ToneMapReinhard applies the Reinhard EXTENDED global tone-mapping operator to
+// linear RGB values, compressing high dynamic range toward [0, 1].
 //
 // Formula: out = in * (1 + in/whitePoint^2) / (1 + in)
 //
-// This maps 0 -> 0 and whitePoint -> 0.5, with a soft roll-off that
-// approaches 1 asymptotically. Each channel is mapped independently.
+// This maps 0 -> 0 and whitePoint -> 1.0 (the white point becomes pure white).
+// Inputs at or below the white point land in [0, 1]; inputs ABOVE it exceed 1
+// and grow without bound (the extended operator does not clamp), so clamp
+// downstream if a strict [0, 1] output is required. Each channel is mapped
+// independently.
 //
 // Valid range: r, g, b >= 0; whitePoint > 0
 // Precision: exact to float64

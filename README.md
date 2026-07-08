@@ -4,21 +4,21 @@ Universal truth encoded in code. Pure math, physics, and constants with zero ext
 
 ## Overview
 
-Reality is the foundational math and science library for the Limitless ecosystem. It provides deterministic, pure functions validated against cross-language golden-file test vectors (JSON).
+Reality is the foundational math and science library for the Limitless ecosystem. It provides deterministic, pure functions validated against language-neutral golden-file test vectors (JSON).
 
-**Version:** v0.10.0 (cohort-additive — see CONTEXT.md §11)
+**Version:** v0.10.0 (cohort-additive — see CONTEXT.md §11 for pre-2026-07 history; this file is the current inventory)
 **Module:** `github.com/davly/reality`
 **License:** Apache 2.0
 **Go version:** 1.24+
 **External dependencies:** None (only Go stdlib)
-**Packages:** 49 importable (32 top-level + audio/info/optim/prob/timeseries/topology sub-packages)
-**Public functions:** 584 exported
-**Tests:** 2,400+ top-level `--- PASS` (3,322 invocations including subtests; all passing under Go 1.24)
-**Golden-file fixtures:** 80 JSON files under `testdata/`
+**Packages:** 70 importable (41 top-level + 29 sub-packages under audio/finance/info/optim/prob/timeseries/topology) — via `GO111MODULE=on go list ./...`, excluding the repo-root package (`honesty_test.go` only, no importable source)
+**Public functions:** 797 exported — via `git ls-files '*.go' | grep -v '_test\.go' | xargs grep -hE '^func ([A-Z][A-Za-z0-9_]*(\[[^]]*\])?\(|\([a-zA-Z0-9_]+ \*?[A-Za-z0-9_.\[\]]+\) [A-Z][A-Za-z0-9_]*\()' | wc -l`
+**Tests:** 3,008 top-level `--- PASS` (4,372 invocations including subtests; all passing under Go 1.24, zero failures)
+**Golden-file fixtures:** 138 JSON files under `testdata/` — via `find . -name "*.json" -path "*testdata*" | wc -l`
 
-> **Note on package count:** The v1.0 design target was 22 core domain packages. Reality has shipped additively past that target through Sessions 22-26 and the S55-S60 cohort work (audio cohort, autodiff, infogeo, copula/conformal, timeseries, topology, zkmark, forge, info/{lz,mdl}). CONTEXT.md §11 is the canonical inventory of post-Session-25 additions. The table below lists all 49 packages as of 2026-05-15.
+> **Note on package count:** The v1.0 design target was 22 core domain packages. Reality has shipped additively past that target through Sessions 22-26, the S55-S60 cohort work (audio cohort, autodiff, infogeo, copula/conformal, timeseries, topology, zkmark, forge, info/{lz,mdl}), and the 2026-06/07 Wave 2 (`w2-reality-*`) and Wave 3/4 (`w34-*`) landings (causal, evidence, fairness, finance/taxlot, forge, moments, optim/{hrp,portfolio}, prob/{evt,hmm,risk}, reliability, retrymath, setsim, slo, spc, timeseries, timeseries/statespace). CONTEXT.md §11 is the historical (Session-25-frozen) inventory; this file is regenerated directly from the repo. The table below lists all 70 packages as of 2026-07-05.
 
-## Packages (49)
+## Packages (70)
 
 ### Core math and structure
 
@@ -52,6 +52,7 @@ Reality is the foundational math and science library for the Limitless ecosystem
 | Package | Description |
 |---------|-------------|
 | `gametheory` | Nash equilibrium, Shapley value, minimax, replicator dynamics |
+| `trust` | Subjective-logic opinions (belief/disbelief/uncertainty) + fusion + discounting; Dempster-Shafer with explicit conflict K (Jøsang 2016 / Zadeh 1984 goldens) |
 | `queue` | Queueing theory: M/M/1, M/M/c, M/G/1, Little's law, Erlang B/C |
 | `optim` | Optimisation: bisection, Newton, L-BFGS, simulated annealing, GA, simplex |
 | `optim/proximal` | Proximal-operator methods (LASSO closed-form witness; first consumer) |
@@ -99,6 +100,31 @@ Reality is the foundational math and science library for the Limitless ecosystem
 | `forge/session40` | Bedrock corpus + canonical situation hashing (Session 40 forge lift) |
 | `pkg/canonical` | Canonical encoding helpers |
 
+### Wave 2 + Wave 3/4 additions (18 — 2026-06/07)
+
+Wave 2 (`w2-reality-*` commits) added functions to four already-tabled packages rather than new packages — continuous/fractional Kelly (`optim`), Probabilistic/Deflated Sharpe (`prob`), normalized LZ76 sequence distance (`info/lz`), Cohen/weighted/Fleiss kappa + Krippendorff alpha (`prob/agreement`) — so those rows are unchanged above. The 18 packages below are the new importable packages Wave 2/3/4 added.
+
+| Package | Description |
+|---------|-------------|
+| `causal` | Back-door ATE estimation from observational data (Pearl adjustment; composes `graph.BackdoorAdjustmentSet`) |
+| `evidence` | Decision-neutral evidence-strength scoring from sample-size backing (weakest-link contract) |
+| `fairness` | EEOC four-fifths (80%) adverse-impact rule + Wilson score CIs |
+| `finance/taxlot` | Statutory tax-lot kernel: IRC §1091 wash-sale apportionment, §1223(3) holding-period tacking, §1222 ST/LT boundary |
+| `forge` | Canonical three-way convergence `Decide()` verdict — single source of truth replacing ~56 flagships' drifted private copies |
+| `moments` | General streaming Welford mean/variance (scalar + fixed-dim vector) + Chan-Golub-LeVeque parallel merge |
+| `optim/hrp` | Hierarchical Risk Parity portfolio construction (Lopez de Prado 2016) |
+| `optim/portfolio` | Composed Black-Litterman posterior + mean-variance/continuous-Kelly weight maps (He-Litterman 1999) |
+| `prob/evt` | Extreme Value Theory: GEV/GPD, L-moment/PWM/Hill/MLE, peaks-over-threshold, EVT VaR/ES |
+| `prob/hmm` | Hidden Markov models: Forward-Backward, Viterbi, Baum-Welch (Rabiner tutorial) |
+| `prob/risk` | Convention-arbitrated risk/performance suite: VaR/CVaR/Sortino/drawdown/Calmar/Omega/beta |
+| `reliability` | Reliability-block-diagram (RBD) availability composition + Birnbaum importance |
+| `retrymath` | Retry-storm load-amplification calculus + stability predicate (composes `reality/queue`) |
+| `setsim` | Generic set-similarity coefficients: Jaccard, Sørensen-Dice, overlap (Szymkiewicz-Simpson) |
+| `slo` | SRE multiwindow burn-rate alerting algebra (SRE Workbook ch. 5) |
+| `spc` | Average-run-length (ARL) calibration for CUSUM/EWMA control charts |
+| `timeseries` | Streaming exponentially-weighted mean/variance tracker (`EWMoments`) |
+| `timeseries/statespace` | Linear-Gaussian state-space models: Kalman filter, RTS smoother, Durbin-Koopman local-level model |
+
 ## Building
 
 ```bash
@@ -109,7 +135,7 @@ go build ./...
 ## Testing
 
 ```bash
-# Run all tests (2,400+ top-level)
+# Run all tests (3,008 top-level PASS)
 go test ./...
 
 # Run with verbose output
@@ -126,7 +152,7 @@ go test ./physics/
 
 ## Golden-File Test Vectors
 
-Golden files are JSON documents in `testdata/` that define expected inputs and outputs for every function. The same JSON files are used by Go, Python, C++, and C# implementations to ensure cross-language consistency.
+Golden files are JSON documents in `testdata/` that define expected inputs and outputs for every function. They are the language-neutral CONTRACT for these functions: the Go implementation validates against them, and the JSON format is designed so independent Python/C++/C# implementations could validate against the same vectors — though only the Go implementation ships in this repository today.
 
 Format:
 ```json
@@ -156,7 +182,7 @@ aicore imports reality. reality imports nothing.
 ## Design Rules
 
 1. **Zero dependencies.** Only Go standard library.
-2. **Golden files are the proof.** Every function has cross-language test vectors.
+2. **Golden files are the proof.** Every function has language-neutral test vectors.
 3. **Every constant cites its source.** SI 2019, NIST CODATA 2018, or ISO standards.
 4. **Pure functions only.** No global state, no goroutines, numbers in / numbers out.
 5. **No allocations in hot paths.** Functions accept output buffers. Pistachio calls these at 60 FPS.

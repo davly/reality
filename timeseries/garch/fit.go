@@ -89,10 +89,23 @@ func Fit(eps []float64, init Model, cfg FitConfig) (Model, FitResult, error) {
 	if slack <= 0 {
 		slack = 0.05
 	}
+	// Floor alpha/beta away from 0 before the log: Validate() accepts Alpha==0
+	// (pure persistence) and Beta==0 (ARCH(1)) as valid GARCH models, but
+	// log(0/slack) = -Inf would seed theta with -Inf and poison the optimizer
+	// (mirrors the slack<=0 guard above). A small floor maps a zero-boundary
+	// warm-start to a large-but-finite negative theta (softmax ~ 0), preserving
+	// the warm-start intent.
+	alpha, beta := init.Alpha, init.Beta
+	if alpha < 1e-8 {
+		alpha = 1e-8
+	}
+	if beta < 1e-8 {
+		beta = 1e-8
+	}
 	theta := [4]float64{
 		math.Log(init.Omega),
-		math.Log(init.Alpha / slack),
-		math.Log(init.Beta / slack),
+		math.Log(alpha / slack),
+		math.Log(beta / slack),
 		0.0,
 	}
 
@@ -138,6 +151,14 @@ func Fit(eps []float64, init Model, cfg FitConfig) (Model, FitResult, error) {
 	_ = lastDelta
 	final := unpack(theta)
 	final.UncondVar = final.Omega / (1.0 - final.Alpha - final.Beta)
+	// Guard: a diverged fit can leave the final iterate non-finite or outside
+	// the stationarity region. Validate the fitted params before returning so
+	// we surface an error rather than silently handing back garbage with a nil
+	// error. (Non-convergence within a valid region is reported via the
+	// Converged flag, not as an error.)
+	if err := final.Validate(); err != nil {
+		return Model{}, FitResult{Iter: iters, Converged: converged, FinalLogLik: finalLL}, err
+	}
 	return final, FitResult{Iter: iters, Converged: converged, FinalLogLik: finalLL}, nil
 }
 

@@ -1,0 +1,21 @@
+{
+  "function": "Hmm.ForwardViterbiPosterior",
+  "source": "Canonical Rabiner-tutorial worked HMM (Rabiner 1989, Proc. IEEE 77(2):257-286; the widely republished {Healthy,Fever} / {normal,cold,dizzy} instance). States 0=Healthy 1=Fever; symbols 0=normal 1=cold 2=dizzy. The Forward likelihood P(O)=0.03628 and the Viterbi best path {Healthy,Healthy,Fever} with joint probability 0.01512 are published reference values; both are additionally cross-checked by exhaustive brute-force path enumeration in the test suite.",
+  "inputs": {
+    "N": 2,
+    "M": 3,
+    "Pi": [0.6, 0.4],
+    "A": [0.7, 0.3, 0.4, 0.6],
+    "B": [0.5, 0.4, 0.1, 0.1, 0.3, 0.6],
+    "obs": [0, 1, 2]
+  },
+  "expected": {
+    "forward_loglik": -3.316488653735,
+    "forward_prob": 0.03628,
+    "viterbi_path": [0, 0, 1],
+    "viterbi_logprob": -4.191736908231,
+    "viterbi_prob": 0.01512,
+    "gamma": [0.876515986770, 0.123484013230, 0.622932745314, 0.377067254686, 0.212127894157, 0.787872105843]
+  },
+  "tolerance": 1e-9
+}

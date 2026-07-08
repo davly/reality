@@ -20,18 +20,19 @@ import "math"
 // y = slope*x + intercept for paired data (x, y), along with the
 // coefficient of determination R^2.
 //
-// Formulas:
+// Formulas (numerically stable two-pass, mean-subtracted; dx = x_i - mean(x),
+// dy = y_i - mean(y)):
 //
-//	slope     = (n*sum(x_i*y_i) - sum(x_i)*sum(y_i)) / (n*sum(x_i^2) - (sum(x_i))^2)
+//	slope     = sum(dx*dy) / sum(dx^2)
 //	intercept = mean(y) - slope * mean(x)
-//	R^2       = 1 - SS_res / SS_tot
-//	          = (n*sum(x_i*y_i) - sum(x_i)*sum(y_i))^2 /
-//	            ((n*sum(x_i^2) - (sum(x_i))^2) * (n*sum(y_i^2) - (sum(y_i))^2))
+//	R^2       = sum(dx*dy)^2 / (sum(dx^2) * sum(dy^2))
 //
 // Valid range: len(x) == len(y) >= 2, not all x values identical.
 // Returns (NaN, NaN, NaN) if len(x) < 2 or len(x) != len(y) or
 // all x values are identical (zero variance in x).
-// Precision: ~15 significant digits (float64)
+// Precision: ~1e-14 relative. The previous one-pass n*sum(x^2)-(sum x)^2 form
+// catastrophically cancelled for large-magnitude x (e.g. Unix timestamps),
+// producing a wrong slope and R^2 (e.g. slope 1.5625 instead of 2.0).
 // Reference: Weisberg, "Applied Linear Regression," 4th ed., 2014.
 func LinearRegression(x, y []float64) (slope, intercept, rSquared float64) {
 	n := len(x)
@@ -39,34 +40,39 @@ func LinearRegression(x, y []float64) (slope, intercept, rSquared float64) {
 		return math.NaN(), math.NaN(), math.NaN()
 	}
 
-	// Accumulate sums in a single pass.
-	var sx, sy, sxx, syy, sxy float64
+	nf := float64(n)
+	var meanX, meanY float64
 	for i := 0; i < n; i++ {
-		sx += x[i]
-		sy += y[i]
-		sxx += x[i] * x[i]
-		syy += y[i] * y[i]
-		sxy += x[i] * y[i]
+		meanX += x[i]
+		meanY += y[i]
+	}
+	meanX /= nf
+	meanY /= nf
+
+	// Mean-subtracted cross-products (avoids large-magnitude cancellation).
+	var sxx, syy, sxy float64
+	for i := 0; i < n; i++ {
+		dx := x[i] - meanX
+		dy := y[i] - meanY
+		sxx += dx * dx
+		syy += dy * dy
+		sxy += dx * dy
 	}
 
-	nf := float64(n)
-	denom := nf*sxx - sx*sx
-	if denom == 0 {
+	if sxx == 0 {
 		// All x values identical — slope is undefined.
 		return math.NaN(), math.NaN(), math.NaN()
 	}
 
-	slope = (nf*sxy - sx*sy) / denom
-	intercept = (sy - slope*sx) / nf
+	slope = sxy / sxx
+	intercept = meanY - slope*meanX
 
 	// Coefficient of determination.
-	ssTot := nf*syy - sy*sy
-	if ssTot == 0 {
+	if syy == 0 {
 		// All y values identical — perfect fit trivially.
 		rSquared = 1.0
 	} else {
-		ssNum := nf*sxy - sx*sy
-		rSquared = (ssNum * ssNum) / (denom * ssTot)
+		rSquared = (sxy * sxy) / (sxx * syy)
 	}
 
 	return slope, intercept, rSquared

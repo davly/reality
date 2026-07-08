@@ -1,0 +1,150 @@
+{
+  "function": "prob.MinTrackRecordLength",
+  "_source": "Bailey & Lopez de Prado (2014), 'The Deflated Sharpe Ratio', J. Portfolio Mgmt 40(5):94-107. Expected values computed independently at 50-digit precision (mpmath: true normal CDF via ncdf, quantile via erfinv).",
+  "cases": [
+    {
+      "description": "normal, SR=0.5, 95% conf, bench 0",
+      "inputs": {
+        "observedSR": 0.5,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "benchmark": 0.0,
+        "confidence": 0.95
+      },
+      "expected": 13.17494554342936,
+      "tolerance": 1e-06
+    },
+    {
+      "description": "normal, SR=0.5, 99% conf, bench 0",
+      "inputs": {
+        "observedSR": 0.5,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "benchmark": 0.0,
+        "confidence": 0.99
+      },
+      "expected": 25.353524939744528,
+      "tolerance": 1e-06
+    },
+    {
+      "description": "normal, SR=0.2, 95% conf, bench 0 (longer)",
+      "inputs": {
+        "observedSR": 0.2,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "benchmark": 0.0,
+        "confidence": 0.95
+      },
+      "expected": 69.99135807943303,
+      "tolerance": 1e-06
+    },
+    {
+      "description": "normal, SR=1.0, 95% conf, bench 0 (short)",
+      "inputs": {
+        "observedSR": 1.0,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "benchmark": 0.0,
+        "confidence": 0.95
+      },
+      "expected": 5.0583151811431195,
+      "tolerance": 1e-06
+    },
+    {
+      "description": "negative skew raises MinTRL",
+      "inputs": {
+        "observedSR": 0.5,
+        "skew": -0.5,
+        "kurt": 5.0,
+        "benchmark": 0.0,
+        "confidence": 0.95
+      },
+      "expected": 17.233260724572478,
+      "tolerance": 1e-06
+    },
+    {
+      "description": "high kurtosis raises MinTRL",
+      "inputs": {
+        "observedSR": 0.5,
+        "skew": 0.0,
+        "kurt": 9.0,
+        "benchmark": 0.0,
+        "confidence": 0.95
+      },
+      "expected": 17.233260724572478,
+      "tolerance": 1e-06
+    },
+    {
+      "description": "beating a positive benchmark needs more data",
+      "inputs": {
+        "observedSR": 0.5,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "benchmark": 0.3,
+        "confidence": 0.95
+      },
+      "expected": 77.09340964643349,
+      "tolerance": 1e-06
+    },
+    {
+      "description": "SR=0.3 vs bench 0.1 at 90% conf",
+      "inputs": {
+        "observedSR": 0.3,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "benchmark": 0.1,
+        "confidence": 0.9
+      },
+      "expected": 43.90703159578897,
+      "tolerance": 1e-06
+    },
+    {
+      "description": "annualized SR=1.5 vs 1.0 at 95%",
+      "inputs": {
+        "observedSR": 1.5,
+        "skew": -0.2,
+        "kurt": 6.0,
+        "benchmark": 1.0,
+        "confidence": 0.95
+      },
+      "expected": 45.50618981986955,
+      "tolerance": 1e-06
+    },
+    {
+      "description": "SR=0.15 tiny edge, 95%",
+      "inputs": {
+        "observedSR": 0.15,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "benchmark": 0.0,
+        "confidence": 0.95
+      },
+      "expected": 122.59914746462164,
+      "tolerance": 1e-06
+    },
+    {
+      "description": "SR=0.4 fat tails kurt=12 skew=-1, 95%",
+      "inputs": {
+        "observedSR": 0.4,
+        "skew": -1.0,
+        "kurt": 12.0,
+        "benchmark": 0.0,
+        "confidence": 0.95
+      },
+      "expected": 32.113749722097246,
+      "tolerance": 1e-06
+    },
+    {
+      "description": "SR=0.5 at 97.5% conf",
+      "inputs": {
+        "observedSR": 0.5,
+        "skew": 0.0,
+        "kurt": 3.0,
+        "benchmark": 0.0,
+        "confidence": 0.975
+      },
+      "expected": 18.28656469312356,
+      "tolerance": 1e-06
+    }
+  ]
+}
