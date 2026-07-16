@@ -45,7 +45,9 @@ func HistoricalVaR(returns []float64, confidence float64) float64 {
 // define the tail (this matches RubberDuck's ceiling-tail historical CVaR and
 // the Basel-style historical-simulation ES used in backtesting). At least one
 // observation always enters the tail. CVaR >= VaR by construction (the tail
-// average is at least as bad as the tail boundary).
+// average is at least as bad as the tail boundary). The ceiling is evaluated
+// robustly against IEEE-754 rounding (see tailCount) so e.g. c=0.95, N=100
+// yields the decimal-exact 5-observation tail, not 6.
 //
 // Valid range: N >= 1; confidence in (0,1). Returns NaN for an empty slice or
 // a confidence outside (0,1).
@@ -55,7 +57,7 @@ func HistoricalCVaR(returns []float64, confidence float64) float64 {
 	if n == 0 || confidence <= 0 || confidence >= 1 {
 		return math.NaN()
 	}
-	nTail := int(math.Ceil((1.0 - confidence) * float64(n)))
+	nTail := tailCount(n, confidence)
 	if nTail < 1 {
 		nTail = 1
 	}
@@ -151,4 +153,30 @@ func ParametricCVaR(mean, stdDev, confidence float64) float64 {
 	z := prob.NormalQuantile(confidence, 0, 1)
 	pdf := math.Exp(-0.5*z*z) / math.Sqrt(2.0*math.Pi)
 	return -mean + stdDev*pdf/(1.0-confidence)
+}
+
+// tailCount computes the ceiling-tail observation count
+//
+//	nTail = ceil((1 - c) * n)
+//
+// robustly against IEEE-754 rounding. The naive
+// `math.Ceil((1.0-confidence)*float64(n))` is off-by-one whenever the true
+// product is an exact integer k but the float product evaluates to
+// k + epsilon — and that hits the FLAGSHIP confidence levels: 1-0.95 is
+// 0.050000000000000044 in float64, so c=0.95, n=100 gives a float product
+// of 5.000000000000004 -> Ceil 6, but the decimal-exact tail is 5. The
+// inflated tail silently averages one extra (less-bad) observation into
+// the CVaR, mis-calibrating the pinned Basel-style convention. We snap a
+// product that sits within a tight relative epsilon of an integer back to
+// that integer before taking the ceiling — the same guard as the
+// prob/conformal conformalRank fix (gridlock ec7c239 lineage); all values
+// the float path already gets right are unchanged.
+func tailCount(n int, confidence float64) int {
+	prod := (1.0 - confidence) * float64(n)
+	nearest := math.Round(prod)
+	const eps = 1e-9
+	if math.Abs(prod-nearest) <= eps*math.Max(1.0, math.Abs(prod)) {
+		prod = nearest
+	}
+	return int(math.Ceil(prod))
 }

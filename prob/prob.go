@@ -379,7 +379,9 @@ func Median(values []float64) float64 {
 // If trimFraction < 0 or >= 0.5, no trimming is applied.
 // The input slice is not modified (a copy is sorted internally).
 //
-// Formula: mean of values[k..n-k] where k = floor(n * trimFraction)
+// Formula: mean of values[k..n-k] where k = floor(n * trimFraction),
+// evaluated robustly against IEEE-754 rounding (see trimCountFor) so e.g.
+// trimFraction=0.29, n=100 trims the decimal-exact 29 per side, not 28.
 // Precision: accumulated float64 summation error
 // Reference: Wilcox, R.R. (2012) "Introduction to Robust Estimation and
 // Hypothesis Testing"
@@ -395,7 +397,7 @@ func TrimmedMean(values []float64, trimFraction float64) float64 {
 	copy(sorted, values)
 	sort.Float64s(sorted)
 
-	trimCount := int(math.Floor(float64(len(sorted)) * trimFraction))
+	trimCount := trimCountFor(len(sorted), trimFraction)
 	if trimCount*2 >= len(sorted) {
 		trimCount = 0
 	}
@@ -410,6 +412,30 @@ func TrimmedMean(values []float64, trimFraction float64) float64 {
 		sum += v
 	}
 	return ClampProbability(sum / float64(len(trimmed)))
+}
+
+// trimCountFor computes the per-side trim count
+//
+//	k = floor(n * trimFraction)
+//
+// robustly against IEEE-754 rounding. The naive
+// `math.Floor(float64(n)*trimFraction)` is off-by-one whenever the true
+// product is an exact integer k but the float product evaluates to
+// k - epsilon (e.g. n=100, trimFraction=0.29 gives a float product of
+// 28.999999999999996 -> Floor 28, but the decimal-exact trim is 29),
+// silently leaving one extreme observation per side inside the mean. We
+// snap a product that sits within a tight relative epsilon of an integer
+// to that integer before taking the floor — the mirror image of the
+// prob/conformal conformalRank ceiling guard (gridlock ec7c239 lineage);
+// all values the float path already gets right are unchanged.
+func trimCountFor(n int, trimFraction float64) int {
+	prod := float64(n) * trimFraction
+	nearest := math.Round(prod)
+	const eps = 1e-9
+	if math.Abs(prod-nearest) <= eps*math.Max(1.0, math.Abs(prod)) {
+		prod = nearest
+	}
+	return int(math.Floor(prod))
 }
 
 // ---------------------------------------------------------------------------
