@@ -101,6 +101,33 @@ func TestMillerRabin_EdgeCases(t *testing.T) {
 	}
 }
 
+// TestMillerRabin_WitnessCountClamp guards the low end of the witness count k.
+// Before the fix, MillerRabin clamped only the HIGH end (k > len(allWitnesses)).
+// For k == 0, allWitnesses[:0] is an empty slice, so the witness loop never runs
+// and the test falls through to `return true` — every odd composite is reported
+// PRIME with zero evidence (a receipt-vs-proxy fail-open). For k < 0,
+// allWitnesses[:k] panics ("slice bounds out of range [:-1]"), crashing the
+// caller. The fix clamps k up to 1 (the strongest single witness, base 2), so
+// k <= 0 degrades to a genuine one-base Miller-Rabin test: no vacuous PRIME,
+// no panic.
+func TestMillerRabin_WitnessCountClamp(t *testing.T) {
+	// k == 0 must NOT report odd composites as prime (base 2 catches 9 and 15).
+	if MillerRabin(9, 0) {
+		t.Error("MillerRabin(9, 0) = true, want false (9 = 3×3 is composite; k=0 must clamp to >=1 witness, not fall through to a vacuous PRIME)")
+	}
+	if MillerRabin(15, 0) {
+		t.Error("MillerRabin(15, 0) = true, want false (15 = 3×5 is composite)")
+	}
+	// k < 0 must not panic and must still reject a composite.
+	if MillerRabin(9, -1) {
+		t.Error("MillerRabin(9, -1) = true, want false (negative k must clamp to 1, not panic)")
+	}
+	// A genuine prime must still pass under the clamped single witness.
+	if !MillerRabin(97, 0) {
+		t.Error("MillerRabin(97, 0) = false, want true (97 is prime; base-2 witness must accept it)")
+	}
+}
+
 // TestIsPrime_StrongPseudoprimes guards against an insufficient Miller-Rabin
 // witness set. Within the uint64 domain, full determinism requires the
 // 12-witness Sinclair set {2,3,5,7,11,13,17,19,23,29,31,37}; a smaller set

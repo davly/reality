@@ -99,6 +99,9 @@ func MillerRabin(n uint64, k int) bool {
 	if k > len(allWitnesses) {
 		k = len(allWitnesses)
 	}
+	if k < 1 {
+		k = 1 // never test with zero witnesses: a verdict needs >=1 base (fail-safe, no panic)
+	}
 
 	witnesses := allWitnesses[:k]
 	return millerRabinTest(n, witnesses)
