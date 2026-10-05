@@ -338,10 +338,13 @@ func BetaPDF(x, alpha, beta float64) float64 {
 //
 // This is the regularized incomplete beta function I_x(alpha, beta).
 //
-// Formula: I_x(alpha, beta) via continued fraction (Lentz's method)
+// Formula: I_x(alpha, beta), see RegularizedBetaInc in mathutil.go
 // Valid range: x in [0, 1], alpha > 0, beta > 0
-// Returns NaN if alpha <= 0 or beta <= 0
-// Precision: ~1e-14 absolute for typical inputs
+// Returns NaN if alpha <= 0 or beta <= 0, and in the cases listed for
+// RegularizedBetaInc
+// Precision: absolute error at most 2e-15 (measured for parameters from
+// 1e-3 to 1e7); relative error below 1e-13 for results >= 1e-150 (see
+// RegularizedBetaInc)
 // Reference: see RegularizedBetaInc in mathutil.go
 func BetaCDF(x, alpha, beta float64) float64 {
 	if alpha <= 0 || beta <= 0 {
@@ -563,7 +566,11 @@ func BinomialPMF(k, n int, p float64) float64 {
 // Valid range: 0 <= k <= n, n >= 0, p in [0, 1]
 // Returns NaN if p < 0 or p > 1, or n < 0
 // Returns 0 if k < 0; returns 1 if k >= n
-// Precision: ~1e-14 (via RegularizedBetaInc)
+// Precision: relative error at most 7e-15 for results >= 1e-10 and below
+// 1e-13 down to 1e-150 (measured for n up to 1e6 and p from 1e-10 to
+// 1 - 1e-6); in the far lower tail it grows in proportion to |ln CDF|, as
+// for RegularizedBetaInc. p is passed to the incomplete beta function as the
+// exact complement of 1 - p, so a small p is not rounded through 1 - p.
 // Reference: relation between binomial CDF and incomplete beta;
 // Abramowitz & Stegun, formula 26.5.24
 func BinomialCDF(k, n int, p float64) float64 {
@@ -576,6 +583,8 @@ func BinomialCDF(k, n int, p float64) float64 {
 	if k >= n {
 		return 1
 	}
-	// I_{1-p}(n-k, k+1)
-	return RegularizedBetaInc(1-p, float64(n-k), float64(k+1))
+	// I_{1-p}(n-k, k+1). p itself is passed as the complement 1 - x, so a
+	// small p is not rounded through 1 - p before the tail is computed.
+	w, _ := incBeta(float64(n-k), float64(k+1), 1-p, p)
+	return w
 }

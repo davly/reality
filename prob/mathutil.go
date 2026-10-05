@@ -45,102 +45,464 @@ func Erfc(x float64) float64 {
 // where B(x; a, b) is the incomplete beta function and B(a, b) is the
 // complete beta function.
 //
-// The implementation uses Lentz's continued fraction method for the
-// incomplete beta function, with the symmetry relation
-// I_x(a, b) = 1 - I_{1-x}(b, a) to ensure convergence.
+// Whichever of I and 1 - I is the smaller tail is computed directly and the
+// other as its complement, by the method of DiDonato & Morris (1992): a power
+// series where x*b is small, a continued fraction whose terms are written in
+// lambda = a - (a+b)x so that they do not cancel near the mean, and, for one
+// large and one small parameter, an asymptotic expansion in the incomplete
+// gamma function. Each is scaled by x^a (1-x)^b / B(a, b), evaluated around
+// the mean without cancellation. I_x(a, 1) = x^a and I_x(1, b) = 1 - (1-x)^b
+// are evaluated in closed form.
 //
-// Formula: I_x(a,b) via continued fraction (DLMF 8.17.22)
+// Formula: I_x(a,b) via continued fraction (DLMF 8.17.22), power series
+// (DLMF 8.17.7) and the DiDonato-Morris asymptotic expansion
 // Valid range: x in [0, 1], a > 0, b > 0
-// Precision: ~1e-14 absolute for typical inputs
-// Failure mode: returns NaN if a <= 0, b <= 0, or x outside [0, 1]
-// Reference: Lentz, W.J. (1976) "Generating Bessel functions in Mie
-// scattering calculations using continued fractions"; Press et al.,
-// Numerical Recipes, 3rd ed., section 6.4
+// Precision: measured against 60-digit references for a, b from 1e-3 to
+// 1e7, with x from the far tails through the mean: absolute error at most
+// 2e-15; relative error at most 8e-15 for results >= 1e-10 and below 1e-13
+// down to 1e-150. Below 1e-150 the relative error is set by the float64
+// rounding of the exponent and grows in proportion to |ln I|, about
+// 5e-16*|ln I| (2.6e-13 near 1e-263). Near the mean of still larger
+// parameters the continued fraction's rounding grows slowly with its
+// iteration count (2.7e-15 at a = b = 1e10, 1.5e-13 at a = b = 1e15).
+// Cost: O(1) in the tails; near the mean about 5.5*min(a, b)^(1/3)
+// continued-fraction iterations.
+// Failure mode: returns NaN if a <= 0, b <= 0, a or b is infinite, or x is
+// outside [0, 1]; also NaN near the mean of parameters above 2^52, where
+// a+n is no longer exact in float64 and the continued fraction would lose
+// accuracy, or if an expansion does not converge within its budget
+// Reference: DiDonato, A.R. & Morris, A.H. (1992) "Algorithm 708:
+// Significant digit computation of the incomplete beta function ratios",
+// ACM TOMS 18(3); Lentz, W.J. (1976); Press et al., Numerical Recipes,
+// 3rd ed., section 6.4
 func RegularizedBetaInc(x, a, b float64) float64 {
-	if x < 0 || x > 1 || a <= 0 || b <= 0 {
+	if !(x >= 0 && x <= 1 && a > 0 && b > 0) || math.IsInf(a, 0) || math.IsInf(b, 0) {
 		return math.NaN()
 	}
-	if x == 0 {
-		return 0
-	}
-	if x == 1 {
-		return 1
-	}
-
-	// Use the symmetry relation for faster convergence:
-	// When x > (a+1)/(a+b+2), evaluate 1 - I_{1-x}(b, a) instead.
-	if x > (a+1)/(a+b+2) {
-		return 1.0 - RegularizedBetaInc(1-x, b, a)
-	}
-
-	// Log of the prefactor: x^a * (1-x)^b / (a * B(a,b))
-	lnPrefactor := a*math.Log(x) + b*math.Log(1-x) - math.Log(a) -
-		(LogGamma(a) + LogGamma(b) - LogGamma(a+b))
-
-	// Evaluate continued fraction using Lentz's method.
-	return math.Exp(lnPrefactor) * betaCF(x, a, b)
+	w, _ := incBeta(a, b, x, 1-x)
+	return w
 }
 
-// betaCF evaluates the continued fraction for the incomplete beta function
-// using the modified Lentz algorithm. The continued fraction is:
+// incBeta returns w = I_x(a, b) and w1 = 1 - w for finite a, b > 0 and
+// x in [0, 1]. The caller supplies y = 1 - x; whichever of x and y is below
+// 1/2 must be accurate to a few ulp in its own right (not rounded from the
+// other), because the tails are computed from it. A non-converging
+// expansion yields NaN for both.
 //
-//	1 / (1 + d1/(1 + d2/(1 + ...)))
-//
-// where the coefficients d_m are defined as in Numerical Recipes eq. 6.4.5.
-//
-// maxIter limits iterations to prevent infinite loops. The tiny constant
-// prevents division by zero in the Lentz algorithm.
-func betaCF(x, a, b float64) float64 {
-	const maxIter = 200
-	const eps = 1e-14
-	const tiny = 1e-30
+// The choice of method follows DiDonato & Morris (1992, bratio): the power
+// series (betaSeries), the continued fraction (betaCF), the asymptotic
+// expansion for a large first and a small second parameter (betaAsymLargeA),
+// and the finite sums that shift a parameter by an integer (betaShift).
+// Their asymptotic expansion for two large parameters is not used: near the
+// mean the continued fraction converges in O(sqrt(min(a, b))) iterations to
+// full accuracy.
+func incBeta(a, b, x, y float64) (w, w1 float64) {
+	switch {
+	case x <= 0:
+		return 0, 1
+	case y <= 0:
+		return 1, 0
+	case b == 1: // I_x(a, 1) = x^a
+		lx, _ := betaLogs(x, y)
+		e := a * lx
+		return math.Exp(e), -math.Expm1(e)
+	case a == 1: // I_x(1, b) = 1 - y^b
+		_, ly := betaLogs(x, y)
+		e := b * ly
+		return -math.Expm1(e), math.Exp(e)
+	}
+	var v, v1 float64 // I_x0(a0, b0) and its complement
+	var ok bool
+	var swap bool
+	if math.Min(a, b) <= 1 {
+		swap, v, v1, ok = incBetaSmallParam(a, b, x, y)
+	} else {
+		swap, v, v1, ok = incBetaLargeParams(a, b, x, y)
+	}
+	if !ok {
+		return math.NaN(), math.NaN()
+	}
+	if swap {
+		return v1, v
+	}
+	return v, v1
+}
 
-	// Lentz's method, started from C_0 = 1 and D_1 = 1/d (f = D_1).
+// incBetaSmallParam handles min(a, b) <= 1. It orients the problem so that
+// x0 <= 1/2 and returns v = I_x0(a0, b0), v1 = 1 - v, each computed directly
+// where it is the smaller.
+func incBetaSmallParam(a, b, x, y float64) (swap bool, v, v1 float64, ok bool) {
+	a0, b0, x0, y0 := a, b, x, y
+	if x > 0.5 {
+		swap = true
+		a0, b0, x0, y0 = b, a, y, x
+	}
+	lower := func() (bool, float64, float64, bool) {
+		s, ok := betaSeries(a0, b0, x0, y0)
+		return swap, s, 1 - s, ok
+	}
+	upper := func() (bool, float64, float64, bool) {
+		s, ok := betaSeries(b0, a0, y0, x0)
+		return swap, 1 - s, s, ok
+	}
+	if math.Max(a0, b0) > 1 {
+		switch {
+		case b0 <= 1:
+			return lower()
+		case x0 >= 0.29:
+			return upper()
+		case x0 < 0.1 && math.Pow(x0*b0, a0) <= 0.7:
+			return lower()
+		case b0 > 15:
+			s, ok := betaAsymLargeA(b0, a0, y0, x0, 0)
+			return swap, 1 - s, s, ok
+		}
+	} else {
+		switch {
+		case a0 >= math.Min(0.2, b0), math.Pow(x0, a0) <= 0.9:
+			return lower()
+		case x0 >= 0.3:
+			return upper()
+		}
+	}
+	// Raise b0 by 20 with a finite sum, then use the asymptotic expansion.
+	s, ok := betaShift(b0, a0, y0, x0, 20)
+	if ok {
+		s, ok = betaAsymLargeA(b0+20, a0, y0, x0, s)
+	}
+	return swap, 1 - s, s, ok
+}
+
+// incBetaLargeParams handles a, b > 1. It orients the problem so that x0 is
+// at or below the mean (lambda = a0 - (a0+b0)x0 >= 0) and returns
+// v = I_x0(a0, b0) and v1 = 1 - v.
+func incBetaLargeParams(a, b, x, y float64) (swap bool, v, v1 float64, ok bool) {
+	lambda := betaLambda(a, b, x, y)
+	a0, b0, x0, y0 := a, b, x, y
+	if lambda < 0 {
+		swap = true
+		a0, b0, x0, y0, lambda = b, a, y, x, -lambda
+	}
+	switch {
+	case b0 >= 40:
+		v, ok = betaCF(a0, b0, x0, y0, lambda)
+	case b0*x0 <= 0.7:
+		v, ok = betaSeries(a0, b0, x0, y0)
+	default:
+		// Split b0 = n + f with f in (0, 1]:
+		// I_x0(a0, b0) = I_x0(a0, f) + [I_y0(f, a0) - I_y0(f+n, a0)].
+		n := math.Floor(b0)
+		f := b0 - n
+		if f == 0 {
+			n--
+			f = 1
+		}
+		v, ok = betaShift(f, a0, y0, x0, int(n))
+		if !ok {
+			break
+		}
+		if x0 <= 0.7 {
+			var s float64
+			s, ok = betaSeries(a0, f, x0, y0)
+			v += s
+			break
+		}
+		aa := a0
+		if a0 <= 15 {
+			var s float64
+			s, ok = betaShift(a0, f, x0, y0, 20)
+			v += s
+			aa += 20
+		}
+		if ok {
+			v, ok = betaAsymLargeA(aa, f, x0, y0, v)
+		}
+	}
+	return swap, v, 1 - v, ok
+}
+
+// betaShift returns I_x(a, b) - I_x(a+n, b) for an integer n >= 1, the
+// finite sum
+//
+//	sum_{i=0}^{n-1} x^(a+i) y^b / ((a+i) B(a+i, b))
+//
+// whose terms satisfy t_(i+1) = t_i * x (a+b+i) / (a+1+i) (DiDonato &
+// Morris 1992, bup).
+func betaShift(a, b, x, y float64, n int) (float64, bool) {
+	if n < 1 {
+		return 0, true
+	}
+	sum := 1.0
+	d := 1.0
+	for i := 0; i < n-1; i++ {
+		fi := float64(i)
+		d *= (a + b + fi) / (a + 1 + fi) * x
+		sum += d
+	}
+	e, m := betaPrefixParts(a, b, x, y)
+	return scaleExp(e, m*sum/a), true
+}
+
+// betaAsymLargeA returns w + I_x(a, b) for a >= 15 and 0 < b <= 1, from the
+// asymptotic expansion of DiDonato & Morris (1992, section 9; bgrat) in terms
+// of the incomplete gamma function:
+//
+//	I_x(a, b) = Gamma(a+b) / (Gamma(a) T^b) * sum_{n>=0} d_n J_n(b, z),
+//	T = a + (b-1)/2,  z = -T ln x,
+//
+// where J_0 = Q(b, z) e^z z^-b Gamma(b) and the J_n and d_n follow the
+// recurrences of that paper. The terms fall like (4T^2)^-n.
+func betaAsymLargeA(a, b, x, y, w float64) (float64, bool) {
+	bm1 := b - 1
+	nu := a + 0.5*bm1
+	lnx, _ := betaLogs(x, y)
+	z := -nu * lnx
+	if b*z == 0 {
+		return math.NaN(), false
+	}
+	lgb, _ := math.Lgamma(b)
+	logR := b*math.Log(z) - z - lgb // ln(z^b e^-z / Gamma(b))
+	// ln of Gamma(a+b) / (Gamma(a) nu^b) * r
+	logU := logR - lnGammaRatioRem(b, a) + b*math.Log1p((b+1)/(2*nu))
+	l := 0.0
+	if w > 0 {
+		l = math.Exp(math.Log(w) - logU)
+	}
+	qr, ok := gammaQOverR(b, z)
+	if !ok {
+		return math.NaN(), false
+	}
+	v := 0.25 / (nu * nu)
+	t2 := 0.25 * lnx * lnx
+	j := qr
+	sum := j
+	t, cn, n2 := 1.0, 1.0, 0.0
+	var c, d [30]float64
+	converged := false
+	for n := 1; n <= len(c); n++ {
+		bp2n := b + n2
+		j = (bp2n*(bp2n+1)*j + (z+bp2n+1)*t) * v
+		n2 += 2
+		t *= t2
+		cn /= n2 * (n2 + 1)
+		c[n-1] = cn
+		s := 0.0
+		coef := b - float64(n)
+		for i := 1; i < n; i++ {
+			s += coef * c[i-1] * d[n-1-i]
+			coef += b
+		}
+		d[n-1] = bm1*cn + s/float64(n)
+		dj := d[n-1] * j
+		sum += dj
+		if sum <= 0 {
+			return math.NaN(), false
+		}
+		if math.Abs(dj) <= 0x1p-53*(sum+l) {
+			converged = true
+			break
+		}
+	}
+	if !converged {
+		return math.NaN(), false
+	}
+	return w + scaleExp(logU, sum), true
+}
+
+// gammaQOverR returns Q(b, z) e^z z^-b Gamma(b), the upper regularized
+// incomplete gamma function scaled by its leading behaviour, without
+// underflow for large z: in the continued-fraction region this is exactly
+// the continued fraction's value.
+func gammaQOverR(b, z float64) (float64, bool) {
+	if z >= math.Max(b, 1.5) {
+		return gammaCF(b, z)
+	}
+	_, q := incGammaPQ(b, z)
+	lgb, _ := math.Lgamma(b)
+	return q / math.Exp(b*math.Log(z)-z-lgb), !math.IsNaN(q)
+}
+
+// betaLogs returns ln(x) and ln(y) for y = 1 - x, each computed from
+// whichever of x and y is below 1/2 (and therefore exact).
+func betaLogs(x, y float64) (lx, ly float64) {
+	if x <= 0.5 {
+		return math.Log(x), math.Log1p(-x)
+	}
+	return math.Log1p(-y), math.Log(y)
+}
+
+// betaLambda returns lambda = a - (a+b)x = (a+b)y - b without cancellation:
+// a+b is carried exactly as a two-term sum and its product with the small
+// one of x and y is formed with a single rounding (math.FMA).
+func betaLambda(a, b, x, y float64) float64 {
+	sh, sl := twoSum(a, b)
+	if x <= 0.5 {
+		return math.FMA(-sh, x, a) - sl*x
+	}
+	return math.FMA(sh, y, -b) + sl*y
+}
+
+// betaPrefixParts returns e and m with x^a y^b / B(a, b) = exp(e) * m for
+// y = 1 - x (DiDonato & Morris 1992, brcomp), where m is of moderate size,
+// so that callers can fold further factors into m before exponentiating
+// (scaleExp) and a prefix that would underflow on its own is not rounded to
+// a subnormal first.
+//
+// For a, b >= 8 it is evaluated around the mean x0 = a/(a+b):
+//
+//	x^a y^b / B(a,b) = sqrt(b*x0/(2 pi)) * exp(a*log1pmx(-lambda/a)
+//	                   + b*log1pmx(lambda/b) - bcorr(a, b)),
+//
+// with lambda = a - (a+b)x and bcorr(a, b) = stirlerr(a) + stirlerr(b) -
+// stirlerr(a+b): the O(a) and O(b) terms of the direct form cancel exactly
+// and are never built. When one parameter is below 8 and the other is not,
+// ln Gamma(q) - ln Gamma(p+q) is evaluated by its Stirling form
+// (lnGammaRatioRem), which also avoids cancellation.
+func betaPrefixParts(a, b, x, y float64) (e, m float64) {
+	if x <= 0 || y <= 0 {
+		return math.Inf(-1), 1
+	}
+	if a >= 8 && b >= 8 {
+		lambda := betaLambda(a, b, x, y)
+		// u = ln(x/x0) - (x-x0)/x0 and v = ln(y/y0) - (y-y0)/y0, where
+		// x/x0 = x(a+b)/a and y/y0 = y(a+b)/b are formed directly.
+		var u, v float64
+		if e := -lambda / a; e < -0.5 {
+			u = math.Log(x*(a+b)/a) - e
+		} else {
+			u = log1pmx(e)
+		}
+		if e := lambda / b; e < -0.5 {
+			v = math.Log(y*(a+b)/b) - e
+		} else {
+			v = log1pmx(e)
+		}
+		return a*u + b*v - bcorr(a, b), math.Sqrt(b*(a/(a+b))) / sqrt2Pi
+	}
+	if a < 8 && b < 8 {
+		lx, ly := betaLogs(x, y)
+		la, _ := math.Lgamma(a)
+		lb, _ := math.Lgamma(b)
+		lab, _ := math.Lgamma(a + b)
+		return a*lx + b*ly - (la + lb - lab), 1
+	}
+	// One parameter p below 8 and the other, q, at least 8; s is p's
+	// variable and t is q's. With ln Gamma(q) - ln Gamma(p+q) =
+	// -p ln(p+q) + lnGammaRatioRem(p, q):
+	//
+	//	ln(s^p t^q / B(p,q)) = p ln(s (p+q)) + q ln t - ln Gamma(p) - lnGammaRatioRem(p, q),
+	//
+	// so p ln s and p ln(p+q), which nearly cancel near the mean, are
+	// combined inside a single logarithm.
+	p, q, s, t := a, b, x, y
+	if b < a {
+		p, q, s, t = b, a, y, x
+	}
+	ls, lt := betaLogs(s, t)
+	pq := p + q
+	var ps float64
+	if s <= 0.5 {
+		ps = p * math.Log(s*pq)
+	} else {
+		ps = p * (ls + math.Log(pq))
+	}
+	lp, _ := math.Lgamma(p)
+	return ps + q*lt - lp - lnGammaRatioRem(p, q), 1
+}
+
+// lnGammaRatioRem returns ln Gamma(q) - ln Gamma(p+q) + p ln(p+q) for p > 0,
+// q >= 8, from Stirling's formula:
+//
+//	-(q - 1/2)*log1pmx(p/q) + p/(2q) + stirlerr(q) - stirlerr(p+q),
+//
+// none of whose terms cancel (DiDonato & Morris 1992, algdiv).
+func lnGammaRatioRem(p, q float64) float64 {
+	return -(q-0.5)*log1pmx(p/q) + p/(2*q) + stirlerr(q) - stirlerr(p+q)
+}
+
+// bcorr returns stirlerr(a) + stirlerr(b) - stirlerr(a+b) for a, b >= 8.
+func bcorr(a, b float64) float64 {
+	return stirlerr(a) + stirlerr(b) - stirlerr(a+b)
+}
+
+// betaSeries returns I_x(a, b) by the power series (DLMF 8.17.7 after
+// Euler's transformation; DiDonato & Morris 1992, bpser)
+//
+//	I_x(a,b) = x^a / (a B(a,b)) * (1 + a sum_{n>=1} c_n / (a+n)),
+//	c_n = (1 - b/1)(1 - b/2)...(1 - b/n) x^n,
+//
+// used for x <= 1/2 with b*x <= 0.7 or b <= 1, where the terms fall at least
+// like x^n and their sum cannot cancel by more than a factor of about e^1.4.
+func betaSeries(a, b, x, y float64) (float64, bool) {
+	_, ly := betaLogs(x, y)
+	e, m := betaPrefixParts(a, b, x, y)
+	e -= b * ly // exp(e) * m = x^a / B(a,b)
+	if math.IsInf(e, -1) {
+		return 0, true
+	}
+	sum := 0.0
 	c := 1.0
-	d := 1.0 - (a+b)*x/(a+1)
-	if math.Abs(d) < tiny {
-		d = tiny
-	}
-	d = 1.0 / d
-	f := d
-
-	for m := 1; m <= maxIter; m++ {
-		mf := float64(m)
-
-		// Even step: d_{2m} coefficient.
-		num := mf * (b - mf) * x / ((a + 2*mf - 1) * (a + 2*mf))
-		d = 1.0 + num*d
-		if math.Abs(d) < tiny {
-			d = tiny
-		}
-		c = 1.0 + num/c
-		if math.Abs(c) < tiny {
-			c = tiny
-		}
-		d = 1.0 / d
-		f *= c * d
-
-		// Odd step: d_{2m+1} coefficient.
-		num = -(a + mf) * (a + b + mf) * x / ((a + 2*mf) * (a + 2*mf + 1))
-		d = 1.0 + num*d
-		if math.Abs(d) < tiny {
-			d = tiny
-		}
-		c = 1.0 + num/c
-		if math.Abs(c) < tiny {
-			c = tiny
-		}
-		d = 1.0 / d
-		delta := c * d
-		f *= delta
-
-		if math.Abs(delta-1.0) < eps {
-			return f
+	for n := 1.0; n <= 2000; n++ {
+		c *= (1 - b/n) * x
+		w := c / (a + n)
+		sum += w
+		if math.Abs(w)*a <= 0x1p-56*math.Abs(1+a*sum) {
+			return scaleExp(e, m*(1+a*sum)/a), true
 		}
 	}
+	return math.NaN(), false
+}
 
-	// Did not converge — return best estimate.
-	return f
+// betaCF returns I_x(a, b) for x at or below the mean (lambda = a - (a+b)x
+// >= 0) by the DiDonato-Morris continued fraction (ACM TOMS 708, bfrac),
+// evaluated by forward recurrence with rescaling. Its coefficients are
+// written in terms of lambda, so unlike the classical form (Numerical
+// Recipes betacf) they do not cancel near the mean. Near the mean it needs
+// O(sqrt(min(a, b))) iterations. Reports ok = false if the budget is
+// exhausted.
+func betaCF(a, b, x, y, lambda float64) (float64, bool) {
+	pe, pm := betaPrefixParts(a, b, x, y)
+	if scaleExp(pe, pm) == 0 {
+		return 0, true
+	}
+	if a > 0x1p52 {
+		// a+1+2n is no longer exact, so the coefficients lose accuracy.
+		return math.NaN(), false
+	}
+	c := lambda + 1
+	c0 := b / a
+	c1 := 1/a + 1
+	yp1 := y + 1
+	p := 1.0
+	s := a + 1
+	an, bn := 0.0, 1.0
+	anp1, bnp1 := 1.0, c/c1
+	r := c1 / c
+	maxIter := iterBudget(1000, 20, math.Min(a, b))
+	for n := 1.0; n <= float64(maxIter); n++ {
+		t := n / a
+		w := n * (b - n) * x
+		e := a / s
+		alpha := p * (p + c0) * e * e * (w * x)
+		e = (t + 1) / (c1 + t + t)
+		beta := n + w/s + e*(c+n*yp1)
+		p = t + 1
+		s += 2
+		t = alpha*an + beta*anp1
+		an, anp1 = anp1, t
+		t = alpha*bn + beta*bnp1
+		bn, bnp1 = bnp1, t
+		r0 := r
+		r = anp1 / bnp1
+		if math.Abs(r-r0) <= 0x1p-52*r {
+			return scaleExp(pe, pm*r), true
+		}
+		an /= bnp1
+		bn /= bnp1
+		anp1 = r
+		bnp1 = 1
+	}
+	return math.NaN(), false
 }
 
 // studentTCDF computes the CDF of the Student's t-distribution with df
@@ -154,18 +516,46 @@ func betaCF(x, a, b float64) float64 {
 //	For t < 0: CDF = 0.5 * I_x(df/2, 1/2)
 //
 // Valid range: any t, df > 0
-// Precision: ~1e-12 for moderate df; degrades slightly for df < 1
+// Precision: relative error below 1e-13 in the lower tail (t < 0) wherever
+// the result is at least 1e-150; absolute error below 1e-15 otherwise
 // Reference: Abramowitz & Stegun, formula 26.5.27
 func studentTCDF(t float64, df float64) float64 {
 	if df <= 0 {
 		return math.NaN()
 	}
-	x := df / (df + t*t)
-	iBeta := RegularizedBetaInc(x, df/2.0, 0.5)
+	tail := studentTTwoSided(t, df)
 	if t >= 0 {
-		return 1.0 - 0.5*iBeta
+		return 1.0 - 0.5*tail
 	}
-	return 0.5 * iBeta
+	return 0.5 * tail
+}
+
+// studentTTwoSided returns the two-sided tail probability P(|T| >= |t|) of
+// the Student's t-distribution with df > 0 degrees of freedom,
+// I_x(df/2, 1/2) with x = df/(df+t^2), computed directly (not as 1 - CDF)
+// so that small p-values keep their relative accuracy. Both x and
+// 1 - x = t^2/(df+t^2) are formed from their own ratio, without rounding one
+// from the other.
+func studentTTwoSided(t, df float64) float64 {
+	if math.IsNaN(t) || math.IsNaN(df) || df <= 0 {
+		return math.NaN()
+	}
+	tt := t * t
+	var x, y float64
+	switch {
+	case math.IsInf(df, 1):
+		return math.Erfc(math.Abs(t) / math.Sqrt2)
+	case math.IsInf(tt, 1):
+		return 0
+	case tt > df:
+		r := df / tt
+		x, y = r/(1+r), 1/(1+r)
+	default:
+		r := tt / df
+		x, y = 1/(1+r), r/(1+r)
+	}
+	w, _ := incBeta(df/2, 0.5, x, y)
+	return w
 }
 
 // ---------------------------------------------------------------------------
@@ -432,11 +822,12 @@ func log1pmx(d float64) float64 {
 }
 
 // stirlerr returns ln Gamma(a+1) - (a+1/2) ln(a) + a - ln(2*pi)/2, the
-// remainder of Stirling's approximation, for a >= 10 by its asymptotic series
-// sum_k B_2k / (2k (2k-1) a^(2k-1)) through the a^-15 term (truncation error
-// below 3e-18 at a = 10), and for smaller a directly from math.Lgamma.
+// remainder of Stirling's approximation (equivalently ln Gamma(a) -
+// (a-1/2) ln(a) + a - ln(2*pi)/2). For a >= 8 it sums the asymptotic series
+// sum_k B_2k / (2k (2k-1) a^(2k-1)) through the a^-19 term (truncation error
+// below 2e-18 at a = 8); for smaller a it is taken directly from math.Lgamma.
 func stirlerr(a float64) float64 {
-	if a < 10 {
+	if a < 8 {
 		v, _ := math.Lgamma(a + 1)
 		return v - (a+0.5)*math.Log(a) + a - lnSqrt2Pi
 	}
@@ -449,10 +840,12 @@ func stirlerr(a float64) float64 {
 		s11 = 691.0 / 360360
 		s13 = 1.0 / 156
 		s15 = 3617.0 / 122400
+		s17 = 43867.0 / 244188
+		s19 = 174611.0 / 125400
 	)
 	r := 1 / a
 	r2 := r * r
-	return r * (s1 - r2*(s3-r2*(s5-r2*(s7-r2*(s9-r2*(s11-r2*(s13-r2*s15)))))))
+	return r * (s1 - r2*(s3-r2*(s5-r2*(s7-r2*(s9-r2*(s11-r2*(s13-r2*(s15-r2*(s17-r2*s19)))))))))
 }
 
 // lnSqrt2Pi is ln(sqrt(2*pi)).

@@ -38,10 +38,7 @@ import (
 
 // knownPrecisionViolations maps a case id to its measured state when it was
 // listed. Remove an entry in the same change that fixes it.
-var knownPrecisionViolations = map[string]string{
-	"ttest/tail-t20":      "p = 0 for t = 20, df = 30 (true 6.75e-19): computed as 2*(1-CDF)",
-	"betacdf/0.5-1e6-1e6": "0.500313 vs exactly 1/2 (abs 3.1e-4): continued fraction capped at 200 iterations",
-}
+var knownPrecisionViolations = map[string]string{}
 
 type precisionCase struct {
 	ID      string         `json:"id"`

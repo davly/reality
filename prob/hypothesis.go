@@ -31,7 +31,12 @@ import "math"
 // Returns: t-statistic and two-tailed p-value
 // Failure mode: returns (NaN, NaN) if len(data) < 2 or if all values are
 // identical (zero variance)
-// Precision: ~1e-12 for p-values (limited by RegularizedBetaInc)
+// Precision: the p-value I_{df/(df+t^2)}(df/2, 1/2) is computed directly,
+// not as 1 - CDF. Given the statistic, its relative error is at most 3e-15
+// for p >= 1e-10 and below 1e-13 down to 1e-150 (measured for df from 1 to
+// 1e6 and |t| up to 1e3), growing in proportion to |ln p| below that. The
+// statistic's own rounding (a few ulp) moves p by up to min(t^2, df+1)
+// times as much, relatively.
 // Reference: Student (Gosset), W.S. (1908) "The Probable Error of a Mean"
 func TTestOneSample(data []float64, mu0 float64) (tStat, pValue float64) {
 	n := len(data)
@@ -61,11 +66,9 @@ func TTestOneSample(data []float64, mu0 float64) (tStat, pValue float64) {
 	tStat = (mean - mu0) / se
 	df := float64(n - 1)
 
-	// Two-tailed p-value.
-	pValue = 2.0 * (1.0 - studentTCDF(math.Abs(tStat), df))
-	if pValue > 1.0 {
-		pValue = 1.0
-	}
+	// Two-tailed p-value, computed directly as I_{df/(df+t^2)}(df/2, 1/2):
+	// the form 2*(1 - CDF(|t|)) cancels to 0 for p below about 1e-16.
+	pValue = studentTTwoSided(tStat, df)
 	return tStat, pValue
 }
 
@@ -88,7 +91,8 @@ func TTestOneSample(data []float64, mu0 float64) (tStat, pValue float64) {
 // Returns: t-statistic and two-tailed p-value
 // Failure mode: returns (NaN, NaN) if either sample has fewer than 2
 // observations or if both samples have zero variance
-// Precision: ~1e-12 for p-values
+// Precision: as for TTestOneSample; the p-value is computed directly for the
+// (generally non-integer) Welch-Satterthwaite df.
 // Reference: Welch, B.L. (1947) "The Generalization of 'Student's'
 // Problem when Several Different Population Variances are Involved"
 func TTestTwoSample(data1, data2 []float64) (tStat, pValue float64) {
@@ -138,11 +142,9 @@ func TTestTwoSample(data1, data2 []float64) (tStat, pValue float64) {
 	}
 	df := num / denom
 
-	// Two-tailed p-value.
-	pValue = 2.0 * (1.0 - studentTCDF(math.Abs(tStat), df))
-	if pValue > 1.0 {
-		pValue = 1.0
-	}
+	// Two-tailed p-value, computed directly as I_{df/(df+t^2)}(df/2, 1/2):
+	// the form 2*(1 - CDF(|t|)) cancels to 0 for p below about 1e-16.
+	pValue = studentTTwoSided(tStat, df)
 	return tStat, pValue
 }
 
