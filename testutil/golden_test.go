@@ -178,3 +178,37 @@ func TestLoadGolden_VectorFile(t *testing.T) {
 		t.Fatalf("got %d cases, want 3", len(gf.Cases))
 	}
 }
+
+func TestWithin_ToleranceKinds(t *testing.T) {
+	next := math.Nextafter(1, 2) // 1 + one unit in the last place
+	cases := []struct {
+		name          string
+		kind          string
+		tol, got, exp float64
+		want          bool
+	}{
+		{"abs inside", "", 1e-9, 1 + 5e-10, 1, true},
+		{"abs outside", "abs", 1e-9, 1 + 2e-9, 1, false},
+		// An absolute tolerance larger than the expected value accepts a
+		// result twice too large; the relative check does not.
+		{"abs is vacuous for tiny values", "abs", 1e-10, 2e-20, 1e-20, true},
+		{"rel catches it", "rel", 1e-12, 2e-20, 1e-20, false},
+		{"rel inside", "rel", 1e-12, 1e-20 * (1 + 1e-13), 1e-20, true},
+		{"rel falls back to abs at zero", "rel", 1e-12, 5e-13, 0, true},
+		{"rel at zero still bounds", "rel", 1e-12, 2e-12, 0, false},
+		{"ulp one step", "ulp", 1, next, 1, true},
+		{"ulp two steps", "ulp", 1, math.Nextafter(next, 2), 1, false},
+	}
+	for _, c := range cases {
+		_, ok, err := Within(TestCase{Tolerance: c.tol, ToleranceKind: c.kind}, c.got, c.exp)
+		if err != nil {
+			t.Fatalf("%s: %v", c.name, err)
+		}
+		if ok != c.want {
+			t.Errorf("%s: Within = %v, want %v", c.name, ok, c.want)
+		}
+	}
+	if _, _, err := Within(TestCase{Tolerance: 1, ToleranceKind: "percent"}, 1, 1); err == nil {
+		t.Error("an unknown tolerance_kind must be an error, not a silent pass")
+	}
+}

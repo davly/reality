@@ -1,7 +1,7 @@
 // Package testutil provides golden-file test infrastructure for the Reality
 // library. Every function in Reality is validated against golden-file test
-// vectors stored as JSON. These vectors are language-agnostic and shared
-// across Go, Python, C++, and C# implementations.
+// vectors stored as JSON. The vectors are language-neutral, so a port to
+// another language can validate against the same files.
 //
 // Golden files live in testdata/ directories relative to each package.
 // The canonical format is:
@@ -20,11 +20,14 @@
 //
 // expected may be a single float64 or an array of float64 for vector-valued
 // functions. tolerance is per-case, not global — some functions need 1e-15,
-// others need 1e-6 for iterative algorithms.
+// others need 1e-6 for iterative algorithms. An optional "tolerance_kind"
+// says how tolerance is applied: "abs" (the default), "rel" or "ulp"; see
+// TestCase.
 package testutil
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"os"
 	"path/filepath"
@@ -46,9 +49,22 @@ type TestCase struct {
 	// []any from JSON, then converted).
 	Expected any `json:"expected"`
 
-	// Tolerance is the maximum acceptable absolute difference between the
-	// computed result and the expected value. Per-case, not global.
+	// Tolerance bounds the difference between the computed result and the
+	// expected value, in the unit ToleranceKind selects. Per-case, not global.
 	Tolerance float64 `json:"tolerance"`
+
+	// ToleranceKind says how Tolerance is applied:
+	//
+	//	"" or "abs"  |got - expected| <= tolerance
+	//	"rel"        |got - expected| <= tolerance * |expected|; an expected
+	//	             value of exactly 0 falls back to the absolute check
+	//	"ulp"        |got - expected| <= tolerance units in the last place
+	//	             of expected
+	//
+	// Prefer "rel" for values that span many magnitudes: an absolute
+	// tolerance at least as large as |expected| accepts 0 and 2*expected
+	// alike, so it checks nothing.
+	ToleranceKind string `json:"tolerance_kind,omitempty"`
 }
 
 // GoldenFile represents a complete set of test vectors for a single function.
@@ -105,8 +121,8 @@ func LoadGolden(t *testing.T, path string) GoldenFile {
 }
 
 // AssertFloat64 checks that a single float64 result matches the expected
-// value within the test case's tolerance. The check uses absolute difference:
-// |got - expected| <= tolerance.
+// value within the test case's tolerance, applied as the case's
+// ToleranceKind says (absolute by default).
 //
 // Special values are handled: if both got and expected are NaN, the assertion
 // passes. If both are the same infinity, the assertion passes.
@@ -130,10 +146,13 @@ func AssertFloat64(t *testing.T, tc TestCase, got float64) {
 		return
 	}
 
-	diff := math.Abs(got - expected)
-	if diff > tc.Tolerance {
-		t.Errorf("[%s] got %v, expected %v (diff %v exceeds tolerance %v)",
-			tc.Description, got, expected, diff, tc.Tolerance)
+	measured, ok, err := Within(tc, got, expected)
+	if err != nil {
+		t.Fatalf("[%s] %v", tc.Description, err)
+	}
+	if !ok {
+		t.Errorf("[%s] got %v, expected %v (%s error %v exceeds tolerance %v)",
+			tc.Description, got, expected, kindName(tc), measured, tc.Tolerance)
 	}
 }
 
@@ -154,7 +173,6 @@ func AssertFloat64Slice(t *testing.T, tc TestCase, got []float64) {
 	}
 
 	for i := range expected {
-		diff := math.Abs(got[i] - expected[i])
 		if math.IsNaN(expected[i]) && math.IsNaN(got[i]) {
 			continue
 		}
@@ -164,11 +182,50 @@ func AssertFloat64Slice(t *testing.T, tc TestCase, got []float64) {
 		if math.IsInf(expected[i], -1) && math.IsInf(got[i], -1) {
 			continue
 		}
-		if diff > tc.Tolerance {
-			t.Errorf("[%s] element %d: got %v, expected %v (diff %v exceeds tolerance %v)",
-				tc.Description, i, got[i], expected[i], diff, tc.Tolerance)
+		measured, ok, err := Within(tc, got[i], expected[i])
+		if err != nil {
+			t.Fatalf("[%s] %v", tc.Description, err)
+		}
+		if !ok {
+			t.Errorf("[%s] element %d: got %v, expected %v (%s error %v exceeds tolerance %v)",
+				tc.Description, i, got[i], expected[i], kindName(tc), measured, tc.Tolerance)
 		}
 	}
+}
+
+// Within reports whether got matches expected under tc's tolerance, and the
+// error measured in the unit tc.ToleranceKind selects (an absolute
+// difference, a relative difference, or a count of units in the last place).
+// It returns an error for an unknown ToleranceKind.
+func Within(tc TestCase, got, expected float64) (measured float64, ok bool, err error) {
+	diff := math.Abs(got - expected)
+	switch tc.ToleranceKind {
+	case "", "abs":
+		return diff, diff <= tc.Tolerance, nil
+	case "rel":
+		if expected == 0 {
+			return diff, diff <= tc.Tolerance, nil
+		}
+		rel := diff / math.Abs(expected)
+		return rel, rel <= tc.Tolerance, nil
+	case "ulp":
+		ulps := diff / ulp(expected)
+		return ulps, ulps <= tc.Tolerance, nil
+	}
+	return 0, false, fmt.Errorf("unknown tolerance_kind %q (want \"abs\", \"rel\" or \"ulp\")", tc.ToleranceKind)
+}
+
+// ulp returns the spacing between |x| and the next larger float64.
+func ulp(x float64) float64 {
+	x = math.Abs(x)
+	return math.Nextafter(x, math.Inf(1)) - x
+}
+
+func kindName(tc TestCase) string {
+	if tc.ToleranceKind == "" {
+		return "abs"
+	}
+	return tc.ToleranceKind
 }
 
 // InputFloat64 extracts a named float64 input from a test case's Inputs map.
