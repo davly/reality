@@ -93,6 +93,18 @@ func LinearRegression(x, y []float64) (slope, intercept, rSquared float64) {
 //     total number of tests.
 //  3. Reject all hypotheses with p-values <= p_(k).
 //
+// Boundary rule: a p-value equal to its threshold k/m * alpha is rejected,
+// but p-values and alpha are usually decimal fractions that float64 cannot
+// represent exactly, so after rounding an exact tie can compare either way
+// (about 10% of generated exact ties used to be decided against the rule).
+// The comparison therefore allows a relative 1e-9, the tolerance this
+// package uses to snap near-integer ranks:
+//
+//	p_(k) <= k/m * alpha * (1 + 1e-9).
+//
+// A p-value that exceeds its threshold by less than one part in 10^9 is
+// treated as equal to it; any larger difference is decided exactly as before.
+//
 // Valid range: alpha in (0, 1], all pValues in [0, 1]
 // Returns: boolean slice of same length as pValues, true = reject null
 // Reference: Benjamini, Y. & Hochberg, Y. (1995) "Controlling the False
@@ -130,13 +142,15 @@ func BenjaminiHochberg(pValues []float64, alpha float64) []bool {
 		return cmp.Compare(a.p, b.p)
 	})
 
-	// Find the largest k such that p_(k) <= k/m * alpha.
+	// Find the largest k such that p_(k) <= k/m * alpha, up to the relative
+	// boundary tolerance (see the doc comment).
 	// k is 1-indexed in the original paper; we use 0-indexed internally.
+	const boundaryTolerance = 1e-9
 	threshold := -1
 	mf := float64(m)
 	for i := m - 1; i >= 0; i-- {
 		rank := float64(i + 1) // 1-indexed rank
-		if sorted[i].p <= rank/mf*alpha {
+		if sorted[i].p <= rank/mf*alpha*(1+boundaryTolerance) {
 			threshold = i
 			break
 		}
