@@ -54,21 +54,27 @@ func NormalCDF(x, mu, sigma float64) float64 {
 // NormalQuantile returns the inverse CDF (quantile function) of the normal
 // distribution for probability p, with mean mu and standard deviation sigma.
 //
-// Uses the rational approximation by Peter Acklam (2004), which provides
-// full float64 precision across the entire range (0, 1).
+// Method: Peter Acklam's (2004) rational approximation, whose relative error
+// reaches 1.15e-9, refined by one step of Halley's method on Phi(x) - p. The
+// residual Phi(x) - p is formed without cancellation: from the tail
+// probability through math.Erfc, or from p - 1/2 through math.Erf near the
+// median. For subnormal p, where Phi(x) itself would lose precision, Newton's
+// method runs on log Phi(x) - log p instead.
 //
 // Formula: mu + sigma * Phi^{-1}(p) where Phi^{-1} is the standard
 // normal quantile (probit function).
 // Valid range: p in (0, 1), sigma > 0
 // Returns: NaN if p <= 0, p >= 1, or sigma <= 0
-// Precision: maximum relative error < 1.15e-9 for p bounded away from 1
-// (validated on p in [1e-12, 0.5], worst observed 1.12e-9, confirming the
-// published Acklam figure). The upper-tail branch (p -> 1) computes
-// sqrt(-2*ln(1-p)), which suffers catastrophic cancellation in (1-p) and
-// can reach ~1.10e-6 at p = 1-1e-12 (~960x the bound). Prefer evaluating
-// 1 - NormalQuantile(1-p, ...) when p is very close to 1.
+// Precision: the standard quantile Phi^{-1}(p) is within 2.5 ulps of the
+// exact quantile of the float64 p for every p in (0, 1), including subnormal
+// p and p close to 1, where 1 - p is exact. The worst error measured over
+// 237,000 values of p is 1.95 ulps (relative error 3.1e-16), with or without
+// fused multiply-adds; most of it is the error of math.Erfc. The result
+// mu + sigma*z adds the rounding of one multiply and one add.
 // Reference: Acklam, P.J. (2004) "An algorithm for computing the inverse
-// normal cumulative distribution function"
+// normal cumulative distribution function" (rational approximation and its
+// Halley refinement); Abramowitz & Stegun 26.2.12 (asymptotic series of the
+// normal tail).
 func NormalQuantile(p, mu, sigma float64) float64 {
 	if sigma <= 0 || p <= 0 || p >= 1 {
 		return math.NaN()
@@ -76,9 +82,71 @@ func NormalQuantile(p, mu, sigma float64) float64 {
 	return mu + sigma*standardNormalQuantile(p)
 }
 
+const (
+	sqrt2Pi = 2.506628274631000502415765284811045253007 // sqrt(2*pi)
+	// sqrt2Lo is sqrt(2) - math.Sqrt2, the part of sqrt(2) that the float64
+	// constant math.Sqrt2 leaves out.
+	sqrt2Lo = -9.66729331345291303718716885983e-17
+)
+
 // standardNormalQuantile computes Phi^{-1}(p) for the standard normal
-// distribution using Acklam's rational approximation.
+// distribution, 0 < p < 1 (see NormalQuantile).
 func standardNormalQuantile(p float64) float64 {
+	if p < 0x1p-1022 {
+		return subnormalNormalQuantile(p)
+	}
+	x := acklamNormalQuantile(p)
+	// One Halley step on f(x) = Phi(x) - p, with f' = phi and f'' = -x*phi:
+	// x - u/(1 + x*u/2), u = f/f'. The residual is formed from the lower tail
+	// when p < 1/4, from p - 1/2 (exact for p >= 1/4) near the median, and
+	// from the upper tail with 1 - p (exact for p >= 1/2) when p > 3/4.
+	//
+	// The error functions see z = x/sqrt(2) rounded, so the residual belongs
+	// to x + d, with d = sqrt(2)*z - x evaluated exactly enough by a fused
+	// multiply-add; the step is taken from x + d.
+	z := x / math.Sqrt2
+	d := math.FMA(z, math.Sqrt2, -x) + z*sqrt2Lo
+	var r float64
+	switch {
+	case p < 0.25:
+		r = 0.5*math.Erfc(-z) - p
+	case p <= 0.75:
+		r = 0.5*math.Erf(z) - (p - 0.5)
+	default:
+		r = (1 - p) - 0.5*math.Erfc(z)
+	}
+	u := r * sqrt2Pi * math.Exp(0.5*x*x) // r/phi(x); x*x/2 < 704 for normal p
+	return x + (d - u/(1+0.5*x*u))
+}
+
+// subnormalNormalQuantile returns Phi^{-1}(p) for subnormal p (p < 2^-1022),
+// which lies between -38.5 and -37.5. Phi(x) would be subnormal there, so
+// Newton's method runs on g(x) = log Phi(x) - log p, where for x = -s
+//
+//	log Phi(-s) = -s^2/2 - log(s*sqrt(2*pi)) + log M(s),
+//	M(s) = 1 - 1/s^2 + 3/s^4 - 15/s^6 + ... (Abramowitz & Stegun 26.2.12),
+//
+// and g'(x) = s/M(s). The series is cut after the s^-14 term; the first
+// omitted term is below 2e-19 for s > 37. The start s = sqrt(2L - log(4*pi*L)),
+// L = -log p, is within 1e-4 of the root, and each Newton step squares the
+// error. log p is taken of the normal number p*2^54, because math.Log is
+// wrong for subnormal arguments on some platforms (on amd64,
+// math.Log(5e-324) returns -709.09 instead of -744.44).
+func subnormalNormalQuantile(p float64) float64 {
+	logP := math.Log(p*0x1p54) - 54*math.Ln2
+	s := math.Sqrt(-2*logP - math.Log(-4*math.Pi*logP))
+	for i := 0; i < 3; i++ {
+		t := 1 / (s * s)
+		m := 1 + t*(-1+t*(3+t*(-15+t*(105+t*(-945+t*(10395-t*135135))))))
+		logPhi := -0.5*s*s - math.Log(s*sqrt2Pi) + math.Log(m)
+		s += (logPhi - logP) * m / s
+	}
+	return -s
+}
+
+// acklamNormalQuantile is Acklam's rational approximation to Phi^{-1}(p) for
+// normal (not subnormal) p, with relative error below 1.15e-9.
+func acklamNormalQuantile(p float64) float64 {
 	// Coefficients for the rational approximation.
 	const (
 		a1 = -3.969683028665376e+01

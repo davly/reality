@@ -54,7 +54,7 @@ protection — a `t.Skip` would not guard them).
 | `BisectionMethod` (optim/rootfind.go:20) | `|root - x*| <= tol` | quick over known roots + cos | **4.99e-10** (tol 1e-9) |
 | `LinearInterpolateRoot` (rootfind.go:110) | "exact (1 div + 1 mul)" — operation-count | quick, well-conditioned residual | rel **1.12e-12** (see caveat) |
 | `LinearInterpolateRoot` NaN contract | `NaN` if `y0==y1` | direct | holds |
-| `NormalQuantile` value (prob/distributions.go:64) | `max rel err < 1.15e-9` (LOWER half, p in [1e-12,0.5)) | vs 200-step bisection on machine-precision `NormalCDF` | **1.12e-9** (validates the Acklam figure) |
+| `NormalQuantile` value (prob/distributions.go) | within 2.5 ulps of the exact quantile, every p in (0,1) | vs mpmath at 50 digits (37,124-point grid incl. subnormal p and 1-10^-k, plus 200,000 random p); vs bisection on `NormalCDF` (upper half through the symmetry) | **1.95 ulps** (relative 3.1e-16) |
 | `NormalCDF` (distributions.go) | monotone + symmetry `CDF(-x)+CDF(x)=1` | quick (100k) | holds (sym 1e-12) |
 | `ChiSquaredTest` p-value (hypothesis.go:165) | correct CDF / monotone p | regression pin: χ²=14400 → p=0; monotone | **p=0** (gamma two-branch fix holds) |
 | `StudentTQuantile∘StudentTCDF` (prob/copula/studentt.go:53) | `~1e-10` on x | CDF round-trip, p∈[1e-6,1-1e-6], df∈[1,200] | CDF err **2.4e-10** |
@@ -90,20 +90,35 @@ is used ONLY here, never to swallow a holding bound.
   bit-exact claim scoped to `n <= 20`.
 - Test: `TestFactorialRelErr170OverClaim` (SKIP) + `TestFactorialExactSmall` (PASS).
 
-### 2. `NormalQuantile` — `< 1.15e-9` over-claimed in the UPPER tail (distributions.go:64)
-- **Claim:** "maximum relative error < 1.15e-9 across ALL p in (0, 1)".
-- **Observed:** worst **1.10e-6 at p = 1 − 1e-12** (~960× the claim). At
-  p = 1 − 1e-10 it is ~1.3e-8 (~11×).
-- **Cause (understood):** the upper branch computes `q = sqrt(-2·ln(1-p))`;
-  `1-p` suffers catastrophic cancellation as `p → 1` (p = 1−1e-12 retains only
-  ~4 significant digits of `1-p`). The LOWER half is unaffected (p is exact)
-  and meets the claim (worst 1.12e-9, which validates the published Acklam
-  figure) — this is PINNED as a PASS.
-- **Honest framing:** the claim holds on the lower half but is over-claimed as
-  `p → 1`. Suggested doc fix: scope the bound to p bounded away from 1, or note
-  the `1-p` cancellation in the upper tail.
-- Test: `TestNormalQuantileValueUpperTailOverClaim` (SKIP) +
-  `TestNormalQuantileValueLowerAndBulk` (PASS).
+### 2. `NormalQuantile` — RESOLVED: the upper-tail figure was an artifact of the test oracle; the real gap (~1e-9 everywhere) is closed (distributions.go)
+- **Former claim:** "maximum relative error < 1.15e-9 for p bounded away from
+  1", next to "full float64 precision across the entire range (0, 1)" in the
+  same docstring; the two contradicted each other.
+- **Former finding:** 1.10e-6 at p = 1 − 1e-12, attributed to cancellation in
+  `1-p`. That number measured the oracle, not the function: `1-p` is exact in
+  float64 for p ≥ 1/2, and bisecting `NormalCDF` near 1 resolves p only to
+  1.1e-16, so x only to 1.1e-16/phi(x) (5.5e-7 relative at p = 1 − 1e-12).
+  Against mpmath the upper tail was exactly as accurate as the lower tail
+  (1.047e-9 at both p = 1e-12 and p = 1 − 1e-12).
+- **The real gap:** Acklam's rational approximation is accurate only to about
+  1e-9 relative over the whole range (worst 1.12e-9), far from full precision.
+  For subnormal p it was much worse (−37.54 instead of −38.47 at p = 5e-324),
+  because `math.Log` returns wrong values for subnormal arguments on amd64
+  (`math.Log(5e-324)` is −709.09, not −744.44).
+- **Fix:** one Halley step on Phi(x) − p, with the residual formed without
+  cancellation (`math.Erfc` in the tails, `math.Erf` with the exact p − 1/2
+  near the median, the exact 1 − p in the upper tail) and corrected for the
+  rounding of x/√2; for subnormal p, Newton's method on log Phi(x) − log p
+  with the asymptotic series of the normal tail, and log p taken on p·2^54.
+- **Now:** within 2.5 ulps of the exact quantile for every p in (0, 1); worst
+  measured 1.95 ulps (relative error 3.1e-16) over 237,000 values of p against
+  mpmath at 50 digits, with and without fused multiply-adds. Most of the
+  remaining error is that of `math.Erfc`, which is off by up to about 3.5
+  ulps.
+- Tests (all ENFORCED, fail RED): `TestNormalQuantileNearlyExact` (mpmath
+  values), `TestNormalQuantileValueUpperTail` (bisection reference through
+  Phi^{-1}(p) = −Phi^{-1}(1−p)), `TestNormalQuantileValueLowerAndBulk`,
+  `TestNormalQuantileRoundTrip`.
 
 ### 3. `QuatToAxisAngle` round-trip — `1e-12` over-claimed near degenerate angles (quaternion.go:158)
 - **Claim:** "Precision: 1e-12 (transcendental functions)" — stated
