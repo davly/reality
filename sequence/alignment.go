@@ -14,11 +14,14 @@ package sequence
 //   - gap: penalty for introducing a gap (negative, e.g., -1.0)
 //
 // Formula: dp[i][j] = max(dp[i-1][j-1]+s(a[i],b[j]), dp[i-1][j]+gap, dp[i][j-1]+gap)
-//   where s(x,y) = match if x==y, mismatch otherwise
+//
+//	where s(x,y) = match if x==y, mismatch otherwise
+//
 // Time complexity: O(len(a) * len(b))
 // Space complexity: O(len(a) * len(b))
 // Reference: Needleman, Wunsch (1970), "A General Method Applicable to the
-//   Search for Similarities in the Amino Acid Sequence of Two Proteins"
+//
+//	Search for Similarities in the Amino Acid Sequence of Two Proteins"
 func NeedlemanWunsch(a, b string, match, mismatch, gap float64) (string, string, float64) {
 	ra, rb := []rune(a), []rune(b)
 	m, n := len(ra), len(rb)
@@ -102,7 +105,8 @@ func NeedlemanWunsch(a, b string, match, mismatch, gap float64) (string, string,
 // Time complexity: O(len(a) * len(b))
 // Space complexity: O(len(a) * len(b))
 // Reference: Smith, Waterman (1981), "Identification of Common Molecular
-//   Subsequences"
+//
+//	Subsequences"
 func SmithWaterman(a, b string, match, mismatch, gap float64) (string, string, float64) {
 	ra, rb := []rune(a), []rune(b)
 	m, n := len(ra), len(rb)

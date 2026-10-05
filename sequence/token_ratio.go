@@ -16,9 +16,9 @@ import (
 //  1. Tokenise each input by whitespace, fold to lowercase, deduplicate via
 //     a sorted set, and re-join.
 //  2. Compute three composite token strings:
-//        t0 = sorted(intersection)
-//        t1 = sorted(intersection)  +  " "  +  sorted(diff_a)
-//        t2 = sorted(intersection)  +  " "  +  sorted(diff_b)
+//     t0 = sorted(intersection)
+//     t1 = sorted(intersection)  +  " "  +  sorted(diff_a)
+//     t2 = sorted(intersection)  +  " "  +  sorted(diff_b)
 //  3. Compute simpleRatio for each pair (t0,t1), (t0,t2), (t1,t2) and
 //     return the maximum.
 //
@@ -32,9 +32,9 @@ import (
 //   - one empty:         0   (no overlap possible)
 //   - identical strings: 100
 //   - disjoint tokens:   intersection is empty, t0 is empty, t1 / t2 are
-//                        sorted-diffs; ratio collapses to simpleRatio of
-//                        the diffs (which can still be > 0 if individual
-//                        tokens are near-misses character-wise).
+//     sorted-diffs; ratio collapses to simpleRatio of
+//     the diffs (which can still be > 0 if individual
+//     tokens are near-misses character-wise).
 //
 // References:
 //   - Bachmann, M. (2020-2023). RapidFuzz Python.

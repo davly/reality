@@ -94,8 +94,8 @@ func LUDecompose(A []float64, n int, L, U []float64, perm []int) bool {
 // length n. x is the solution vector of length n (pre-allocated).
 //
 // The solution is computed in two steps:
-//   1. Forward substitution: Ly = Pb
-//   2. Back substitution:    Ux = y
+//  1. Forward substitution: Ly = Pb
+//  2. Back substitution:    Ux = y
 //
 // Zero heap allocations (caller provides x; forward substitution reuses x as scratch).
 //
@@ -257,7 +257,8 @@ func Determinant(A []float64, n int) float64 {
 // In that case L contents are undefined.
 //
 // Definition: L[i][j] = (A[i][j] - sum(L[i][k]*L[j][k], k=0..j-1)) / L[j][j]  for i > j
-//             L[j][j] = sqrt(A[j][j] - sum(L[j][k]^2, k=0..j-1))
+//
+//	L[j][j] = sqrt(A[j][j] - sum(L[j][k]^2, k=0..j-1))
 //
 // Valid input range: n >= 1, A must be symmetric positive definite.
 // Zero heap allocations (caller provides all buffers).
@@ -307,8 +308,8 @@ func CholeskyDecompose(A []float64, n int, L []float64) bool {
 // b is the right-hand side vector of length n. x is the solution (pre-allocated).
 //
 // The solution is computed in two steps:
-//   1. Forward substitution: Ly = b
-//   2. Back substitution:    L^T x = y
+//  1. Forward substitution: Ly = b
+//  2. Back substitution:    L^T x = y
 //
 // Zero heap allocations (x is used as scratch for the intermediate y).
 //

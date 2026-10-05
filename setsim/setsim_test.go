@@ -123,9 +123,9 @@ func TestSetOverlapCoefficient_Golden(t *testing.T) {
 //	{}      vs {}      : (0, 0)
 func TestSetOverlapCounts_Golden(t *testing.T) {
 	cases := []struct {
-		name           string
-		a, b           []int
-		wantI, wantU   int
+		name         string
+		a, b         []int
+		wantI, wantU int
 	}{
 		{"overlap", []int{1, 2, 3}, []int{2, 3, 4}, 2, 4},
 		{"disjoint", []int{1, 2}, []int{3, 4}, 0, 4},

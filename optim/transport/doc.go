@@ -55,23 +55,23 @@
 // # API surface
 //
 //   - Wasserstein1D(u, v, p)       — closed-form Wasserstein-p on 1D
-//                                    empirical distributions.
-//                                    p in [1, +Inf); p = 1 is the
-//                                    default Earth-Mover's case.
+//     empirical distributions.
+//     p in [1, +Inf); p = 1 is the
+//     default Earth-Mover's case.
 //   - Wasserstein1DDetailed(u, v)  — W_1 + IQR-normalised distance +
-//                                    sample sizes.  Mirrors
-//                                    RubberDuck's
-//                                    `Wasserstein1DDetailed`.
+//     sample sizes.  Mirrors
+//     RubberDuck's
+//     `Wasserstein1DDetailed`.
 //   - IQRNormalise(samples)        — robust z-score-style
-//                                    normalisation by inter-quartile
-//                                    range (Tukey 1977).
+//     normalisation by inter-quartile
+//     range (Tukey 1977).
 //   - PairwiseWasserstein1D(d, p)  — symmetric K×K distance matrix.
 //   - MinPairwiseWasserstein1D(d)  — smallest pairwise distance + the
-//                                    achieving (i, j) index pair.
+//     achieving (i, j) index pair.
 //   - Sinkhorn(a, b, C, eps, ...)  — log-domain entropic-regularised
-//                                    OT for the general n×m case.
-//                                    Returns transport plan + cost +
-//                                    iteration count.
+//     OT for the general n×m case.
+//     Returns transport plan + cost +
+//     iteration count.
 //
 // # Cross-substrate output parity (R80b)
 //

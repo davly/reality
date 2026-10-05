@@ -40,7 +40,7 @@ var ErrCopulaPDFInvalidTheta = errors.New(
 //
 // Formula (Joe 1997 §5.1):
 //
-//   c(u, v; θ) = (1 + θ) · (uv)^(-1-θ) · ( u^(-θ) + v^(-θ) - 1 )^(-2 - 1/θ)
+//	c(u, v; θ) = (1 + θ) · (uv)^(-1-θ) · ( u^(-θ) + v^(-θ) - 1 )^(-2 - 1/θ)
 //
 // At the boundaries (u or v ∈ {0, 1}) the density is degenerate; the
 // closure clamps to (0, 1) and returns 0 outside.
@@ -96,8 +96,8 @@ func ClaytonLogPDFFn(theta float64) (func(u, v float64) float64, error) {
 //
 // Formula (Joe 1997 §5.1):
 //
-//   Lu = -ln u; Lv = -ln v; T = Lu^θ + Lv^θ; C = exp(-T^(1/θ))
-//   c(u, v; θ) = C / (uv) · T^(2/θ - 2) · (Lu·Lv)^(θ-1) · (T^(1/θ) + θ - 1)
+//	Lu = -ln u; Lv = -ln v; T = Lu^θ + Lv^θ; C = exp(-T^(1/θ))
+//	c(u, v; θ) = C / (uv) · T^(2/θ - 2) · (Lu·Lv)^(θ-1) · (T^(1/θ) + θ - 1)
 func GumbelPDFFn(theta float64) (func(u, v float64) float64, error) {
 	if math.IsNaN(theta) || math.IsInf(theta, 0) || theta < 1 {
 		return nil, ErrCopulaPDFInvalidTheta

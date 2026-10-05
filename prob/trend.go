@@ -139,7 +139,7 @@ func TrendPredictionInterval(data []float64, h, conf float64) (yhat, lower, uppe
 	yhat = intercept + slope*x0
 	tCrit := StudentTQuantile(0.5*(1+conf), nf-2)
 	d := x0 - xbar
-	se := s * math.Sqrt(1 + 1/nf + d*d/sxx)
+	se := s * math.Sqrt(1+1/nf+d*d/sxx)
 	half := tCrit * se
 	return yhat, yhat - half, yhat + half
 }

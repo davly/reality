@@ -286,7 +286,7 @@ func TestSynodicPeriod_CoOrbital(t *testing.T) {
 
 func TestTrueAnomalyFromMean_CircularIdentity(t *testing.T) {
 	// For e=0, true anomaly = mean anomaly.
-	for _, M := range []float64{0, 0.5, 1.0, math.Pi, 2 * math.Pi - 0.1} {
+	for _, M := range []float64{0, 0.5, 1.0, math.Pi, 2*math.Pi - 0.1} {
 		nu := TrueAnomalyFromMean(M, 0, 30)
 		assertClose(t, "circular-id", nu, M, 1e-12)
 	}

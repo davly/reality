@@ -41,10 +41,10 @@ func BezierCubic3D(p0, p1, p2, p3 [3]float64, t float64) [3]float64 {
 	u := 1 - t
 	uu := u * u
 	tt := t * t
-	a := uu * u       // (1-t)^3
-	b := 3 * uu * t   // 3*(1-t)^2*t
-	c := 3 * u * tt   // 3*(1-t)*t^2
-	d := tt * t        // t^3
+	a := uu * u     // (1-t)^3
+	b := 3 * uu * t // 3*(1-t)^2*t
+	c := 3 * u * tt // 3*(1-t)*t^2
+	d := tt * t     // t^3
 	return [3]float64{
 		a*p0[0] + b*p1[0] + c*p2[0] + d*p3[0],
 		a*p0[1] + b*p1[1] + c*p2[1] + d*p3[1],

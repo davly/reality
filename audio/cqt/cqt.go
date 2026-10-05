@@ -81,7 +81,7 @@ func WindowLength(q, sr, f float64) int {
 //   - binsPerOctave:   bins per octave; B = 12 for semitone resolution.
 //   - octaves:         number of octaves to span starting at fMin.
 //   - out:             complex output, len(out) must equal
-//                      binsPerOctave * octaves.
+//     binsPerOctave * octaves.
 //
 // Errors:
 //   - ErrInvalidParams when any of sr, fMin, binsPerOctave, octaves are

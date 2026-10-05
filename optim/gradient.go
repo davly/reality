@@ -76,8 +76,9 @@ func GradientDescent(f func([]float64) float64, grad func([]float64, []float64),
 // approximation, using O(mn) storage and O(mn) work per iteration.
 //
 // Reference: Nocedal & Wright, "Numerical Optimization," Chapter 7.
-//            Liu & Nocedal, "On the limited memory BFGS method for large
-//            scale optimization," Math. Programming 45 (1989).
+//
+//	Liu & Nocedal, "On the limited memory BFGS method for large
+//	scale optimization," Math. Programming 45 (1989).
 func LBFGS(f func([]float64) float64, grad func([]float64, []float64), x0 []float64, m, maxIter int, tol float64) []float64 {
 	n := len(x0)
 

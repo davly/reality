@@ -42,14 +42,20 @@ import (
 // (p in [0,100]). It is implemented in terms of Quantile (p/100).
 //
 // Formula: q = p/100; pos = q*(n-1); lo = floor(pos); frac = pos - lo;
-//          result = sorted[lo] + (sorted[lo+1] - sorted[lo]) * frac
+//
+//	result = sorted[lo] + (sorted[lo+1] - sorted[lo]) * frac
+//
 // Valid range: p in [0, 100]; p is clamped to that interval (a p outside the
-//          range is treated as the nearest endpoint, never an out-of-bounds
-//          index).
+//
+//	range is treated as the nearest endpoint, never an out-of-bounds
+//	index).
+//
 // Output range: within [min(data), max(data)].
 // Edge cases: returns NaN for empty input (no sample => no percentile, matching
-//          the "no evidence" convention but in the general numeric domain where
-//          0/0.5 would be a misleading real value); returns data[0] for n==1.
+//
+//	the "no evidence" convention but in the general numeric domain where
+//	0/0.5 would be a misleading real value); returns data[0] for n==1.
+//
 // Precision: one multiply + one lerp; ~15 significant digits.
 //
 // The input slice is not modified (a copy is sorted internally).
@@ -66,8 +72,10 @@ func Percentile(data []float64, p float64) float64 {
 // slice; this one does not).
 //
 // Formula: pos = q*(n-1); lo = floor(pos); frac = pos - lo;
-//          result = sorted[lo] + (sorted[lo+1] - sorted[lo]) * frac
-//          (when lo+1 >= n, i.e. q == 1, returns sorted[n-1])
+//
+//	result = sorted[lo] + (sorted[lo+1] - sorted[lo]) * frac
+//	(when lo+1 >= n, i.e. q == 1, returns sorted[n-1])
+//
 // Valid range: q in [0, 1]; q is clamped to that interval.
 // Output range: within [min(data), max(data)].
 // Edge cases: returns NaN for empty input; returns data[0] for n==1.

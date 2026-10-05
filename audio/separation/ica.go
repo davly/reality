@@ -168,8 +168,8 @@ func FastICA(observations [][]float64, maxIterations int) [][]float64 {
 	// Step 4 + 5: Fixed-point iteration with symmetric decorrelation.
 	const tol = 1e-4
 	wNew := make([]float64, K*K)
-	gz := make([]float64, T)   // g(wᵀ z)
-	gpz := 0.0                 // mean g'(wᵀ z)
+	gz := make([]float64, T) // g(wᵀ z)
+	gpz := 0.0               // mean g'(wᵀ z)
 	for iter := 0; iter < maxIterations; iter++ {
 		// For each row i:
 		for i := 0; i < K; i++ {

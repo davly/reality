@@ -285,7 +285,7 @@ func TestMagnitude_PanicsOnShortOut(t *testing.T) {
 func TestPeakBin_FindsMaxMagnitude(t *testing.T) {
 	in := []complex128{
 		complex(1, 0),
-		complex(3, 4),  // |.|=5 — peak
+		complex(3, 4), // |.|=5 — peak
 		complex(0, 2),
 	}
 	if got := PeakBin(in); got != 1 {

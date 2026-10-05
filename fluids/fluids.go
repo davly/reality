@@ -61,11 +61,13 @@ func BernoulliPressure(rho, v1, p1, h1, v2, h2, g float64) float64 {
 // using the Colebrook–White equation (solved iteratively).
 //
 // For laminar flow (Re < 2300), the exact Hagen–Poiseuille result is used:
-//   f = 64 / Re
+//
+//	f = 64 / Re
 //
 // For turbulent flow (Re >= 2300), the Colebrook–White implicit equation is
 // solved by fixed-point iteration (typically converges in < 20 iterations):
-//   1/√f = -2 log₁₀(ε/(3.7D) + 2.51/(Re√f))
+//
+//	1/√f = -2 log₁₀(ε/(3.7D) + 2.51/(Re√f))
 //
 // Parameters:
 //   - Re:        Reynolds number (dimensionless), must be > 0

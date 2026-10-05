@@ -17,7 +17,9 @@ import "errors"
 // string b using the Wagner-Fischer dynamic programming algorithm.
 //
 // Formula: dp[i][j] = min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+cost)
-//   where cost = 0 if a[i]==b[j], else 1
+//
+//	where cost = 0 if a[i]==b[j], else 1
+//
 // Time complexity: O(len(a) * len(b))
 // Space complexity: O(min(len(a), len(b))) — uses two-row optimization
 // Reference: Wagner, Fischer (1974), "The String-to-String Correction Problem"
@@ -46,8 +48,8 @@ func LevenshteinDistance(a, b string) int {
 				cost = 0
 			}
 			curr[i] = min3(
-				prev[i]+1,     // deletion
-				curr[i-1]+1,   // insertion
+				prev[i]+1,      // deletion
+				curr[i-1]+1,    // insertion
 				prev[i-1]+cost, // substitution
 			)
 		}
@@ -66,7 +68,8 @@ func LevenshteinDistance(a, b string) int {
 // Time complexity: O(len(a) * len(b))
 // Space complexity: O(len(a) * len(b))
 // Reference: Damerau (1964), "A Technique for Computer Detection and
-//   Correction of Spelling Errors"
+//
+//	Correction of Spelling Errors"
 func DamerauLevenshtein(a, b string) int {
 	ra, rb := []rune(a), []rune(b)
 	m, n := len(ra), len(rb)
@@ -89,9 +92,9 @@ func DamerauLevenshtein(a, b string) int {
 			}
 
 			dp[i][j] = min3(
-				dp[i-1][j]+1,       // deletion
-				dp[i][j-1]+1,       // insertion
-				dp[i-1][j-1]+cost,  // substitution
+				dp[i-1][j]+1,      // deletion
+				dp[i][j-1]+1,      // insertion
+				dp[i-1][j-1]+cost, // substitution
 			)
 
 			// Transposition.
@@ -139,10 +142,13 @@ func HammingDistance(a, b string) (int, error) {
 // prefix (up to 4 characters), with a scaling factor of 0.1.
 //
 // Formula: jaro = (matches/|a| + matches/|b| + (matches-transpositions)/matches) / 3
-//   winkler = jaro + prefix * 0.1 * (1 - jaro)
+//
+//	winkler = jaro + prefix * 0.1 * (1 - jaro)
+//
 // Time complexity: O(len(a) * len(b))
 // Reference: Winkler (1990), "String Comparator Metrics and Enhanced Decision
-//   Rules in the Fellegi-Sunter Model of Record Linkage"
+//
+//	Rules in the Fellegi-Sunter Model of Record Linkage"
 func JaroWinkler(a, b string) float64 {
 	ra, rb := []rune(a), []rune(b)
 	la, lb := len(ra), len(rb)
@@ -351,4 +357,3 @@ func max2(a, b int) int {
 	}
 	return b
 }
-

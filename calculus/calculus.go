@@ -81,7 +81,7 @@ func NumericalGradient(f func([]float64) float64, x []float64, h float64, out []
 // where h = (b-a)/n.
 //
 // Valid range: n >= 1, a < b
-// Precision: O(h^2) — error proportional to h^2 * max|f''|
+// Precision: O(h^2) — error proportional to h^2 * max|f″|
 // Reference: Burden & Faires, Numerical Analysis, Chapter 4.
 func TrapezoidalRule(f func(float64) float64, a, b float64, n int) float64 {
 	if n < 1 {

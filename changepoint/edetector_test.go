@@ -74,11 +74,11 @@ func TestEProcess_FalseAlarmControlledUnderNull(t *testing.T) {
 // the CUSUM e-detector raises an alarm, and the alarm lands after the change.
 func TestEDetector_DetectsMeanShift(t *testing.T) {
 	const (
-		alpha    = 0.05
-		preLen   = 80
-		postLen  = 120
-		trials   = 1000
-		shiftTo  = 0.85 // post-change mean (pre-change null mean 0.5)
+		alpha   = 0.05
+		preLen  = 80
+		postLen = 120
+		trials  = 1000
+		shiftTo = 0.85 // post-change mean (pre-change null mean 0.5)
 	)
 	rng := rand.New(rand.NewSource(11))
 	detected := 0
@@ -160,8 +160,8 @@ func TestEProcess_LogMatchesProduct(t *testing.T) {
 
 func TestBettingEValue_Validation(t *testing.T) {
 	cases := []struct {
-		name                   string
-		mu0, lambda, lo, hi    float64
+		name                string
+		mu0, lambda, lo, hi float64
 	}{
 		{"lo>=hi", 0.5, 0.5, 1.0, 1.0},
 		{"mu0 at boundary", 1.0, 0.5, 0.0, 1.0},

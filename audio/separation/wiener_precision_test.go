@@ -54,8 +54,8 @@ func TestWienerNoNoisePassThrough(t *testing.T) {
 // TestWienerNoiseOnlyFullAttenuation pins |X|==|N| => SNR==0 => G==0.
 func TestWienerNoiseOnlyFullAttenuation(t *testing.T) {
 	// in == noise (same magnitude) => gain 0 => output 0.
-	in := []complex128{complex(3, 4)}      // |X|=5
-	noise := []complex128{complex(5, 0)}   // |N|=5
+	in := []complex128{complex(3, 4)}    // |X|=5
+	noise := []complex128{complex(5, 0)} // |N|=5
 	out := WienerFilter(in, noise)
 	if out[0] != 0 {
 		t.Errorf("PRECISION OVER-CLAIM: WienerFilter |X|==|N| gave %v, want 0 (full attenuation)", out[0])

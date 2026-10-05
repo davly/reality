@@ -83,10 +83,10 @@ func (p NigPrior) Validate() error {
 //
 // Bocpd is not safe for concurrent use. Wrap in a mutex if shared.
 type Bocpd struct {
-	prior    NigPrior
-	rMax     int
-	lambda   float64 // constant hazard rate; H(r) = 1/lambda
-	t        int     // observations seen so far
+	prior  NigPrior
+	rMax   int
+	lambda float64 // constant hazard rate; H(r) = 1/lambda
+	t      int     // observations seen so far
 
 	// Run-length posterior. p[r] = P(r_t = r | x_{1:t}).
 	// Length is min(t+1, rMax+1). Always sums to 1 after Update.

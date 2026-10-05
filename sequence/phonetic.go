@@ -15,23 +15,23 @@ package sequence
 // Input is case-insensitive (the first letter is uppercased in the output).
 //
 // Algorithm:
-//   1. Retain the first letter (uppercased).
-//   2. Encode each subsequent letter as a digit:
-//        B,F,P,V         -> 1
-//        C,G,J,K,Q,S,X,Z -> 2
-//        D,T             -> 3
-//        L               -> 4
-//        M,N             -> 5
-//        R               -> 6
-//        A,E,I,O,U,Y     -> 0  (vowel; treated as a separator)
-//        H,W             -> transparent (skip, but do NOT reset the running class)
-//   3. If two same-class consonants are adjacent — INCLUDING when separated
-//      only by H or W — keep only the first.  If separated by a vowel
-//      (A/E/I/O/U/Y), keep both.  This is the modern Soundex H/W rule.
-//   4. The first letter's class is also part of the running class, so a
-//      same-class consonant immediately after the first letter is dropped
-//      (e.g. "Pfister" -> "P236", not "P1236", because F shares P's class 1).
-//   5. Truncate or zero-pad to 4 characters.
+//  1. Retain the first letter (uppercased).
+//  2. Encode each subsequent letter as a digit:
+//     B,F,P,V         -> 1
+//     C,G,J,K,Q,S,X,Z -> 2
+//     D,T             -> 3
+//     L               -> 4
+//     M,N             -> 5
+//     R               -> 6
+//     A,E,I,O,U,Y     -> 0  (vowel; treated as a separator)
+//     H,W             -> transparent (skip, but do NOT reset the running class)
+//  3. If two same-class consonants are adjacent — INCLUDING when separated
+//     only by H or W — keep only the first.  If separated by a vowel
+//     (A/E/I/O/U/Y), keep both.  This is the modern Soundex H/W rule.
+//  4. The first letter's class is also part of the running class, so a
+//     same-class consonant immediately after the first letter is dropped
+//     (e.g. "Pfister" -> "P236", not "P1236", because F shares P's class 1).
+//  5. Truncate or zero-pad to 4 characters.
 //
 // References:
 //   - Russell, R. C. (1918). U.S. Patent 1,261,167.

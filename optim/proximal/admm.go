@@ -23,10 +23,10 @@ type AdmmConfig struct {
 
 // AdmmResult reports the outcome of an ADMM run.
 type AdmmResult struct {
-	Iter         int
-	Converged    bool
-	PrimalResid  float64 // ||x - z||_inf
-	DualResid    float64 // rho * ||z - z_prev||_inf
+	Iter        int
+	Converged   bool
+	PrimalResid float64 // ||x - z||_inf
+	DualResid   float64 // rho * ||z - z_prev||_inf
 }
 
 // Admm solves

@@ -55,16 +55,16 @@ func oracleProportionBF10(k, n int) float64 {
 // independent high-resolution Simpson quadrature oracle to < 1e-6 relative.
 func TestProportionBayesFactor10_OracleQuadrature(t *testing.T) {
 	cases := []struct{ k, n int }{
-		{25, 50},   // exactly half: weak/no evidence
-		{5, 10},    // p_hat = 0.5
-		{8, 10},    // mild evidence
-		{0, 10},    // all failures: BF10 < 1
-		{10, 10},   // all successes
-		{45, 50},   // strong evidence
-		{60, 100},  // mild
-		{90, 100},  // very strong
+		{25, 50},    // exactly half: weak/no evidence
+		{5, 10},     // p_hat = 0.5
+		{8, 10},     // mild evidence
+		{0, 10},     // all failures: BF10 < 1
+		{10, 10},    // all successes
+		{45, 50},    // strong evidence
+		{60, 100},   // mild
+		{90, 100},   // very strong
 		{750, 1000}, // very strong, larger n (oracle still finite here)
-		{1, 1},     // smallest n
+		{1, 1},      // smallest n
 	}
 
 	for _, c := range cases {
@@ -92,7 +92,7 @@ func TestProportionBayesFactor10_OracleQuadrature(t *testing.T) {
 func TestProportionBayesFactor10_FiniteGuard(t *testing.T) {
 	cases := []struct{ k, n int }{
 		{9000, 10000},
-		{5000, 5000},  // all successes, large n
+		{5000, 5000}, // all successes, large n
 		{20000, 20000},
 	}
 	for _, c := range cases {
@@ -137,10 +137,10 @@ func TestProportionBayesFactor10_Monotone(t *testing.T) {
 // mode: (NaN, false) for out-of-range arguments.
 func TestProportionBayesFactor10_InvalidInputs(t *testing.T) {
 	cases := []struct{ k, n int }{
-		{0, 0},    // n < 1
-		{-1, 10},  // k < 0
-		{11, 10},  // k > n
-		{5, -3},   // n < 1
+		{0, 0},   // n < 1
+		{-1, 10}, // k < 0
+		{11, 10}, // k > n
+		{5, -3},  // n < 1
 	}
 	for _, c := range cases {
 		bf, ok := ProportionBayesFactor10(c.k, c.n)

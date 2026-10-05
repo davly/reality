@@ -17,10 +17,10 @@ func TestMM1_Rho50(t *testing.T) {
 	// Classic textbook: λ=1, μ=2, ρ=0.5
 	Lq, Wq, L, W, rho := MM1(1, 2)
 	assertClose(t, "rho", rho, 0.5)
-	assertClose(t, "L", L, 1.0)           // ρ/(1-ρ) = 0.5/0.5 = 1
-	assertClose(t, "W", W, 1.0)           // 1/(μ-λ) = 1/1 = 1
-	assertClose(t, "Lq", Lq, 0.5)         // ρ²/(1-ρ) = 0.25/0.5 = 0.5
-	assertClose(t, "Wq", Wq, 0.5)         // ρ/(μ-λ) = 0.5/1 = 0.5
+	assertClose(t, "L", L, 1.0)   // ρ/(1-ρ) = 0.5/0.5 = 1
+	assertClose(t, "W", W, 1.0)   // 1/(μ-λ) = 1/1 = 1
+	assertClose(t, "Lq", Lq, 0.5) // ρ²/(1-ρ) = 0.25/0.5 = 0.5
+	assertClose(t, "Wq", Wq, 0.5) // ρ/(μ-λ) = 0.5/1 = 0.5
 }
 
 func TestMM1_Rho80(t *testing.T) {

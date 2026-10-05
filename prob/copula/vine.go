@@ -179,13 +179,14 @@ func (v *DVine) HFunctionPass(treeIdx int, u []float64) ([]float64, error) {
 // likelihood decomposition (§2.5).
 //
 // Algorithm:
-//   For tree T_1 (raw observations), edge e couples u[e] with u[e+1]:
-//     contribution = log c_e( u[e], u[e+1]; θ_e )
-//   For tree T_k (k > 1, pseudo-observations), edge e couples
-//   pseudo[e] with pseudo[e+1] where pseudo is the previous tree's
-//   h-function output:
-//     contribution = log c_e( pseudo[e], pseudo[e+1]; θ_e )
-//   Sum all contributions across all trees.
+//
+//	For tree T_1 (raw observations), edge e couples u[e] with u[e+1]:
+//	  contribution = log c_e( u[e], u[e+1]; θ_e )
+//	For tree T_k (k > 1, pseudo-observations), edge e couples
+//	pseudo[e] with pseudo[e+1] where pseudo is the previous tree's
+//	h-function output:
+//	  contribution = log c_e( pseudo[e], pseudo[e+1]; θ_e )
+//	Sum all contributions across all trees.
 //
 // Returns -∞ when any input falls on the unit-hypercube boundary
 // (the bivariate copula densities are degenerate there).

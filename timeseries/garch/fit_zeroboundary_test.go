@@ -20,8 +20,8 @@ func TestFit_ZeroBoundaryWarmStart(t *testing.T) {
 		eps[i] = 0.01 * rng.NormFloat64()
 	}
 	for _, init := range []Model{
-		{Omega: 1e-6, Alpha: 0.0, Beta: 0.90},  // pure persistence (Alpha==0)
-		{Omega: 1e-6, Alpha: 0.05, Beta: 0.0},  // ARCH(1) (Beta==0)
+		{Omega: 1e-6, Alpha: 0.0, Beta: 0.90}, // pure persistence (Alpha==0)
+		{Omega: 1e-6, Alpha: 0.05, Beta: 0.0}, // ARCH(1) (Beta==0)
 	} {
 		init.UncondVar = init.Omega / (1 - init.Alpha - init.Beta)
 		fitted, res, err := Fit(eps, init, FitConfig{MaxIter: 50})

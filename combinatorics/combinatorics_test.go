@@ -443,7 +443,10 @@ func TestNextPermutation_Single(t *testing.T) {
 // RandomSubset
 // ---------------------------------------------------------------------------
 
-type fixedRNG struct{ vals []int; idx int }
+type fixedRNG struct {
+	vals []int
+	idx  int
+}
 
 func (r *fixedRNG) Intn(n int) int {
 	v := r.vals[r.idx%len(r.vals)]

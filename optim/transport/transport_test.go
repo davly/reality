@@ -508,10 +508,10 @@ func TestSinkhorn_LogDomainStability(t *testing.T) {
 
 func TestMinPairwise_FindsClosestPair(t *testing.T) {
 	dists := [][]float64{
-		{0, 1, 2},          // group A
-		{100, 101, 102},    // group C
-		{0.5, 1.5, 2.5},    // group A' (closest to A)
-		{50, 51, 52},       // group B
+		{0, 1, 2},       // group A
+		{100, 101, 102}, // group C
+		{0.5, 1.5, 2.5}, // group A' (closest to A)
+		{50, 51, 52},    // group B
 	}
 	idx, dist, err := MinPairwiseWasserstein1D(dists, 1)
 	if err != nil {

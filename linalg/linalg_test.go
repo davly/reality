@@ -334,7 +334,7 @@ func TestMatTranspose_DoubleTranspose(t *testing.T) {
 	A := []float64{1, 2, 3, 4, 5, 6}
 	tmp := make([]float64, 6)
 	out := make([]float64, 6)
-	MatTranspose(A, 2, 3, tmp) // 2x3 -> 3x2
+	MatTranspose(A, 2, 3, tmp)   // 2x3 -> 3x2
 	MatTranspose(tmp, 3, 2, out) // 3x2 -> 2x3
 	assertSliceClose(t, "double-transpose", out, A, 1e-15)
 }

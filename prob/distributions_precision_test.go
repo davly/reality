@@ -41,8 +41,9 @@ func genUnitOpen(u uint64) float64 {
 // A quantile error of <= 1.15e-9 relative maps (via the PDF, max ~0.4) to a
 // CDF round-trip error comfortably under ~1e-9 in the bulk; in the deep tails
 // the relative-error claim is on the quantile magnitude, so we check both:
-//   (a) bulk p in [1e-6, 1-1e-6]: CDF round-trip < 1e-9
-//   (b) full domain: relative consistency of the Acklam approx.
+//
+//	(a) bulk p in [1e-6, 1-1e-6]: CDF round-trip < 1e-9
+//	(b) full domain: relative consistency of the Acklam approx.
 func TestNormalQuantileRoundTrip(t *testing.T) {
 	var worstBulk, worstBulkAt float64
 	prop := func(u uint64) bool {

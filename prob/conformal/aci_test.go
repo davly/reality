@@ -15,10 +15,10 @@ import (
 // static baseline and this test fails (verified by the revert harness).
 func TestACI_LongRunCoverageUnderDrift(t *testing.T) {
 	const (
-		alpha  = 0.10
-		gamma  = 0.02
-		nCal   = 500
-		steps  = 20000
+		alpha = 0.10
+		gamma = 0.02
+		nCal  = 500
+		steps = 20000
 	)
 	rng := rand.New(rand.NewSource(3))
 	// FIXED calibration scores (half-normal, scale 1) — frozen for the whole run.

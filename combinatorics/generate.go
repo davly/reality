@@ -109,11 +109,11 @@ func GenerateCombinations(n, k int) [][]int {
 // (fully descending), it returns false without modifying perm.
 //
 // Algorithm: standard "next permutation" algorithm.
-// 1. Find largest i such that perm[i] < perm[i+1]. If none, this is the
-//    last permutation.
-// 2. Find largest j > i such that perm[j] > perm[i].
-// 3. Swap perm[i] and perm[j].
-// 4. Reverse perm[i+1:].
+//  1. Find largest i such that perm[i] < perm[i+1]. If none, this is the
+//     last permutation.
+//  2. Find largest j > i such that perm[j] > perm[i].
+//  3. Swap perm[i] and perm[j].
+//  4. Reverse perm[i+1:].
 //
 // Time complexity: O(n) amortised over all permutations.
 // Reference: Knuth, TAOCP vol. 4A, Algorithm L; also Dijkstra (1976)

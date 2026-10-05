@@ -41,7 +41,7 @@ func TestIdentifyEffect_LiteratureTruthTable(t *testing.T) {
 			name:     "back-door observed confounder Z->X, Z->Y, X->Y",
 			nodes:    []string{"Z", "X", "Y"},
 			directed: []Edge{{"Z", "X"}, {"Z", "Y"}, {"X", "Y"}},
-			x: []string{"X"}, y: []string{"Y"},
+			x:        []string{"X"}, y: []string{"Y"},
 			wantID: true, note: "adjust for Z",
 		},
 		{
@@ -52,11 +52,11 @@ func TestIdentifyEffect_LiteratureTruthTable(t *testing.T) {
 			wantID: false, note: "IV is NOT nonparametrically identifiable",
 		},
 		{
-			name:     "napkin graph",
-			nodes:    []string{"W", "Z", "X", "Y"},
-			directed: []Edge{{"W", "Z"}, {"Z", "X"}, {"X", "Y"}},
+			name:       "napkin graph",
+			nodes:      []string{"W", "Z", "X", "Y"},
+			directed:   []Edge{{"W", "Z"}, {"Z", "X"}, {"X", "Y"}},
 			bidirected: []Edge{{"W", "X"}, {"W", "Y"}},
-			x: []string{"X"}, y: []string{"Y"},
+			x:          []string{"X"}, y: []string{"Y"},
 			wantID: true, note: "famous identifiable case (Pearl)",
 		},
 		{

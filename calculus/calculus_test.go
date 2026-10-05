@@ -14,17 +14,17 @@ import (
 // ---------------------------------------------------------------------------
 
 var scalarFuncs = map[string]func(float64) float64{
-	"x":    func(x float64) float64 { return x },
-	"x^2":  func(x float64) float64 { return x * x },
-	"x^3":  func(x float64) float64 { return x * x * x },
-	"x^4":  func(x float64) float64 { return x * x * x * x },
-	"sin":  math.Sin,
-	"cos":  math.Cos,
-	"exp":  math.Exp,
-	"ln":   math.Log,
-	"1/x":  func(x float64) float64 { return 1.0 / x },
-	"5":    func(float64) float64 { return 5 },
-	"7":    func(float64) float64 { return 7 },
+	"x":   func(x float64) float64 { return x },
+	"x^2": func(x float64) float64 { return x * x },
+	"x^3": func(x float64) float64 { return x * x * x },
+	"x^4": func(x float64) float64 { return x * x * x * x },
+	"sin": math.Sin,
+	"cos": math.Cos,
+	"exp": math.Exp,
+	"ln":  math.Log,
+	"1/x": func(x float64) float64 { return 1.0 / x },
+	"5":   func(float64) float64 { return 5 },
+	"7":   func(float64) float64 { return 7 },
 }
 
 // ---------------------------------------------------------------------------

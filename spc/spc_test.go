@@ -25,10 +25,10 @@ const tol = 1e-9
 
 func TestCp(t *testing.T) {
 	tests := []struct {
-		name           string
-		usl, lsl, sig  float64
-		want           float64
-		wantErr        error
+		name          string
+		usl, lsl, sig float64
+		want          float64
+		wantErr       error
 	}{
 		{"centered six-sigma spread", 103, 97, 1, 1.0, nil},
 		{"six sigma (Cp=2)", 106, 94, 1, 2.0, nil},

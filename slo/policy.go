@@ -164,9 +164,9 @@ func RecommendedWindows(period float64) ([]Window, error) {
 		return nil, ErrNonPositivePeriod
 	}
 	tiers := []RecommendedTier{
-		{BudgetFraction: 0.02, LongWindow: period / 720, Severity: "page"},   // 1h of 30d
-		{BudgetFraction: 0.05, LongWindow: period / 120, Severity: "page"},   // 6h of 30d
-		{BudgetFraction: 0.10, LongWindow: period / 10, Severity: "ticket"},  // 3d of 30d
+		{BudgetFraction: 0.02, LongWindow: period / 720, Severity: "page"},  // 1h of 30d
+		{BudgetFraction: 0.05, LongWindow: period / 120, Severity: "page"},  // 6h of 30d
+		{BudgetFraction: 0.10, LongWindow: period / 10, Severity: "ticket"}, // 3d of 30d
 	}
 	windows := make([]Window, len(tiers))
 	for i, t := range tiers {

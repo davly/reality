@@ -22,7 +22,7 @@ func TestHzToMelKnownPoints(t *testing.T) {
 		// Cross-checked against librosa.hz_to_mel(htk=True).
 		// Note librosa uses 2595 * log10(1 + f/700) by default which
 		// corresponds to 1127 * ln(1 + f/700) — same Slaney form.
-		{700.0, 1127.0 * math.Log(2.0)},   // ~781.42 mel
+		{700.0, 1127.0 * math.Log(2.0)}, // ~781.42 mel
 		{1000.0, 1127.0 * math.Log1p(10.0/7.0)},
 	}
 	for _, c := range cases {

@@ -6,9 +6,9 @@ import "testing"
 // R-MUTUAL-CROSS-VALIDATION-IN-PARITY-TEST watchlist (S62 overnight,
 // 2026-05-06) to 3/3. The two prior consumers were:
 //
-//   1. F2.b changepoint × infogeo (TV + Hellinger ordering check)
-//   2. Project 1 optim × proximal (FBS + FISTA + ADMM all converge to
-//      same closed-form on LASSO with X = I)
+//  1. F2.b changepoint × infogeo (TV + Hellinger ordering check)
+//  2. Project 1 optim × proximal (FBS + FISTA + ADMM all converge to
+//     same closed-form on LASSO with X = I)
 //
 // This third consumer:
 //

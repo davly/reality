@@ -22,8 +22,8 @@
 //
 // **2 of 3 instantiated consumers as of 2026-05-01:**
 //
-//   1. flagships/dipstick (consumer brand — substrate pioneer)
-//   2. flagships/fleetworks-torque (commercial fleet sister — landed 2026-05-01)
+//  1. flagships/dipstick (consumer brand — substrate pioneer)
+//  2. flagships/fleetworks-torque (commercial fleet sister — landed 2026-05-01)
 //
 // The 3rd consumer slot lands when:
 //   - Dipstick KMM Kotlin compiles in Android Studio (port shipped;

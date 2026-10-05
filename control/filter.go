@@ -53,12 +53,13 @@ func HighPassFilter(prevFiltered, prev, current, alpha float64) float64 {
 // Definition: out = alpha * (gyro * dt + accel_component) + (1 - alpha) * accel
 //
 // In practice this is a first-order complementary filter:
-//   out = alpha * (prev_angle + gyro * dt) + (1 - alpha) * accel
+//
+//	out = alpha * (prev_angle + gyro * dt) + (1 - alpha) * accel
 //
 // The caller must maintain the previous angle estimate and pass it as accel's
 // complementary value. For a simplified interface:
 //
-//   angle = ComplementaryFilter(accel_angle, gyro_rate, alpha, dt)
+//	angle = ComplementaryFilter(accel_angle, gyro_rate, alpha, dt)
 //
 // where accel_angle is the angle derived from the accelerometer alone, and
 // gyro_rate is the angular velocity from the gyroscope.
@@ -90,9 +91,10 @@ func ComplementaryFilter(accel, gyro, alpha, dt float64) float64 {
 // toward target but does not exceed maxRate * dt change from current.
 //
 // Definition:
-//   delta = target - current
-//   if |delta| <= maxRate * dt: return target
-//   else: return current + sign(delta) * maxRate * dt
+//
+//	delta = target - current
+//	if |delta| <= maxRate * dt: return target
+//	else: return current + sign(delta) * maxRate * dt
 //
 // maxRate must be positive (the maximum rate of change per second).
 // dt must be positive; if dt <= 0, current is returned unchanged.

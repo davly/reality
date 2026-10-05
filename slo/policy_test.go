@@ -58,9 +58,9 @@ func TestRecommendedWindowsScaleWithPeriod(t *testing.T) {
 func TestWindowFires(t *testing.T) {
 	w := Window{Long: 1, Short: 1.0 / 12.0, BurnRateThreshold: 14.4}
 	tests := []struct {
-		name       string
+		name        string
 		long, short float64
-		want       bool
+		want        bool
 	}{
 		{"both above -> fire", 20, 20, true},
 		{"both exactly at threshold -> fire", 14.4, 14.4, true},

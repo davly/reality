@@ -758,7 +758,7 @@ func TestApplyWindow_PanicLengthMismatch(t *testing.T) {
 func TestPipeline_WindowedFFT(t *testing.T) {
 	// Generate a sinusoid, window it, FFT, verify peak location.
 	n := 256
-	sr := 1000.0 // 1 kHz sample rate
+	sr := 1000.0  // 1 kHz sample rate
 	freq := 100.0 // 100 Hz signal
 
 	sig := make([]float64, n)

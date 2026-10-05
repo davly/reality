@@ -117,9 +117,9 @@ func MurmurHash3_32(data []byte, seed uint32) uint32 {
 // Given a key and the number of buckets, it returns a bucket in [0, numBuckets).
 //
 // The algorithm has two important properties:
-//   1. Uniform distribution: keys are evenly spread across buckets.
-//   2. Monotonicity: when numBuckets increases, keys only move to the new
-//      bucket (never between existing buckets).
+//  1. Uniform distribution: keys are evenly spread across buckets.
+//  2. Monotonicity: when numBuckets increases, keys only move to the new
+//     bucket (never between existing buckets).
 //
 // Returns 0 if numBuckets <= 0.
 //

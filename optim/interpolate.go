@@ -32,7 +32,7 @@ func LinearInterpolate(x0, y0, x1, y1, x float64) float64 {
 // spline at any query point x.
 //
 // "Natural" means the second derivative at both endpoints is zero:
-// S''(x_0) = 0, S''(x_n) = 0. This produces the smoothest interpolant
+// S″(x_0) = 0, S″(x_n) = 0. This produces the smoothest interpolant
 // that passes through all data points.
 //
 // The returned function clamps queries outside [xs[0], xs[n-1]] to the

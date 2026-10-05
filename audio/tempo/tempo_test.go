@@ -65,7 +65,7 @@ func TestEstimate_NegativeBpmBounds_ReturnsErrInvalidParams(t *testing.T) {
 	cases := []Options{
 		{MinBpm: -10, MaxBpm: 200},
 		{MinBpm: 60, MaxBpm: -10},
-		{MinBpm: 200, MaxBpm: 60}, // swapped
+		{MinBpm: 200, MaxBpm: 60},  // swapped
 		{MinBpm: 100, MaxBpm: 100}, // degenerate
 	}
 	for i, opts := range cases {

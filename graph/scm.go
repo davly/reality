@@ -21,11 +21,11 @@ import (
 
 // DiscreteSCM is a binary SCM consistent with an ADMG. Build with RandomSCM.
 type DiscreteSCM struct {
-	observed []string            // sorted observed vertices
-	latents  []string            // one binary latent per bidirected edge
-	parents  map[string][]string // node -> ordered parents (observed dir. parents + latent parents)
+	observed []string                      // sorted observed vertices
+	latents  []string                      // one binary latent per bidirected edge
+	parents  map[string][]string           // node -> ordered parents (observed dir. parents + latent parents)
 	p1       map[string]map[string]float64 // node -> parentConfigKey -> P(node=1 | parents)
-	platent  map[string]float64  // latent -> P(=1)
+	platent  map[string]float64            // latent -> P(=1)
 }
 
 // RandomSCM constructs a random binary SCM consistent with g: each bidirected

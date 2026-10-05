@@ -17,7 +17,8 @@ import "math"
 // degrees of freedom evaluated at x.
 //
 // Formula: F(x; df) = 1 - 0.5 * I_{df/(df + x^2)}(df/2, 1/2)  for x >= 0
-//          F(x; df) =     0.5 * I_{df/(df + x^2)}(df/2, 1/2)  for x <  0
+//
+//	F(x; df) =     0.5 * I_{df/(df + x^2)}(df/2, 1/2)  for x <  0
 //
 // Uses the regularized incomplete beta function via continued fraction.
 // Precision: ~1e-12 for typical (df, x).

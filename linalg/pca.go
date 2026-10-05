@@ -20,11 +20,11 @@ import "math"
 // components (sum of explained[0..nComponents-1]).
 //
 // Algorithm:
-//   1. Center the data (subtract column means).
-//   2. Compute the covariance matrix (nFeatures x nFeatures).
-//   3. Compute eigenvalues via QR algorithm.
-//   4. For each eigenvalue, recover the eigenvector via inverse iteration.
-//   5. Sort by decreasing eigenvalue; fill components and explained.
+//  1. Center the data (subtract column means).
+//  2. Compute the covariance matrix (nFeatures x nFeatures).
+//  3. Compute eigenvalues via QR algorithm.
+//  4. For each eigenvalue, recover the eigenvector via inverse iteration.
+//  5. Sort by decreasing eigenvalue; fill components and explained.
 //
 // Valid input range: nSamples >= 2, nFeatures >= 1, 1 <= nComponents <= nFeatures.
 // Allocates internal workspace for covariance matrix and eigen computation.
@@ -268,4 +268,3 @@ func orthoDeflate(v, components []float64, c, nf int) {
 		}
 	}
 }
-

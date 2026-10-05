@@ -22,7 +22,7 @@ import (
 //   - f:        objective function R^n → R (to be minimized)
 //   - x0:       initial solution (copied, not modified)
 //   - neighbor:  generates a neighbor of x; neighbor(current, out) writes
-//                the neighbor into out, avoiding allocation per iteration
+//     the neighbor into out, avoiding allocation per iteration
 //   - temp0:    initial temperature (controls initial acceptance probability)
 //   - cooling:  multiplicative cooling factor per iteration (e.g., 0.999)
 //   - maxIter:  maximum number of iterations
@@ -34,7 +34,8 @@ import (
 // delta = f(neighbor) - f(current) > 0 and T is the current temperature.
 //
 // Reference: Kirkpatrick, Gelatt & Vecchi, "Optimization by Simulated
-//            Annealing," Science 220 (1983).
+//
+//	Annealing," Science 220 (1983).
 func SimulatedAnnealing(
 	f func([]float64) float64,
 	x0 []float64,

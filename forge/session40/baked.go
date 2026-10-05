@@ -30,7 +30,7 @@
 // R73 requires of a strict-R73 substrate. Reality is the ecosystem's
 // canonical Go implementation of R73 for that reason.
 //
-// R74 in Reality
+// # R74 in Reality
 //
 // Reality is the pure-math foundation — it should have the THINNEST
 // possible divergence registry. A foundational library that registered
@@ -42,7 +42,7 @@
 // ecosystem-level declaration that Reality itself is the canonical
 // source for FNV / Jeffreys primitives.
 //
-// Contract
+// # Contract
 //
 // Every constant in this file is referenced (by name or value) in at
 // least one downstream flagship. They are NOT to be renamed or reshaped

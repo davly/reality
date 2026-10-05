@@ -79,14 +79,14 @@ func TestBisection_Golden(t *testing.T) {
 
 	// Map function descriptions to actual Go functions.
 	funcMap := map[string]func(float64) float64{
-		"x^2-2":   func(x float64) float64 { return x*x - 2 },
-		"x^2-3":   func(x float64) float64 { return x*x - 3 },
-		"sin(x)":  math.Sin,
-		"cos(x)":  math.Cos,
-		"x^3-x-2": func(x float64) float64 { return x*x*x - x - 2 },
+		"x^2-2":    func(x float64) float64 { return x*x - 2 },
+		"x^2-3":    func(x float64) float64 { return x*x - 3 },
+		"sin(x)":   math.Sin,
+		"cos(x)":   math.Cos,
+		"x^3-x-2":  func(x float64) float64 { return x*x*x - x - 2 },
 		"exp(x)-3": func(x float64) float64 { return math.Exp(x) - 3 },
-		"x-1":     func(x float64) float64 { return x - 1 },
-		"x^5-x-1": func(x float64) float64 { return x*x*x*x*x - x - 1 },
+		"x-1":      func(x float64) float64 { return x - 1 },
+		"x^5-x-1":  func(x float64) float64 { return x*x*x*x*x - x - 1 },
 	}
 
 	for _, tc := range gf.Cases {

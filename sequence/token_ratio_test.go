@@ -87,8 +87,8 @@ func TestTokenSetRatio_DisjointTokens(t *testing.T) {
 // (same tokens, light reordering, light typo) hits a high threshold.
 func TestTokenSetRatio_HighScoreOnLikelyMatch(t *testing.T) {
 	cases := []struct {
-		a, b   string
-		minOK  int
+		a, b  string
+		minOK int
 	}{
 		{"London W1 SW1A 1AA", "SW1A 1AA London", 80},
 		{"Acme Corp Ltd", "ACME CORPORATION LTD", 70},

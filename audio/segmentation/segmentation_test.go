@@ -157,7 +157,7 @@ func TestSegmentWithMinSilence_NoSplitForShortPauses(t *testing.T) {
 	samples := make([]float64, dur)
 	// Two bursts separated by only 50ms silence — should NOT split when
 	// minSilence > 50ms.
-	makeBurstAt(samples, 0, sr/2, sr, 1000, 1.0) // 0 to 0.5s
+	makeBurstAt(samples, 0, sr/2, sr, 1000, 1.0)          // 0 to 0.5s
 	makeBurstAt(samples, sr/2+sr/20, sr/2, sr, 1000, 1.0) // 0.55s to 1.05s
 
 	got := SegmentWithMinSilence(samples, sr, 200) // 200 ms min silence
@@ -192,8 +192,8 @@ func TestMergeCloseSegments_MergesNearbySegments(t *testing.T) {
 	sr := 16000
 	// Two segments 50 ms apart → should merge with gapMs >= 50.
 	segs := []Segment{
-		{StartIdx: 0, EndIdx: sr / 4},                  // 0 - 250 ms
-		{StartIdx: sr/4 + sr/20, EndIdx: sr / 2},       // 300 ms - 500 ms (50 ms gap)
+		{StartIdx: 0, EndIdx: sr / 4},            // 0 - 250 ms
+		{StartIdx: sr/4 + sr/20, EndIdx: sr / 2}, // 300 ms - 500 ms (50 ms gap)
 	}
 	got := MergeCloseSegments(segs, 100, sr) // 100 ms gap tolerance
 	if len(got) != 1 {
@@ -207,8 +207,8 @@ func TestMergeCloseSegments_MergesNearbySegments(t *testing.T) {
 func TestMergeCloseSegments_KeepsDistantSegments(t *testing.T) {
 	sr := 16000
 	segs := []Segment{
-		{StartIdx: 0, EndIdx: sr / 4},                // 0 - 250 ms
-		{StartIdx: sr, EndIdx: 5 * sr / 4},          // 1000 - 1250 ms (750 ms gap)
+		{StartIdx: 0, EndIdx: sr / 4},      // 0 - 250 ms
+		{StartIdx: sr, EndIdx: 5 * sr / 4}, // 1000 - 1250 ms (750 ms gap)
 	}
 	got := MergeCloseSegments(segs, 100, sr) // 100 ms gap tolerance
 	if len(got) != 2 {
@@ -239,8 +239,8 @@ func TestMergeCloseSegments_PanicsOnInvalid(t *testing.T) {
 func TestFilterByMinDuration_DropsShortSegments(t *testing.T) {
 	sr := 16000
 	segs := []Segment{
-		{StartIdx: 0, EndIdx: sr / 100},   // 10 ms — too short
-		{StartIdx: sr, EndIdx: sr + sr/2}, // 500 ms — kept
+		{StartIdx: 0, EndIdx: sr / 100},          // 10 ms — too short
+		{StartIdx: sr, EndIdx: sr + sr/2},        // 500 ms — kept
 		{StartIdx: 2 * sr, EndIdx: 2*sr + sr/10}, // 100 ms — kept (boundary)
 	}
 	got := FilterByMinDuration(segs, 100, sr)
@@ -263,7 +263,7 @@ func TestFilterByMinDuration_DropsAll(t *testing.T) {
 func TestFilterByMinDuration_KeepsAll(t *testing.T) {
 	sr := 16000
 	segs := []Segment{
-		{StartIdx: 0, EndIdx: sr},     // 1 s
+		{StartIdx: 0, EndIdx: sr},          // 1 s
 		{StartIdx: 2 * sr, EndIdx: 3 * sr}, // 1 s
 	}
 	got := FilterByMinDuration(segs, 100, sr)
@@ -292,9 +292,9 @@ func TestComposition_VAD_Merge_Filter(t *testing.T) {
 	dur := 2 * sr
 	samples := make([]float64, dur)
 	// One sustained "call" with internal pauses (zero-amplitude gaps).
-	makeBurstAt(samples, sr/4, sr/8, sr, 1000, 1.0)        // 250-375 ms
+	makeBurstAt(samples, sr/4, sr/8, sr, 1000, 1.0)          // 250-375 ms
 	makeBurstAt(samples, 3*sr/8+sr/100, sr/8, sr, 1000, 1.0) // ~385-510 ms — 10 ms gap
-	makeBurstAt(samples, sr/2+sr/100, sr/8, sr, 1000, 1.0)  // ~510-635 ms — touching
+	makeBurstAt(samples, sr/2+sr/100, sr/8, sr, 1000, 1.0)   // ~510-635 ms — touching
 
 	segs := SegmentByEnergy(samples, 1024, 256, 0.01)
 	t.Logf("VAD found %d segments before merge", len(segs))

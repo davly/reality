@@ -95,9 +95,9 @@ func ModInverse(a, mod uint64) (uint64, bool) {
 // ChineseRemainder solves a system of simultaneous congruences using the
 // Chinese Remainder Theorem:
 //
-//   x ≡ residues[0] (mod moduli[0])
-//   x ≡ residues[1] (mod moduli[1])
-//   ...
+//	x ≡ residues[0] (mod moduli[0])
+//	x ≡ residues[1] (mod moduli[1])
+//	...
 //
 // Returns the unique solution x in [0, M) where M = product of all moduli,
 // provided all moduli are pairwise coprime. Returns an error if:

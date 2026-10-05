@@ -287,7 +287,7 @@ func TestNextPrime(t *testing.T) {
 		{10, 11},
 		{14, 17},
 		{100, 101},
-		{997, 997},  // 997 is already prime
+		{997, 997}, // 997 is already prime
 		{998, 1009},
 	}
 
@@ -309,8 +309,8 @@ func TestGCD_Known(t *testing.T) {
 	}{
 		{12, 8, 4},
 		{100, 75, 25},
-		{17, 13, 1},    // coprime
-		{48, 48, 48},   // identical
+		{17, 13, 1},  // coprime
+		{48, 48, 48}, // identical
 		{0, 5, 5},
 		{5, 0, 5},
 		{0, 0, 0},
@@ -332,7 +332,7 @@ func TestLCM_Known(t *testing.T) {
 	}{
 		{4, 6, 12},
 		{12, 8, 24},
-		{7, 13, 91},    // coprime
+		{7, 13, 91}, // coprime
 		{0, 5, 0},
 		{5, 0, 0},
 		{0, 0, 0},
@@ -382,13 +382,13 @@ func TestModPow_Known(t *testing.T) {
 	tests := []struct {
 		base, exp, mod, want uint64
 	}{
-		{2, 10, 1000, 24},      // 2^10 = 1024 mod 1000 = 24
-		{3, 4, 100, 81},        // 3^4 = 81
-		{2, 0, 100, 1},         // x^0 = 1
-		{0, 5, 100, 0},         // 0^x = 0
-		{5, 3, 13, 8},          // 5^3 = 125 mod 13 = 8
-		{7, 1, 13, 7},          // x^1 = x
-		{2, 10, 1, 0},          // anything mod 1 = 0
+		{2, 10, 1000, 24}, // 2^10 = 1024 mod 1000 = 24
+		{3, 4, 100, 81},   // 3^4 = 81
+		{2, 0, 100, 1},    // x^0 = 1
+		{0, 5, 100, 0},    // 0^x = 0
+		{5, 3, 13, 8},     // 5^3 = 125 mod 13 = 8
+		{7, 1, 13, 7},     // x^1 = x
+		{2, 10, 1, 0},     // anything mod 1 = 0
 	}
 
 	for _, tt := range tests {
@@ -418,11 +418,11 @@ func TestModInverse(t *testing.T) {
 		want   uint64
 		ok     bool
 	}{
-		{3, 7, 5, true},    // 3*5 = 15 ≡ 1 (mod 7)
-		{2, 5, 3, true},    // 2*3 = 6 ≡ 1 (mod 5)
-		{6, 7, 6, true},    // 6*6 = 36 ≡ 1 (mod 7)
-		{2, 4, 0, false},   // gcd(2,4) = 2, no inverse
-		{0, 5, 0, false},   // 0 has no inverse
+		{3, 7, 5, true},  // 3*5 = 15 ≡ 1 (mod 7)
+		{2, 5, 3, true},  // 2*3 = 6 ≡ 1 (mod 5)
+		{6, 7, 6, true},  // 6*6 = 36 ≡ 1 (mod 7)
+		{2, 4, 0, false}, // gcd(2,4) = 2, no inverse
+		{0, 5, 0, false}, // 0 has no inverse
 	}
 
 	for _, tt := range tests {

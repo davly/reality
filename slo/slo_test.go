@@ -210,9 +210,9 @@ func TestBurnRateNormalisationAgreesWithErrorRate(t *testing.T) {
 
 func TestResetTime(t *testing.T) {
 	tests := []struct {
-		name              string
+		name                string
 		window, brs, actual float64
-		want              float64
+		want                float64
 	}{
 		{"not firing (actual == threshold) resets immediately", 1, 14.4, 14.4, 0},
 		{"below threshold resets immediately", 1, 14.4, 10, 0},

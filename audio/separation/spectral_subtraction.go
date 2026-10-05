@@ -62,8 +62,8 @@ func SubtractSpectrumInto(in, noise, out []complex128) {
 	if len(out) < n {
 		panic("separation.SubtractSpectrumInto: out must have length >= len(in)")
 	}
-	const alpha = 1.0  // over-subtraction factor
-	const beta = 0.01  // spectral floor (1% of noisy magnitude)
+	const alpha = 1.0 // over-subtraction factor
+	const beta = 0.01 // spectral floor (1% of noisy magnitude)
 	for k := 0; k < n; k++ {
 		xMag := cmplx.Abs(in[k])
 		nMag := cmplx.Abs(noise[k])

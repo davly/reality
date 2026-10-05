@@ -43,10 +43,10 @@ func bruteLogShtarkov(n, k int) float64 {
 // match the exact Shtarkov sum for k >= 3.
 func TestNMLMultinomial_MatchesBruteForce(t *testing.T) {
 	cases := [][]int{
-		{3, 3, 4},    // n=10, k=3
-		{2, 4, 2, 2}, // n=10, k=4
-		{2, 1, 1},    // n=4,  k=3
-		{1, 1, 1, 1}, // n=4,  k=4
+		{3, 3, 4},       // n=10, k=3
+		{2, 4, 2, 2},    // n=10, k=4
+		{2, 1, 1},       // n=4,  k=3
+		{1, 1, 1, 1},    // n=4,  k=4
 		{5, 5, 5, 5, 5}, // n=25, k=5
 	}
 	for _, counts := range cases {

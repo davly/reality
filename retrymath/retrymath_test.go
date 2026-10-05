@@ -97,9 +97,9 @@ func TestJitterDrawsWithinIntervals(t *testing.T) {
 		e := CappedExponentialTerm(base, cap, factor, n)
 		for u := 0.0; u < 1.0; u += 0.01 {
 			checks := []struct {
-				name     string
-				got      float64
-				lo, hi   float64
+				name   string
+				got    float64
+				lo, hi float64
 			}{
 				{"full", FullJitter(base, cap, factor, n, u), 0, e},
 				{"equal", EqualJitter(base, cap, factor, n, u), e / 2, e},

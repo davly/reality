@@ -77,37 +77,37 @@
 // # API surface
 //
 //   - GaussianCopulaCDF(u, sigma)           — n-variate (n in {2, 3})
-//                                            Gaussian copula CDF.
+//     Gaussian copula CDF.
 //   - StudentTCopulaCDF(u, sigma, df)       — n-variate (n in {2, 3})
-//                                            Student-t copula CDF
-//                                            with tail dependence
-//                                            for cat-cluster perils.
+//     Student-t copula CDF
+//     with tail dependence
+//     for cat-cluster perils.
 //   - SklarJointFromMarginals(margs, cop)   — Sklar reconstruction:
-//                                            wires marginals + copula
-//                                            into a joint CDF on R^n.
+//     wires marginals + copula
+//     into a joint CDF on R^n.
 //   - GaussianCopulaCDFFn(sigma)            — closure form for use
-//                                            with Sklar.
+//     with Sklar.
 //   - StudentTCopulaCDFFn(sigma, df)        — t-copula closure form.
 //   - KendallTau(x, y)                      — concordance-counter rank
-//                                            correlation; canonical
-//                                            fitting statistic.
+//     correlation; canonical
+//     fitting statistic.
 //   - GaussianCopulaCorrelationFromTau(tau) — Kruskal 1958 link:
-//                                            rho = sin(pi * tau / 2).
+//     rho = sin(pi * tau / 2).
 //   - EmpiricalCdf(data)                    — rank-based PIT helper
-//                                            for transforming raw
-//                                            samples into uniform
-//                                            margins.
+//     for transforming raw
+//     samples into uniform
+//     margins.
 //   - BivariateNormalCDF / TrivariateNormalCDF /
 //     BivariateTCDF / TrivariateTCDF        — exported standard-CDF
-//                                            building blocks for
-//                                            advanced consumers (e.g.
-//                                            arbitrary-dimensionality
-//                                            consumers that combine
-//                                            with their own QMC).
+//     building blocks for
+//     advanced consumers (e.g.
+//     arbitrary-dimensionality
+//     consumers that combine
+//     with their own QMC).
 //   - StudentTCDF / StudentTQuantile        — univariate Student-t
-//                                            CDF + inverse, exposed
-//                                            because the prob package
-//                                            keeps its t-CDF internal.
+//     CDF + inverse, exposed
+//     because the prob package
+//     keeps its t-CDF internal.
 //
 // # R80b cross-substrate output parity
 //

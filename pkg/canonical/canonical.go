@@ -39,9 +39,9 @@ const IsCanonicalSource = true
 // reality package symbol (e.g. "constants.Pi", "constants.SpeedOfLight").
 func CanonicalPrimitives() []string {
 	return []string{
-		"math.pi",               // reality/constants.Pi (delegates to math.Pi)
-		"physics.c",             // reality/constants.SpeedOfLight (299792458 m/s, SI 2019 exact)
-		"color.srgb_to_linear",  // reality/color sRGB <-> linear transforms + golden vectors
+		"math.pi",              // reality/constants.Pi (delegates to math.Pi)
+		"physics.c",            // reality/constants.SpeedOfLight (299792458 m/s, SI 2019 exact)
+		"color.srgb_to_linear", // reality/color sRGB <-> linear transforms + golden vectors
 		/* extend as needed */
 	}
 }

@@ -79,7 +79,8 @@ func IsPrime(n uint64) bool {
 // MillerRabin(n, k) directly only when you specifically want a fixed small k.
 //
 // Formula: decompose n-1 = 2^r · d, then for each witness a check:
-//   a^d ≡ 1 (mod n) OR a^(2^i · d) ≡ -1 (mod n) for some 0 <= i < r.
+//
+//	a^d ≡ 1 (mod n) OR a^(2^i · d) ≡ -1 (mod n) for some 0 <= i < r.
 //
 // Time complexity: O(k · log²(n))
 // Reference: Miller (1976), Rabin (1980)
@@ -155,10 +156,11 @@ func millerRabinWitness(a, d, n uint64, r uint) bool {
 // order. Repeated factors appear multiple times.
 //
 // Examples:
-//   PrimeFactors(12)  = [2, 2, 3]
-//   PrimeFactors(100) = [2, 2, 5, 5]
-//   PrimeFactors(0)   = []
-//   PrimeFactors(1)   = []
+//
+//	PrimeFactors(12)  = [2, 2, 3]
+//	PrimeFactors(100) = [2, 2, 5, 5]
+//	PrimeFactors(0)   = []
+//	PrimeFactors(1)   = []
 //
 // Time complexity: O(√n) for trial division.
 // Reference: trial division, the simplest factorization method.

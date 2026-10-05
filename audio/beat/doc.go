@@ -9,13 +9,15 @@
 //     foundation/reality/audio/onset.SpectralFluxStrength) and a
 //     tempo prior (in BPM, e.g. via
 //     foundation/reality/audio/tempo.Estimate).
+//
 //  2. For each time t, compute backlink score
 //
-//	score[t] = novelty[t] + max over s of (score[s] - alpha * (log((t-s)/period))^2)
+//     score[t] = novelty[t] + max over s of (score[s] - alpha * (log((t-s)/period))^2)
 //
 //     where `period` is the expected inter-beat interval in frames
 //     (60 * frameRate / bpm) and `alpha` controls the rigidity of
 //     the tempo prior.
+//
 //  3. Backtrack from the frame with maximum score to recover the
 //     beat sequence.
 //

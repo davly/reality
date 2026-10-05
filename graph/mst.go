@@ -130,8 +130,8 @@ func PrimMST(n int, edges [][3]float64) (mstEdges [][3]float64, totalWeight floa
 	}
 
 	inMST := make([]bool, n)
-	key := make([]float64, n)   // minimum weight edge connecting node to MST
-	from := make([]int, n)      // the MST node this edge comes from
+	key := make([]float64, n) // minimum weight edge connecting node to MST
+	from := make([]int, n)    // the MST node this edge comes from
 	for i := range key {
 		key[i] = inf
 		from[i] = -1

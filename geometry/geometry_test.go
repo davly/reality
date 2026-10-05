@@ -716,7 +716,7 @@ func TestConvexHull2D_LargerSet(t *testing.T) {
 	// Pentagon with interior points.
 	points := [][2]float64{
 		{0, 0}, {4, 0}, {5, 3}, {2, 5}, {-1, 3}, // hull
-		{1, 1}, {2, 2}, {3, 1}, {2, 3},            // interior
+		{1, 1}, {2, 2}, {3, 1}, {2, 3}, // interior
 	}
 	hull := ConvexHull2D(points)
 	if len(hull) != 5 {

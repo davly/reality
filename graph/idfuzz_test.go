@@ -68,6 +68,7 @@ func measureWorst(t *testing.T, g ADMG, xName, yName string) float64 {
 //   - approximate cases stay within a small bound (no wild divergence = no NEW bug
 //     beyond the documented line-7/8 imperfection);
 //   - the exact rate is high (most identifiable graphs use the common paths).
+//
 // The measured exact/approx breakdown is logged so the limitation's scope is on
 // the record, not just asserted.
 func TestIDFunctional_Fuzz(t *testing.T) {

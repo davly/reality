@@ -163,12 +163,12 @@ func TestXYZLab_Roundtrip(t *testing.T) {
 	// D65 white point
 	Xn, Yn, Zn := 0.9505, 1.0, 1.0890
 	xyzValues := [][3]float64{
-		{0.9505, 1.0, 1.0890},     // white
-		{0.0, 0.0, 0.0},           // black
-		{0.4124, 0.2127, 0.0193},  // red primary approx
-		{0.3576, 0.7152, 0.1192},  // green primary approx
-		{0.1805, 0.0722, 0.9505},  // blue primary approx
-		{0.5, 0.5, 0.5},           // mid-gray
+		{0.9505, 1.0, 1.0890},    // white
+		{0.0, 0.0, 0.0},          // black
+		{0.4124, 0.2127, 0.0193}, // red primary approx
+		{0.3576, 0.7152, 0.1192}, // green primary approx
+		{0.1805, 0.0722, 0.9505}, // blue primary approx
+		{0.5, 0.5, 0.5},          // mid-gray
 	}
 	for _, xyz := range xyzValues {
 		L, a, b := XYZToLab(xyz[0], xyz[1], xyz[2], Xn, Yn, Zn)
@@ -251,9 +251,9 @@ func TestHSV_RGB_Roundtrip(t *testing.T) {
 
 func TestHSVToRGB_KnownValues(t *testing.T) {
 	tests := []struct {
-		h, s, v    float64
-		r, g, b    float64
-		desc       string
+		h, s, v float64
+		r, g, b float64
+		desc    string
 	}{
 		{0, 1, 1, 1, 0, 0, "pure red"},
 		{120, 1, 1, 0, 1, 0, "pure green"},

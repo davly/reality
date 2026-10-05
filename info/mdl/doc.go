@@ -162,9 +162,9 @@
 //   - universal_int.go — UniversalIntegerCodeLength + Bits variant.
 //   - bernoulli.go     — NMLBernoulli + BernoulliCodeLength.
 //   - nml.go           — NMLMultinomial Kontkanen-Myllymäki 2007
-//                        linear-time recursion + computeCn2.
+//     linear-time recursion + computeCn2.
 //   - codelength.go    — GaussianCodeLength + ModelCodeLength +
-//                        BICShape + AICShape adapters.
+//     BICShape + AICShape adapters.
 //   - select.go        — SelectMDL + SelectMDLWithMargin.
 //   - doc.go           — this file.
 package mdl

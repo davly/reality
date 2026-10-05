@@ -426,7 +426,7 @@ func TestR85_AllPitchDetectors_PanicOnZeroSampleRate(t *testing.T) {
 // 0.15. This test pins the dual-directional pattern:
 //
 //   - clean tone: aperiodicity_clean < aperiodicity_noisy AND
-//                 clarity_clean > clarity_noisy.
+//     clarity_clean > clarity_noisy.
 //
 // A regression in either confidence signal alone would still be
 // directional; a regression in BOTH simultaneously (the harder-to-

@@ -195,10 +195,10 @@ type dijkstraItem struct {
 
 type dijkstraHeap []dijkstraItem
 
-func (h dijkstraHeap) Len() int            { return len(h) }
-func (h dijkstraHeap) Less(i, j int) bool   { return h[i].dist < h[j].dist }
-func (h dijkstraHeap) Swap(i, j int)        { h[i], h[j] = h[j], h[i] }
-func (h *dijkstraHeap) Push(x any)          { *h = append(*h, x.(dijkstraItem)) }
+func (h dijkstraHeap) Len() int           { return len(h) }
+func (h dijkstraHeap) Less(i, j int) bool { return h[i].dist < h[j].dist }
+func (h dijkstraHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+func (h *dijkstraHeap) Push(x any)        { *h = append(*h, x.(dijkstraItem)) }
 func (h *dijkstraHeap) Pop() any {
 	old := *h
 	n := len(old)

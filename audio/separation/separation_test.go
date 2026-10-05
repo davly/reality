@@ -126,8 +126,8 @@ func TestSubtractSpectrum_SpectralFloorPreserved(t *testing.T) {
 func TestSubtractSpectrum_PhasePreserved(t *testing.T) {
 	// The phase of the noisy observation must be preserved after
 	// magnitude subtraction. Boll 1979 + Wang & Lim 1982.
-	in := []complex128{complex(2.0, 0)}     // phase 0
-	noise := []complex128{complex(1.0, 0)}  // half magnitude
+	in := []complex128{complex(2.0, 0)}    // phase 0
+	noise := []complex128{complex(1.0, 0)} // half magnitude
 	out := SubtractSpectrum(in, noise)
 	if math.Abs(cmplx.Phase(out[0])-cmplx.Phase(in[0])) > 1e-12 {
 		t.Errorf("phase not preserved: in=%v out=%v", cmplx.Phase(in[0]), cmplx.Phase(out[0]))

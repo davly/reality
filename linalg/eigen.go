@@ -160,7 +160,7 @@ func tridiagonalize(A []float64, n int, d, e []float64) {
 
 		// Householder vector v: v[k+1] = w[k+1,k] - sigma, v[i] = w[i,k] for i > k+1.
 		w[(k+1)*n+k] -= sigma
-		h := w[(k+1)*n+k]*w[(k+1)*n+k] // recompute v^T v
+		h := w[(k+1)*n+k] * w[(k+1)*n+k] // recompute v^T v
 		for i := k + 2; i < n; i++ {
 			h += w[i*n+k] * w[i*n+k]
 		}

@@ -140,14 +140,15 @@ func TestNMLMultinomial_EmptyData(t *testing.T) {
 // and compare against the implementation.
 //
 // For n = 4, k = 2:
-//   C(4, 2) = sum_{r=0}^{4} C(4, r) * (r/4)^r * ((4-r)/4)^(4-r)
-//           = (4/4)^4 + 4*(1/4)^1*(3/4)^3 + 6*(2/4)^2*(2/4)^2
-//             + 4*(3/4)^3*(1/4)^1 + (4/4)^4
-//           = 1 + 4*(0.25)*(0.421875) + 6*(0.25)*(0.25)
-//             + 4*(0.421875)*(0.25) + 1
-//           = 1 + 0.421875 + 0.375 + 0.421875 + 1
-//           = 3.21875
-//   regret = log(3.21875) ≈ 1.16904
+//
+//	C(4, 2) = sum_{r=0}^{4} C(4, r) * (r/4)^r * ((4-r)/4)^(4-r)
+//	        = (4/4)^4 + 4*(1/4)^1*(3/4)^3 + 6*(2/4)^2*(2/4)^2
+//	          + 4*(3/4)^3*(1/4)^1 + (4/4)^4
+//	        = 1 + 4*(0.25)*(0.421875) + 6*(0.25)*(0.25)
+//	          + 4*(0.421875)*(0.25) + 1
+//	        = 1 + 0.421875 + 0.375 + 0.421875 + 1
+//	        = 3.21875
+//	regret = log(3.21875) ≈ 1.16904
 func TestNMLMultinomial_K2_MatchesDirectSum(t *testing.T) {
 	got, err := NMLMultinomial([]int{2, 2})
 	if err != nil {
@@ -167,8 +168,10 @@ func TestNMLMultinomial_K2_MatchesDirectSum(t *testing.T) {
 // k -> k+1 by computing C(n, 3) two ways and asserting equality.
 //
 // For n = 10:
-//   C(10, 3) = C(10, 2) + (10/1) * C(10, 1)   // KM divisor is n/(k-2) = 10/1
-//            = C(10, 2) + 10 * 1.0
+//
+//	C(10, 3) = C(10, 2) + (10/1) * C(10, 1)   // KM divisor is n/(k-2) = 10/1
+//	         = C(10, 2) + 10 * 1.0
+//
 // Compute C(10, 2) directly via the Bernoulli-mass sum, then compare
 // against NMLMultinomial([10/3, 10/3, 10/3 + 1]) = NMLMultinomial([3, 3, 4]).
 func TestNMLMultinomial_K3_KontkanenRecurrence(t *testing.T) {
