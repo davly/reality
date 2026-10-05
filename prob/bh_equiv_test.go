@@ -6,10 +6,12 @@ import (
 	"testing"
 )
 
-// benjaminiHochbergInsertionReference is the procedure exactly as it was
-// before the O(m^2) insertion sort was replaced; it is kept here as the
-// equivalence oracle for finite p-values.
-func benjaminiHochbergInsertionReference(pValues []float64, alpha float64) []bool {
+// benjaminiHochbergInsertionReference is the procedure as it was before the
+// O(m^2) insertion sort was replaced; it is kept here as the equivalence
+// oracle for finite p-values. tol is the relative boundary tolerance of the
+// threshold comparison: 0 reproduces the rule before the boundary tolerance
+// was introduced, 1e-9 the current rule.
+func benjaminiHochbergInsertionReference(pValues []float64, alpha, tol float64) []bool {
 	m := len(pValues)
 	if m == 0 {
 		return nil
@@ -35,7 +37,7 @@ func benjaminiHochbergInsertionReference(pValues []float64, alpha float64) []boo
 	mf := float64(m)
 	for i := m - 1; i >= 0; i-- {
 		rank := float64(i + 1)
-		if sorted[i].p <= rank/mf*alpha {
+		if sorted[i].p <= rank/mf*alpha*(1+tol) {
 			threshold = i
 			break
 		}
@@ -67,7 +69,7 @@ func TestBenjaminiHochberg_MatchesInsertionReference(t *testing.T) {
 		}
 		alpha := alphas[rng.Intn(len(alphas))]
 		got := BenjaminiHochberg(p, alpha)
-		want := benjaminiHochbergInsertionReference(p, alpha)
+		want := benjaminiHochbergInsertionReference(p, alpha, 1e-9)
 		for i := range got {
 			if got[i] != want[i] {
 				t.Fatalf("trial %d alpha %v: mask differs at %d for %v: got %v want %v",
