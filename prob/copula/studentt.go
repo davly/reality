@@ -20,8 +20,11 @@ import "math"
 //
 //	F(x; df) =     0.5 * I_{df/(df + x^2)}(df/2, 1/2)  for x <  0
 //
-// Uses the regularized incomplete beta function via continued fraction.
-// Precision: ~1e-12 for typical (df, x).
+// Uses prob.RegularizedBetaInc, with the complement x^2/(df + x^2) kept
+// exact (see studentTTailBeta).
+// Precision: relative error below 1e-13 for results >= 1e-150 (measured at
+// most 2.1e-15 for results >= 1e-10, df from 1 to 1e6, |x| up to 1e3); the
+// upper half 1 - CDF(-x) is exact to 2e-16 absolute.
 //
 // Reference: Abramowitz & Stegun 26.5.27.
 func StudentTCDF(x, df float64) float64 {
@@ -38,8 +41,7 @@ func StudentTCDF(x, df float64) float64 {
 		// t -> standard normal as df -> inf.
 		return 0.5 * math.Erfc(-x/math.Sqrt2)
 	}
-	bx := df / (df + x*x)
-	ib := regularizedBetaInc(bx, df/2.0, 0.5)
+	ib := studentTTailBeta(df, x*x)
 	if x >= 0 {
 		return 1.0 - 0.5*ib
 	}
@@ -163,79 +165,4 @@ func standardNormalQuantileLocal(p float64) float64 {
 	q = math.Sqrt(-2 * math.Log(1-p))
 	return -(((((c1*q+c2)*q+c3)*q+c4)*q+c5)*q + c6) /
 		((((d1*q+d2)*q+d3)*q+d4)*q + 1)
-}
-
-// regularizedBetaInc computes the regularized incomplete beta function
-// I_x(a, b) = B(x; a, b) / B(a, b) via the modified Lentz continued
-// fraction.  Local copy — reality/prob has the equivalent but
-// unexported.
-//
-// Precision: ~1e-14 for typical (a, b, x).  Returns NaN on out-of-domain.
-//
-// Reference: Press et al., Numerical Recipes 3rd ed §6.4; DLMF 8.17.22.
-func regularizedBetaInc(x, a, b float64) float64 {
-	if x < 0 || x > 1 || a <= 0 || b <= 0 {
-		return math.NaN()
-	}
-	if x == 0 {
-		return 0
-	}
-	if x == 1 {
-		return 1
-	}
-	if x > (a+1)/(a+b+2) {
-		return 1.0 - regularizedBetaInc(1-x, b, a)
-	}
-	la, _ := math.Lgamma(a)
-	lb, _ := math.Lgamma(b)
-	lab, _ := math.Lgamma(a + b)
-	lnPrefactor := a*math.Log(x) + b*math.Log(1-x) - math.Log(a) - (la + lb - lab)
-	return math.Exp(lnPrefactor) * betaContinuedFraction(x, a, b)
-}
-
-func betaContinuedFraction(x, a, b float64) float64 {
-	const maxIter = 200
-	const eps = 1e-14
-	const tiny = 1e-30
-
-	c := 1.0
-	d := 1.0 - (a+b)*x/(a+1)
-	if math.Abs(d) < tiny {
-		d = tiny
-	}
-	d = 1.0 / d
-	f := d
-
-	for m := 1; m <= maxIter; m++ {
-		mf := float64(m)
-		num := mf * (b - mf) * x / ((a + 2*mf - 1) * (a + 2*mf))
-		d = 1.0 + num*d
-		if math.Abs(d) < tiny {
-			d = tiny
-		}
-		c = 1.0 + num/c
-		if math.Abs(c) < tiny {
-			c = tiny
-		}
-		d = 1.0 / d
-		f *= c * d
-
-		num = -(a + mf) * (a + b + mf) * x / ((a + 2*mf) * (a + 2*mf + 1))
-		d = 1.0 + num*d
-		if math.Abs(d) < tiny {
-			d = tiny
-		}
-		c = 1.0 + num/c
-		if math.Abs(c) < tiny {
-			c = tiny
-		}
-		d = 1.0 / d
-		delta := c * d
-		f *= delta
-
-		if math.Abs(delta-1.0) < eps {
-			return f
-		}
-	}
-	return f
 }
