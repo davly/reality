@@ -18,6 +18,7 @@ import (
 	"math/big"
 
 	"github.com/davly/reality/linalg"
+	"github.com/davly/reality/optim"
 )
 
 func numVec(c precisionCase, k string) []float64 {
@@ -106,6 +107,7 @@ func numBool(b bool) float64 {
 
 func init() {
 	registerLinalgEvaluators()
+	registerOptimEvaluators()
 	registerKnownPrecisionViolations(numericsKnownViolations)
 }
 
@@ -133,6 +135,19 @@ var numericsKnownViolations = map[string]string{
 	"numerics/det/singular-rank2-covariance":     "returns -5.4e-14 for an exactly singular integer covariance: the pivot test is an absolute 1e-300",
 	"numerics/inverse/singular-1to9":             "reports success (inverse entries ~4.5e15) for an exactly singular integer matrix",
 	"numerics/inverse/singular-rank2-covariance": "reports success for an exactly singular integer covariance (30 of 49 such rank-2 3x3 matrices pass)",
+
+	// optim
+	"numerics/lbfgs/rosenbrock-maxiter100":     "returns (-0.949, 0.907), 1.95 from the minimizer, with no signal: the Armijo-only line search accepts steps that fail the curvature condition, so 639 of the 673 iterations it needs skip the update (with a Wolfe search: 38)",
+	"numerics/bisect/tol-below-spacing-exp":    "never returns: once a and b are adjacent floats the midpoint is one of them, and b-a stays at the spacing 1.8e-15 > tol",
+	"numerics/bisect/tol-below-spacing-sqrt2":  "never returns: b-a cannot fall below the spacing 2.2e-16 > tol 1e-17",
+	"numerics/golden/flat-min-tol1e-12":        "returns x* + 1.05e-8: f = (x-1)^2 + 1 takes equal float values within ~1e-8 of x*, so the comparisons cannot locate x* to 1e-12",
+	"numerics/golden/cosh-tol1e-10":            "returns x* + 1.66e-8: the same ~sqrt(eps) floor",
+	"numerics/golden/tol-below-spacing":        "never returns: tol 1e-12 is below the spacing 1.2e-10 at x* = 1e6",
+	"numerics/lerp/near-zero-crossing":         "returns 0 for -2.8e-17: y0 + (y1-y0)*(x-x0)/(x1-x0) cancels",
+	"numerics/lroot/root-near-zero":            "returns 0 for -9.9e-18: x0 - y0*(x1-x0)/(y1-y0) cancels",
+	"numerics/simplex/row-scaled-1e-11":        "returns the INFEASIBLE x = (0, 2), value -4, nil error (optimum -3): the ratio test ignores pivot entries below an absolute 1e-10, so the row is dropped",
+	"numerics/simplex/single-row-scaled-1e-11": "returns an 'unbounded' error for an LP with optimum x = 1: its only pivot entry 1e-11 is below the absolute 1e-10 threshold",
+	"numerics/simplex/costs-1e-11":             "returns x = 0, value 0 (optimum -1e-11): reduced costs above an absolute -1e-10 count as optimal",
 }
 
 func registerLinalgEvaluators() {
@@ -212,5 +227,146 @@ func registerLinalgEvaluators() {
 		n := argI(c, "n")
 		out := make([]float64, n*n)
 		return numBool(linalg.Inverse(numVec(c, "A"), n, out)), nil
+	})
+}
+
+// The test functions below are written so that the Go compiler cannot fuse
+// their multiply-adds (an explicit float64 conversion rounds the product), so
+// each is the same function on every build; only the code under test differs
+// between builds.
+
+var numFuncs1D = map[string]func(float64) float64{
+	"x2minus2":    func(x float64) float64 { return float64(x*x) - 2 },
+	"expminus1e5": func(x float64) float64 { return math.Exp(x) - 1e5 },
+	"sq_xminus2": func(x float64) float64 {
+		d := x - 2
+		return float64(d * d)
+	},
+	"sq_xminus1_plus1": func(x float64) float64 {
+		d := x - 1
+		return float64(d*d) + 1
+	},
+	"cosh_xminus0.3": func(x float64) float64 { return math.Cosh(x - 0.3) },
+	"sq_xminus1e6_plus1": func(x float64) float64 {
+		d := x - 1e6
+		return float64(d*d) + 1
+	},
+}
+
+func numFunc1D(c precisionCase) func(float64) float64 {
+	f, ok := numFuncs1D[numStr(c, "f")]
+	if !ok {
+		panic(fmt.Sprintf("%s: unknown function %q", c.ID, numStr(c, "f")))
+	}
+	return f
+}
+
+type numBudgetExceeded struct{}
+
+// numWithBudget runs search with f wrapped to allow at most budget calls. A
+// search still running after budget calls has not met its claimed iteration
+// count (or never terminates); it is stopped by a panic and scored as NaN.
+func numWithBudget(f func(float64) float64, budget int, search func(func(float64) float64) float64) (got float64) {
+	calls := 0
+	counted := func(x float64) float64 {
+		calls++
+		if calls > budget {
+			panic(numBudgetExceeded{})
+		}
+		return f(x)
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			if _, ok := r.(numBudgetExceeded); !ok {
+				panic(r)
+			}
+			got = math.NaN()
+		}
+	}()
+	return search(counted)
+}
+
+func numRosenbrock(x []float64) float64 {
+	a := 1 - x[0]
+	b := x[1] - float64(x[0]*x[0])
+	return float64(a*a) + float64(100*float64(b*b))
+}
+
+func numRosenbrockGrad(x, g []float64) {
+	b := x[1] - float64(x[0]*x[0])
+	g[0] = float64(-2*(1-x[0])) - float64(float64(400*x[0])*b)
+	g[1] = float64(200 * b)
+}
+
+func registerOptimEvaluators() {
+	registerPrecisionEvaluator("optim.LBFGS", func(c precisionCase) (float64, error) {
+		var f func([]float64) float64
+		var grad func([]float64, []float64)
+		switch numStr(c, "problem") {
+		case "rosenbrock":
+			f, grad = numRosenbrock, numRosenbrockGrad
+		case "quadratic":
+			A, b := numVec(c, "A"), numVec(c, "b")
+			n := len(b)
+			ax := func(x []float64, out []float64) {
+				for i := 0; i < n; i++ {
+					s := 0.0
+					for j := 0; j < n; j++ {
+						s += float64(A[i*n+j] * x[j])
+					}
+					out[i] = s
+				}
+			}
+			f = func(x []float64) float64 {
+				t := make([]float64, n)
+				ax(x, t)
+				s := 0.0
+				for i := range x {
+					s += float64(x[i] * float64(0.5*t[i]-b[i]))
+				}
+				return s
+			}
+			grad = func(x, g []float64) {
+				ax(x, g)
+				for i := range g {
+					g[i] -= b[i]
+				}
+			}
+		default:
+			return 0, fmt.Errorf("unknown problem %q", numStr(c, "problem"))
+		}
+		x := optim.LBFGS(f, grad, numVec(c, "x0"), argI(c, "m"), argI(c, "maxIter"), argF(c, "tol"))
+		return numMaxAbsErr(x, numVec(c, "truth")), nil
+	})
+	registerPrecisionEvaluator("optim.BisectionMethod", func(c precisionCase) (float64, error) {
+		a, b, tol := argF(c, "a"), argF(c, "b"), argF(c, "tol")
+		return numWithBudget(numFunc1D(c), argI(c, "budget"), func(f func(float64) float64) float64 {
+			return optim.BisectionMethod(f, a, b, tol)
+		}), nil
+	})
+	registerPrecisionEvaluator("optim.GoldenSectionSearch", func(c precisionCase) (float64, error) {
+		a, b, tol := argF(c, "a"), argF(c, "b"), argF(c, "tol")
+		return numWithBudget(numFunc1D(c), argI(c, "budget"), func(f func(float64) float64) float64 {
+			return optim.GoldenSectionSearch(f, a, b, tol)
+		}), nil
+	})
+	registerPrecisionEvaluator("optim.LinearInterpolate", func(c precisionCase) (float64, error) {
+		return optim.LinearInterpolate(argF(c, "x0"), argF(c, "y0"), argF(c, "x1"), argF(c, "y1"), argF(c, "x")), nil
+	})
+	registerPrecisionEvaluator("optim.LinearInterpolateRoot", func(c precisionCase) (float64, error) {
+		return optim.LinearInterpolateRoot(argF(c, "x0"), argF(c, "y0"), argF(c, "x1"), argF(c, "y1")), nil
+	})
+	registerPrecisionEvaluator("optim.SimplexMethod", func(c precisionCase) (float64, error) {
+		cost, flat, b := numVec(c, "c"), numVec(c, "A"), numVec(c, "b")
+		m, n := argI(c, "m"), len(cost)
+		A := make([][]float64, m)
+		for i := range A {
+			A[i] = flat[i*n : (i+1)*n]
+		}
+		_, val, err := optim.SimplexMethod(cost, A, b)
+		if err != nil {
+			return math.NaN(), nil
+		}
+		return val, nil
 	})
 }

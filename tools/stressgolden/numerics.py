@@ -39,6 +39,7 @@ Reading rules (each case states its reading in `claim`):
     reverse: where the doc promises nil/false, success scores 1 against 0.
 """
 
+import itertools
 import json
 import math
 import os
@@ -449,9 +450,136 @@ def linalg_cases():
     return C
 
 
+# ---------------------------------------------------------------------------
+# optim (root package)
+# ---------------------------------------------------------------------------
+
+PHI = (math.sqrt(5) - 1) / 2
+
+
+def lp_opt_bruteforce(c, A, b):
+    """Exact optimum of min c'x s.t. Ax <= b, x >= 0 for n <= 2, by vertex
+    enumeration in rationals (the feasible sets here are bounded)."""
+    n = len(c)
+    cons = [([Fraction(v) for v in row], Fraction(bi)) for row, bi in zip(A, b)]
+    for j in range(n):
+        e = [Fraction(0)] * n
+        e[j] = Fraction(-1)
+        cons.append((e, Fraction(0)))
+    best = None
+    for idx in itertools.combinations(range(len(cons)), n):
+        rows = [cons[i] for i in idx]
+        if n == 1:
+            a, bb = rows[0]
+            if a[0] == 0:
+                continue
+            x = [bb / a[0]]
+        else:
+            (a1, b1), (a2, b2) = rows
+            det = a1[0] * a2[1] - a1[1] * a2[0]
+            if det == 0:
+                continue
+            x = [(b1 * a2[1] - a1[1] * b2) / det, (a1[0] * b2 - b1 * a2[0]) / det]
+        if all(sum(ai * xi for ai, xi in zip(a, x)) <= bb for a, bb in cons):
+            v = sum(Fraction(ci) * xi for ci, xi in zip(c, x))
+            if best is None or v < best:
+                best = v
+    return best
+
+
+def optim_cases():
+    C = []
+    ex = "'exact' read as faithful rounding: relative error below 2^-52"
+
+    # LBFGS -----------------------------------------------------------------
+    lb = ("optim/gradient.go LBFGS: 'the standard two-loop recursion algorithm with Wolfe line search'; 'tol: stop when "
+          "||grad f(x)||_2 < tol'; 'Returns the approximate minimizer.' ")
+    # Rosenbrock: minimizer (1, 1) exactly; Hessian there [[802,-400],[-400,200]],
+    # smallest eigenvalue 0.3994, so ||grad|| < 1e-8 puts x within 2.6e-8.
+    C.append(case("lbfgs/rosenbrock-maxiter100", "optim.LBFGS",
+                  {"problem": "rosenbrock", "x0": [-1.2, 1.0], "m": 5, "maxIter": 100, "tol": 1e-8, "truth": [1.0, 1.0]}, 0.0, 1e-6, "abs",
+                  lb + "-> on 2-D Rosenbrock from (-1.2, 1) with m = 5, the same two-loop recursion with a strong-Wolfe line search "
+                  "(scipy line_search, c1 = 1e-4, c2 = 0.9) reaches ||grad|| < 1e-8 in 38 iterations (scipy L-BFGS-B: 40), so "
+                  "maxIter = 100 must return the minimizer (1, 1) to within ||H^-1|| * 1e-8 = 2.6e-8; scalar = max |x_i - 1|, "
+                  "tolerance 1e-6"))
+    C.append(case("lbfgs/rosenbrock-maxiter1000", "optim.LBFGS",
+                  {"problem": "rosenbrock", "x0": [-1.2, 1.0], "m": 5, "maxIter": 1000, "tol": 1e-8, "truth": [1.0, 1.0]}, 0.0, 1e-6, "abs",
+                  lb + "-> the same problem with maxIter = 1000; scalar = max |x_i - 1|, tolerance 1e-6"))
+    Aq = [[4.0, 1.0, 0.0], [1.0, 3.0, 0.5], [0.0, 0.5, 2.0]]
+    bq = [1.0, 2.0, 3.0]
+    Am = mp.matrix(Aq)
+    xs = mp.lu_solve(Am, mp.matrix(bq))
+    ev = mp.eigsy(Am)[0]
+    inv_norm = 1 / min(ev[k] for k in range(3))
+    tolq = f64(inv_norm * mp.mpf("1e-10"))
+    C.append(case("lbfgs/quadratic", "optim.LBFGS",
+                  {"problem": "quadratic", "A": [v for row in Aq for v in row], "b": bq, "x0": [0.0, 0.0, 0.0], "m": 5, "maxIter": 100,
+                   "tol": 1e-10, "truth": [f64(xs[i]) for i in range(3)]}, 0.0, tolq, "abs",
+                  lb + "-> f = x'Ax/2 - b'x with A SPD: stopping at ||Ax - b|| < 1e-10 puts x within ||A^-1|| * 1e-10 = %.3g "
+                  "of A^-1 b; scalar = max |x_i - x*_i|" % tolq))
+
+    # BisectionMethod --------------------------------------------------------
+    bi = ("optim/rootfind.go BisectionMethod: 'Precision: |root - x*| <= tol after ceil(log2((b-a)/tol)) iterations.' -> "
+          "absolute tol; the evaluator stops f after the claimed iteration count (+2 calls) and scores a run that has not "
+          "returned by then as NaN")
+    for cid, fn, a, b, tol, root in (("bisect/sqrt2", "x2minus2", 1.0, 2.0, 1e-12, mp.sqrt(2)),
+                                     ("bisect/tol-below-spacing-exp", "expminus1e5", 0.0, 20.0, 1e-15, mp.log(100000)),
+                                     ("bisect/tol-below-spacing-sqrt2", "x2minus2", 1.0, 2.0, 1e-17, mp.sqrt(2))):
+        k = math.ceil(math.log2((b - a) / tol))
+        note = "" if tol >= 1e-12 else "; tol %g is below the float spacing %.3g at the root, and no float makes f exactly 0" % (tol, math.ulp(f64(root)))
+        C.append(case(cid, "optim.BisectionMethod", {"f": fn, "a": a, "b": b, "tol": tol, "budget": k + 3}, f64(root), tol, "abs",
+                      bi + " (claimed %d iterations)" % k + note))
+
+    # GoldenSectionSearch ----------------------------------------------------
+    gs = ("optim/rootfind.go GoldenSectionSearch: 'Precision: |x* - x_min| <= tol after ceil(log_phi(tol/(b-a))) "
+          "iterations.' -> absolute tol; the evaluator stops f after the claimed iteration count (+2 evaluations, +2 slack) "
+          "and scores a run that has not returned by then as NaN")
+    for cid, fn, a, b, tol, xstar, note in (
+            ("golden/typical", "sq_xminus2", 0.0, 5.0, 1e-6, mp.mpf(2), ""),
+            ("golden/flat-min-tol1e-12", "sq_xminus1_plus1", 0.0, 3.0, 1e-12, mp.mpf(1),
+             "; f(x*) = 1, so f is flat to rounding within ~1e-8 of x*"),
+            ("golden/cosh-tol1e-10", "cosh_xminus0.3", -1.0, 2.0, 1e-10, M(0.3), "; f(x*) = 1, flat to rounding within ~1.5e-8 of x*"),
+            ("golden/tol-below-spacing", "sq_xminus1e6_plus1", 0.0, 2e6, 1e-12, mp.mpf(10) ** 6,
+             "; tol is below the float spacing 1.2e-10 at x* = 1e6")):
+        k = math.ceil(math.log(tol / (b - a)) / math.log(PHI))
+        C.append(case(cid, "optim.GoldenSectionSearch", {"f": fn, "a": a, "b": b, "tol": tol, "budget": k + 4}, f64(xstar), tol, "abs",
+                      gs + " (claimed %d iterations)" % k + note))
+
+    # LinearInterpolate / LinearInterpolateRoot -------------------------------
+    li = "optim/interpolate.go LinearInterpolate: 'Precision: exact for IEEE 754 float64.' -> " + ex
+    for cid, x0, y0, x1, y1, x in (("lerp/typical", 0.0, 0.0, 1.0, 10.0, 0.3),
+                                    ("lerp/near-zero-crossing", 0.1, 0.3, 0.7, -0.9, 0.25)):
+        t = M(y0) + (M(y1) - M(y0)) * (M(x) - M(x0)) / (M(x1) - M(x0))
+        C.append(case(cid, "optim.LinearInterpolate", {"x0": x0, "y0": y0, "x1": x1, "y1": y1, "x": x}, f64(t), ULP, "rel",
+                      li + ("; the interpolated value is near 0 (cancellation)" if "crossing" in cid else "")))
+    lr = "optim/rootfind.go LinearInterpolateRoot: 'Precision: exact for IEEE 754 float64 (single division + multiply).' -> " + ex
+    for cid, x0, y0, x1, y1 in (("lroot/typical", 1.0, -1.0, 3.0, 3.0),
+                                ("lroot/decimals", 0.1, -0.2, 0.7, 1.3),
+                                ("lroot/root-near-zero", 0.3, 0.7, -0.1, -0.7 / 3)):
+        t = M(x0) - M(y0) * (M(x1) - M(x0)) / (M(y1) - M(y0))
+        C.append(case(cid, "optim.LinearInterpolateRoot", {"x0": x0, "y0": y0, "x1": x1, "y1": y1}, f64(t), ULP, "rel",
+                      lr + ("; the root is near 0 (x0 and the correction cancel)" if "zero" in cid else "")))
+
+    # SimplexMethod -----------------------------------------------------------
+    sm = ("optim/linear.go SimplexMethod: 'Returns the optimal solution x (length n), the optimal objective value, and an "
+          "error if the problem is infeasible or unbounded.' -> scalar = the returned objective value (NaN when an error is "
+          "returned), relative 1e-9 against the exact LP optimum")
+    for cid, c, A, b, note in (
+            ("simplex/textbook", [-3.0, -5.0], [[1.0, 0.0], [0.0, 2.0], [3.0, 2.0]], [4.0, 12.0, 18.0], ""),
+            ("simplex/row-scaled-1e-11", [-1.0, -2.0], [[1.0, 1.0], [0.0, 1e-11]], [2.0, 1e-11],
+             "; the second row is y <= 1 written as 1e-11*y <= 1e-11 (feasible optimum x = y = 1, value -3)"),
+            ("simplex/single-row-scaled-1e-11", [-1.0], [[1e-11]], [1e-11], "; x <= 1 written as 1e-11*x <= 1e-11 (optimum x = 1)"),
+            ("simplex/costs-1e-11", [-1e-11], [[1.0]], [1.0], "; min -1e-11*x s.t. x <= 1 (optimum x = 1)")):
+        opt = lp_opt_bruteforce(c, A, b)
+        C.append(case(cid, "optim.SimplexMethod", {"c": c, "A": [v for row in A for v in row], "m": len(A), "b": b}, f64(opt), 1e-9, "rel",
+                      sm + note))
+    return C
+
+
 def main():
     C = []
     C += linalg_cases()
+    C += optim_cases()
     ids = [c["id"] for c in C]
     assert len(ids) == len(set(ids)), "duplicate case id"
     doc = {

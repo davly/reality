@@ -32090,6 +32090,360 @@
    "tol": 0.0,
    "tol_kind": "abs",
    "claim": "linalg/decompose.go Inverse: 'Returns false if A is singular.' -> scalar = 1 when Inverse reports success, 0 when it reports singular; an exactly singular input (integer entries) must give 0"
+  },
+  {
+   "id": "numerics/lbfgs/rosenbrock-maxiter100",
+   "func": "optim.LBFGS",
+   "args": {
+    "problem": "rosenbrock",
+    "x0": [
+     -1.2,
+     1.0
+    ],
+    "m": 5,
+    "maxIter": 100,
+    "tol": 1e-08,
+    "truth": [
+     1.0,
+     1.0
+    ]
+   },
+   "want": 0.0,
+   "tol": 1e-06,
+   "tol_kind": "abs",
+   "claim": "optim/gradient.go LBFGS: 'the standard two-loop recursion algorithm with Wolfe line search'; 'tol: stop when ||grad f(x)||_2 < tol'; 'Returns the approximate minimizer.' -> on 2-D Rosenbrock from (-1.2, 1) with m = 5, the same two-loop recursion with a strong-Wolfe line search (scipy line_search, c1 = 1e-4, c2 = 0.9) reaches ||grad|| < 1e-8 in 38 iterations (scipy L-BFGS-B: 40), so maxIter = 100 must return the minimizer (1, 1) to within ||H^-1|| * 1e-8 = 2.6e-8; scalar = max |x_i - 1|, tolerance 1e-6"
+  },
+  {
+   "id": "numerics/lbfgs/rosenbrock-maxiter1000",
+   "func": "optim.LBFGS",
+   "args": {
+    "problem": "rosenbrock",
+    "x0": [
+     -1.2,
+     1.0
+    ],
+    "m": 5,
+    "maxIter": 1000,
+    "tol": 1e-08,
+    "truth": [
+     1.0,
+     1.0
+    ]
+   },
+   "want": 0.0,
+   "tol": 1e-06,
+   "tol_kind": "abs",
+   "claim": "optim/gradient.go LBFGS: 'the standard two-loop recursion algorithm with Wolfe line search'; 'tol: stop when ||grad f(x)||_2 < tol'; 'Returns the approximate minimizer.' -> the same problem with maxIter = 1000; scalar = max |x_i - 1|, tolerance 1e-6"
+  },
+  {
+   "id": "numerics/lbfgs/quadratic",
+   "func": "optim.LBFGS",
+   "args": {
+    "problem": "quadratic",
+    "A": [
+     4.0,
+     1.0,
+     0.0,
+     1.0,
+     3.0,
+     0.5,
+     0.0,
+     0.5,
+     2.0
+    ],
+    "b": [
+     1.0,
+     2.0,
+     3.0
+    ],
+    "x0": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "m": 5,
+    "maxIter": 100,
+    "tol": 1e-10,
+    "truth": [
+     0.15476190476190477,
+     0.38095238095238093,
+     1.4047619047619047
+    ]
+   },
+   "want": 0.0,
+   "tol": 5.855187357222232e-11,
+   "tol_kind": "abs",
+   "claim": "optim/gradient.go LBFGS: 'the standard two-loop recursion algorithm with Wolfe line search'; 'tol: stop when ||grad f(x)||_2 < tol'; 'Returns the approximate minimizer.' -> f = x'Ax/2 - b'x with A SPD: stopping at ||Ax - b|| < 1e-10 puts x within ||A^-1|| * 1e-10 = 5.86e-11 of A^-1 b; scalar = max |x_i - x*_i|"
+  },
+  {
+   "id": "numerics/bisect/sqrt2",
+   "func": "optim.BisectionMethod",
+   "args": {
+    "f": "x2minus2",
+    "a": 1.0,
+    "b": 2.0,
+    "tol": 1e-12,
+    "budget": 43
+   },
+   "want": 1.4142135623730951,
+   "tol": 1e-12,
+   "tol_kind": "abs",
+   "claim": "optim/rootfind.go BisectionMethod: 'Precision: |root - x*| <= tol after ceil(log2((b-a)/tol)) iterations.' -> absolute tol; the evaluator stops f after the claimed iteration count (+2 calls) and scores a run that has not returned by then as NaN (claimed 40 iterations)"
+  },
+  {
+   "id": "numerics/bisect/tol-below-spacing-exp",
+   "func": "optim.BisectionMethod",
+   "args": {
+    "f": "expminus1e5",
+    "a": 0.0,
+    "b": 20.0,
+    "tol": 1e-15,
+    "budget": 58
+   },
+   "want": 11.512925464970229,
+   "tol": 1e-15,
+   "tol_kind": "abs",
+   "claim": "optim/rootfind.go BisectionMethod: 'Precision: |root - x*| <= tol after ceil(log2((b-a)/tol)) iterations.' -> absolute tol; the evaluator stops f after the claimed iteration count (+2 calls) and scores a run that has not returned by then as NaN (claimed 55 iterations); tol 1e-15 is below the float spacing 1.78e-15 at the root, and no float makes f exactly 0"
+  },
+  {
+   "id": "numerics/bisect/tol-below-spacing-sqrt2",
+   "func": "optim.BisectionMethod",
+   "args": {
+    "f": "x2minus2",
+    "a": 1.0,
+    "b": 2.0,
+    "tol": 1e-17,
+    "budget": 60
+   },
+   "want": 1.4142135623730951,
+   "tol": 1e-17,
+   "tol_kind": "abs",
+   "claim": "optim/rootfind.go BisectionMethod: 'Precision: |root - x*| <= tol after ceil(log2((b-a)/tol)) iterations.' -> absolute tol; the evaluator stops f after the claimed iteration count (+2 calls) and scores a run that has not returned by then as NaN (claimed 57 iterations); tol 1e-17 is below the float spacing 2.22e-16 at the root, and no float makes f exactly 0"
+  },
+  {
+   "id": "numerics/golden/typical",
+   "func": "optim.GoldenSectionSearch",
+   "args": {
+    "f": "sq_xminus2",
+    "a": 0.0,
+    "b": 5.0,
+    "tol": 1e-06,
+    "budget": 37
+   },
+   "want": 2.0,
+   "tol": 1e-06,
+   "tol_kind": "abs",
+   "claim": "optim/rootfind.go GoldenSectionSearch: 'Precision: |x* - x_min| <= tol after ceil(log_phi(tol/(b-a))) iterations.' -> absolute tol; the evaluator stops f after the claimed iteration count (+2 evaluations, +2 slack) and scores a run that has not returned by then as NaN (claimed 33 iterations)"
+  },
+  {
+   "id": "numerics/golden/flat-min-tol1e-12",
+   "func": "optim.GoldenSectionSearch",
+   "args": {
+    "f": "sq_xminus1_plus1",
+    "a": 0.0,
+    "b": 3.0,
+    "tol": 1e-12,
+    "budget": 64
+   },
+   "want": 1.0,
+   "tol": 1e-12,
+   "tol_kind": "abs",
+   "claim": "optim/rootfind.go GoldenSectionSearch: 'Precision: |x* - x_min| <= tol after ceil(log_phi(tol/(b-a))) iterations.' -> absolute tol; the evaluator stops f after the claimed iteration count (+2 evaluations, +2 slack) and scores a run that has not returned by then as NaN (claimed 60 iterations); f(x*) = 1, so f is flat to rounding within ~1e-8 of x*"
+  },
+  {
+   "id": "numerics/golden/cosh-tol1e-10",
+   "func": "optim.GoldenSectionSearch",
+   "args": {
+    "f": "cosh_xminus0.3",
+    "a": -1.0,
+    "b": 2.0,
+    "tol": 1e-10,
+    "budget": 55
+   },
+   "want": 0.3,
+   "tol": 1e-10,
+   "tol_kind": "abs",
+   "claim": "optim/rootfind.go GoldenSectionSearch: 'Precision: |x* - x_min| <= tol after ceil(log_phi(tol/(b-a))) iterations.' -> absolute tol; the evaluator stops f after the claimed iteration count (+2 evaluations, +2 slack) and scores a run that has not returned by then as NaN (claimed 51 iterations); f(x*) = 1, flat to rounding within ~1.5e-8 of x*"
+  },
+  {
+   "id": "numerics/golden/tol-below-spacing",
+   "func": "optim.GoldenSectionSearch",
+   "args": {
+    "f": "sq_xminus1e6_plus1",
+    "a": 0.0,
+    "b": 2000000.0,
+    "tol": 1e-12,
+    "budget": 92
+   },
+   "want": 1000000.0,
+   "tol": 1e-12,
+   "tol_kind": "abs",
+   "claim": "optim/rootfind.go GoldenSectionSearch: 'Precision: |x* - x_min| <= tol after ceil(log_phi(tol/(b-a))) iterations.' -> absolute tol; the evaluator stops f after the claimed iteration count (+2 evaluations, +2 slack) and scores a run that has not returned by then as NaN (claimed 88 iterations); tol is below the float spacing 1.2e-10 at x* = 1e6"
+  },
+  {
+   "id": "numerics/lerp/typical",
+   "func": "optim.LinearInterpolate",
+   "args": {
+    "x0": 0.0,
+    "y0": 0.0,
+    "x1": 1.0,
+    "y1": 10.0,
+    "x": 0.3
+   },
+   "want": 3.0,
+   "tol": 2.220446049250313e-16,
+   "tol_kind": "rel",
+   "claim": "optim/interpolate.go LinearInterpolate: 'Precision: exact for IEEE 754 float64.' -> 'exact' read as faithful rounding: relative error below 2^-52"
+  },
+  {
+   "id": "numerics/lerp/near-zero-crossing",
+   "func": "optim.LinearInterpolate",
+   "args": {
+    "x0": 0.1,
+    "y0": 0.3,
+    "x1": 0.7,
+    "y1": -0.9,
+    "x": 0.25
+   },
+   "want": -2.7755575615628914e-17,
+   "tol": 2.220446049250313e-16,
+   "tol_kind": "rel",
+   "claim": "optim/interpolate.go LinearInterpolate: 'Precision: exact for IEEE 754 float64.' -> 'exact' read as faithful rounding: relative error below 2^-52; the interpolated value is near 0 (cancellation)"
+  },
+  {
+   "id": "numerics/lroot/typical",
+   "func": "optim.LinearInterpolateRoot",
+   "args": {
+    "x0": 1.0,
+    "y0": -1.0,
+    "x1": 3.0,
+    "y1": 3.0
+   },
+   "want": 1.5,
+   "tol": 2.220446049250313e-16,
+   "tol_kind": "rel",
+   "claim": "optim/rootfind.go LinearInterpolateRoot: 'Precision: exact for IEEE 754 float64 (single division + multiply).' -> 'exact' read as faithful rounding: relative error below 2^-52"
+  },
+  {
+   "id": "numerics/lroot/decimals",
+   "func": "optim.LinearInterpolateRoot",
+   "args": {
+    "x0": 0.1,
+    "y0": -0.2,
+    "x1": 0.7,
+    "y1": 1.3
+   },
+   "want": 0.18,
+   "tol": 2.220446049250313e-16,
+   "tol_kind": "rel",
+   "claim": "optim/rootfind.go LinearInterpolateRoot: 'Precision: exact for IEEE 754 float64 (single division + multiply).' -> 'exact' read as faithful rounding: relative error below 2^-52"
+  },
+  {
+   "id": "numerics/lroot/root-near-zero",
+   "func": "optim.LinearInterpolateRoot",
+   "args": {
+    "x0": 0.3,
+    "y0": 0.7,
+    "x1": -0.1,
+    "y1": -0.2333333333333333
+   },
+   "want": -9.912705577010326e-18,
+   "tol": 2.220446049250313e-16,
+   "tol_kind": "rel",
+   "claim": "optim/rootfind.go LinearInterpolateRoot: 'Precision: exact for IEEE 754 float64 (single division + multiply).' -> 'exact' read as faithful rounding: relative error below 2^-52; the root is near 0 (x0 and the correction cancel)"
+  },
+  {
+   "id": "numerics/simplex/textbook",
+   "func": "optim.SimplexMethod",
+   "args": {
+    "c": [
+     -3.0,
+     -5.0
+    ],
+    "A": [
+     1.0,
+     0.0,
+     0.0,
+     2.0,
+     3.0,
+     2.0
+    ],
+    "m": 3,
+    "b": [
+     4.0,
+     12.0,
+     18.0
+    ]
+   },
+   "want": -36.0,
+   "tol": 1e-09,
+   "tol_kind": "rel",
+   "claim": "optim/linear.go SimplexMethod: 'Returns the optimal solution x (length n), the optimal objective value, and an error if the problem is infeasible or unbounded.' -> scalar = the returned objective value (NaN when an error is returned), relative 1e-9 against the exact LP optimum"
+  },
+  {
+   "id": "numerics/simplex/row-scaled-1e-11",
+   "func": "optim.SimplexMethod",
+   "args": {
+    "c": [
+     -1.0,
+     -2.0
+    ],
+    "A": [
+     1.0,
+     1.0,
+     0.0,
+     1e-11
+    ],
+    "m": 2,
+    "b": [
+     2.0,
+     1e-11
+    ]
+   },
+   "want": -3.0,
+   "tol": 1e-09,
+   "tol_kind": "rel",
+   "claim": "optim/linear.go SimplexMethod: 'Returns the optimal solution x (length n), the optimal objective value, and an error if the problem is infeasible or unbounded.' -> scalar = the returned objective value (NaN when an error is returned), relative 1e-9 against the exact LP optimum; the second row is y <= 1 written as 1e-11*y <= 1e-11 (feasible optimum x = y = 1, value -3)"
+  },
+  {
+   "id": "numerics/simplex/single-row-scaled-1e-11",
+   "func": "optim.SimplexMethod",
+   "args": {
+    "c": [
+     -1.0
+    ],
+    "A": [
+     1e-11
+    ],
+    "m": 1,
+    "b": [
+     1e-11
+    ]
+   },
+   "want": -1.0,
+   "tol": 1e-09,
+   "tol_kind": "rel",
+   "claim": "optim/linear.go SimplexMethod: 'Returns the optimal solution x (length n), the optimal objective value, and an error if the problem is infeasible or unbounded.' -> scalar = the returned objective value (NaN when an error is returned), relative 1e-9 against the exact LP optimum; x <= 1 written as 1e-11*x <= 1e-11 (optimum x = 1)"
+  },
+  {
+   "id": "numerics/simplex/costs-1e-11",
+   "func": "optim.SimplexMethod",
+   "args": {
+    "c": [
+     -1e-11
+    ],
+    "A": [
+     1.0
+    ],
+    "m": 1,
+    "b": [
+     1.0
+    ]
+   },
+   "want": -1e-11,
+   "tol": 1e-09,
+   "tol_kind": "rel",
+   "claim": "optim/linear.go SimplexMethod: 'Returns the optimal solution x (length n), the optimal objective value, and an error if the problem is infeasible or unbounded.' -> scalar = the returned objective value (NaN when an error is returned), relative 1e-9 against the exact LP optimum; min -1e-11*x s.t. x <= 1 (optimum x = 1)"
   }
  ]
 }
