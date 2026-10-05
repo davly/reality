@@ -56,9 +56,9 @@
       "tolerance": 0
     },
     {
-      "description": "Stefan-Boltzmann constant (derived from SI 2019 exact values)",
+      "description": "Stefan-Boltzmann constant (derived from SI 2019 exact values: 2 pi^5 k^4 / (15 h^3 c^2) = 5.670374419184429453970996731889...e-8, correctly rounded)",
       "inputs": {"constant": "StefanBoltzmann"},
-      "expected": 5.670374419e-8,
+      "expected": 5.6703744191844294e-8,
       "tolerance": 0
     },
     {

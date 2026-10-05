@@ -59,10 +59,16 @@ const VacuumPermittivity = 8.8541878128e-12 // F/m
 const VacuumPermeability = 1.25663706212e-6 // H/m
 
 // StefanBoltzmann is the Stefan-Boltzmann constant, in W m^-2 K^-4.
-// Source: derived from SI 2019 exact constants.
+// Source: derived from the SI 2019 exact constants, so it is itself exact:
 // sigma = 2 * pi^5 * k_B^4 / (15 * h^3 * c^2)
-// Value: 5.670374419e-8 W m^-2 K^-4 (exact given exact inputs).
-const StefanBoltzmann = 5.670374419e-8 // W m^-2 K^-4
+// Value: 5.670374419184429453970996731889...e-8 W m^-2 K^-4, a non-terminating
+// decimal. The constant is defined by the expression above, which Go
+// evaluates exactly; as a float64 it is 5.6703744191844294e-8, the correctly
+// rounded value (relative rounding error 5.7e-18). NIST prints the value
+// truncated, as 5.670 374 419... e-8; the ellipsis is part of the value, and
+// 5.670374419e-8 alone is low by 3.3e-11 relative.
+const StefanBoltzmann = 2 * Pi * Pi * Pi * Pi * Pi * Boltzmann * Boltzmann * Boltzmann * Boltzmann /
+	(15 * Planck * Planck * Planck * SpeedOfLight * SpeedOfLight) // W m^-2 K^-4
 
 // GasConstant is the molar gas constant, in J mol^-1 K^-1.
 // Source: SI 2019 derived exact value. R = N_A * k_B.

@@ -155,7 +155,9 @@ func TestPhysicsConstants(t *testing.T) {
 		}
 	})
 
-	// 25. StefanBoltzmann known value
+	// 25. StefanBoltzmann known value: a coarse check against the leading digits
+	// NIST prints (5.670 374 419...e-8, the ellipsis being part of the value).
+	// The full value is pinned bit-for-bit in stefan_boltzmann_test.go.
 	t.Run("StefanBoltzmann ~ 5.670374419e-8", func(t *testing.T) {
 		if math.Abs(StefanBoltzmann-5.670374419e-8) > 1e-17 {
 			t.Errorf("StefanBoltzmann = %e, want 5.670374419e-8", StefanBoltzmann)

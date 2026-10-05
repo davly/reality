@@ -329,7 +329,7 @@ testutil/testdata/
 | GravitationalConst | constants | `6.67430e-11` |
 | VacuumPermittivity | constants | `8.8541878128e-12` |
 | VacuumPermeability | constants | `1.25663706212e-6` |
-| StefanBoltzmann | constants | `5.670374419e-8` |
+| StefanBoltzmann | constants | `5.670374419184429e-8` |
 | GasConstant | constants | `` |
 | StandardGravity | constants | `9.80665` |
 | AtmPressure | constants | `101325.0` |
