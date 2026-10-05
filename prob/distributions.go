@@ -399,9 +399,12 @@ func PoissonPMF(k int, lambda float64) float64 {
 // its iteration budget (only for k and lambda above about 1e12 near the
 // median)
 // Precision: relative error below 1e-12 wherever the result is at least
-// 1e-300 (measured at most 5e-15 for results >= 1e-10); in the far lower
-// tail the error grows in proportion to |ln CDF|, about 3e-16*|ln CDF|.
-// Cost: O(sqrt(k)) operations when lambda is within O(sqrt(k)) of k.
+// 1e-300 (measured at most 5e-15 for results >= 1e-10, for k up to 1e7);
+// in the far lower tail the error grows in proportion to |ln CDF|, about
+// 3e-16*|ln CDF|. Near the median of still larger means the error grows
+// slowly, to about 2e-13 at 1e13 to 1e17 (see GammaCDF).
+// Cost: about 9*sqrt(k) series terms when lambda is just below k+1, and
+// about 9.4*k^(1/3) continued-fraction iterations at or above it.
 // Reference: DLMF 8.4 (Q(n+1, z) = e^-z sum_{j=0}^{n} z^j / j!)
 func PoissonCDF(k int, lambda float64) float64 {
 	if lambda <= 0 {
@@ -462,14 +465,18 @@ func GammaPDF(x, k, theta float64) float64 {
 // Valid range: k > 0, theta > 0, x >= 0
 // Returns NaN if k <= 0 or theta <= 0, and NaN if the incomplete gamma
 // expansion does not converge within its iteration budget (only for shapes
-// above about 1e12, with x/theta within O(sqrt(k)) of k)
+// above about 1e12, with x/theta just below k)
 // Returns 0 if x <= 0
-// Precision: relative error below 1e-13 wherever the result is at least
-// 1e-150 (measured at most 5e-15 for results >= 1e-10 and 4.4e-14 down to
-// 1e-150, on shapes from 1e-3 to 1e7). Below 1e-150 the error is set by the
-// float64 rounding of the exponent and grows in proportion to |ln P|, about
-// 3e-16*|ln P|, i.e. 2e-13 near 1e-300.
-// Cost: O(sqrt(k)) operations when x/theta is within O(sqrt(k)) of k.
+// Precision: for shapes from 1e-3 to 1e7 (the measured range), relative
+// error below 1e-13 wherever the result is at least 1e-150 (at most 5e-15
+// for results >= 1e-10 and 4.4e-14 down to 1e-150). Below 1e-150 the error
+// is set by the float64 rounding of the exponent and grows in proportion to
+// |ln P|, about 3e-16*|ln P|, i.e. 2e-13 near 1e-300. For larger shapes the
+// continued fraction's rounding near the peak grows slowly with k: against
+// the asymptotic form at x/theta = k, 9e-15 at k = 1e10, 7e-14 at 1e12 and
+// up to 2.1e-13 for k from 1e13 to 1e17.
+// Cost: about 9*sqrt(k) series terms when x/theta is just below k, and
+// about 9.4*k^(1/3) continued-fraction iterations at or above it.
 // Reference: Abramowitz & Stegun, Chapter 6; DLMF 8.2; DiDonato & Morris
 // (1986), ACM TOMS 12(4)
 func GammaCDF(x, k, theta float64) float64 {

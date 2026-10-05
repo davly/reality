@@ -209,7 +209,7 @@ func regularizedGammaQ(a, x float64) float64 {
 //   - x >= max(a, 1.5): the Legendre continued fraction for Q, and P = 1 - Q.
 //
 // Both expansions are scaled by x^a e^-x / Gamma(a+1), computed without
-// cancellation by gammaPrefix. Near x = a both need O(sqrt(a)) terms; the
+// cancellation by gammaLogPrefix. Near x = a both need O(sqrt(a)) terms; the
 // series term recurrence is carried in double-double arithmetic so that its
 // rounding error does not grow with the number of terms. If an expansion
 // does not converge within its iteration budget (which also grows as
@@ -237,7 +237,7 @@ func incGammaPQ(a, x float64) (p, q float64) {
 		if !ok {
 			return math.NaN(), math.NaN()
 		}
-		p = gammaPrefix(a, x) * s
+		p = scaleExp(gammaLogPrefix(a, x), s)
 		if x < 1.5 && a < 1 {
 			return p, gammaQSmallA(a, x)
 		}
@@ -247,24 +247,24 @@ func incGammaPQ(a, x float64) (p, q float64) {
 	if !ok {
 		return math.NaN(), math.NaN()
 	}
-	q = gammaPrefix(a, x) * a * h
+	q = scaleExp(gammaLogPrefix(a, x), a*h)
 	return 1 - q, q
 }
 
-// gammaPrefix returns x^a e^-x / Gamma(a+1) for a > 0, x > 0.
+// gammaLogPrefix returns ln(x^a e^-x / Gamma(a+1)) for a > 0, x > 0.
 //
 // For a >= 10 it is evaluated as
 //
-//	exp(a*log1pmx((x-a)/a) - ln(2*pi*a)/2 - stirlerr(a)),
+//	a*log1pmx((x-a)/a) - ln(2*pi*a)/2 - stirlerr(a),
 //
 // where log1pmx(d) = ln(1+d) - d and stirlerr is the Stirling-series
 // remainder of ln Gamma(a+1). The two O(a) terms a*ln(x) and x of the
 // direct form cancel near x = a; this form never builds them, so its
 // relative error is a few ulp times the size of the exponent itself (about
 // 1e-15 near the peak, growing only as the result itself becomes tiny).
-func gammaPrefix(a, x float64) float64 {
+func gammaLogPrefix(a, x float64) float64 {
 	if a < 10 {
-		return math.Exp(a*math.Log(x) - x - lgamma1p(a))
+		return a*math.Log(x) - x - lgamma1p(a)
 	}
 	d := (x - a) / a // exact numerator for a/2 <= x <= 2a
 	var t float64    // ln(x/a) - (x-a)/a
@@ -273,11 +273,11 @@ func gammaPrefix(a, x float64) float64 {
 	} else {
 		t = math.Log(x/a) - d
 	}
-	return math.Exp(a*t - 0.5*math.Log(2*math.Pi*a) - stirlerr(a))
+	return a*t - 0.5*math.Log(2*math.Pi*a) - stirlerr(a)
 }
 
 // gammaSeries returns S = sum_{n>=0} x^n / ((a+1)(a+2)...(a+n)), so that
-// P(a, x) = gammaPrefix(a, x) * S (DLMF 8.7.1). The terms decrease once
+// P(a, x) = exp(gammaLogPrefix(a, x)) * S (DLMF 8.7.1). The terms decrease once
 // n > x - a, which holds from the start whenever x < a + 1.
 //
 // Near x = a about 9*sqrt(a) terms are needed. Each term and the running sum
@@ -313,14 +313,14 @@ func gammaSeries(a, x float64) (s float64, ok bool) {
 //	h = 1/(x+1-a- 1(1-a)/(x+3-a- 2(2-a)/(x+5-a- ...)))
 //
 // evaluated by the modified Lentz method, so that
-// Q(a, x) = gammaPrefix(a, x) * a * h (DLMF 8.9.2; Numerical Recipes 3e,
+// Q(a, x) = exp(gammaLogPrefix(a, x)) * a * h (DLMF 8.9.2; Numerical Recipes 3e,
 // section 6.2). It is used for x >= max(a, 1.5), where it needs at most
 // about 0.7*sqrt(a) + 50 iterations. Reports ok = false if the budget is
 // exhausted.
 func gammaCF(a, x float64) (h float64, ok bool) {
 	const tiny = 1e-300
 	maxIter := iterBudget(500, 10, a)
-	b := x + 1.0 - a
+	b := (x - a) + 1.0 // x - a is exact near the peak, so the 1 is not lost at large a
 	c := 1.0 / tiny
 	d := 1.0 / b
 	h = d
@@ -466,6 +466,20 @@ func iterBudget(base, scale, a float64) int {
 		return 1e7
 	}
 	return int(n)
+}
+
+// scaleExp returns exp(e) * m for m >= 0. When exp(e) alone would be
+// subnormal or zero, the factor is folded into the exponent first, so a
+// result in the normal range does not inherit the lost precision of a
+// subnormal intermediate.
+func scaleExp(e, m float64) float64 {
+	if m == 0 || math.IsInf(e, -1) {
+		return 0
+	}
+	if e > -700 {
+		return math.Exp(e) * m
+	}
+	return math.Exp(e + math.Log(m))
 }
 
 // twoSum returns s = fl(a+b) and the exact rounding error e, a+b = s+e
