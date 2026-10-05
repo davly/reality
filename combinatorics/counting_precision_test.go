@@ -19,6 +19,7 @@ package combinatorics
 import (
 	"math"
 	"math/big"
+	"math/rand"
 	"testing"
 	"testing/quick"
 )
@@ -204,7 +205,7 @@ func TestBinomialSymmetryExact(t *testing.T) {
 		k := int(ku % uint64(n+1))
 		return BinomialCoeff(n, k) == BinomialCoeff(n, n-k)
 	}
-	if err := quick.Check(prop, &quick.Config{MaxCount: 20000}); err != nil {
+	if err := quick.Check(prop, &quick.Config{Rand: rand.New(rand.NewSource(1)), MaxCount: 20000}); err != nil {
 		t.Errorf("BinomialCoeff symmetry C(n,k)==C(n,n-k) violated: %v", err)
 	}
 }

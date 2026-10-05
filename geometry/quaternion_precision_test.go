@@ -15,6 +15,7 @@ package geometry
 
 import (
 	"math"
+	"math/rand"
 	"testing"
 	"testing/quick"
 )
@@ -127,7 +128,7 @@ func TestQuatRotateVecPreservesLength(t *testing.T) {
 		}
 		return rel <= tol
 	}
-	if err := quick.Check(prop, &quick.Config{MaxCount: 200000}); err != nil {
+	if err := quick.Check(prop, &quick.Config{Rand: rand.New(rand.NewSource(1)), MaxCount: 200000}); err != nil {
 		t.Errorf("PRECISION REGRESSION: QuatRotateVec claims 'exact', isometry violated by relative %g > %g", worst, tol)
 	}
 	t.Logf("PINNED quaternion.go:190 isometry: worst relative length error %g (tol %g)", worst, tol)
@@ -143,7 +144,7 @@ func TestQuatIdentityRotateExact(t *testing.T) {
 		r := QuatRotateVec(id, v)
 		return r[0] == v[0] && r[1] == v[1] && r[2] == v[2]
 	}
-	if err := quick.Check(prop, &quick.Config{MaxCount: 100000}); err != nil {
+	if err := quick.Check(prop, &quick.Config{Rand: rand.New(rand.NewSource(1)), MaxCount: 100000}); err != nil {
 		t.Errorf("PRECISION REGRESSION: QuatRotateVec(identity, v) is not bit-exact: %v", err)
 	}
 }
@@ -167,7 +168,7 @@ func TestQuatNormalizeUnitLength(t *testing.T) {
 		}
 		return e <= tol
 	}
-	if err := quick.Check(prop, &quick.Config{MaxCount: 100000}); err != nil {
+	if err := quick.Check(prop, &quick.Config{Rand: rand.New(rand.NewSource(1)), MaxCount: 100000}); err != nil {
 		t.Errorf("PRECISION REGRESSION: QuatNormalize unit-length violated by %g > %g", worst, tol)
 	}
 	t.Logf("PINNED quaternion.go:47 unit length: worst |mag-1| = %g (tol %g)", worst, tol)

@@ -15,6 +15,7 @@ package optim
 
 import (
 	"math"
+	"math/rand"
 	"testing"
 	"testing/quick"
 )
@@ -42,7 +43,7 @@ func TestBisectionWithinTol(t *testing.T) {
 		}
 		return err <= tol
 	}
-	if err := quick.Check(prop, &quick.Config{MaxCount: 100000}); err != nil {
+	if err := quick.Check(prop, &quick.Config{Rand: rand.New(rand.NewSource(1)), MaxCount: 100000}); err != nil {
 		t.Errorf("PRECISION REGRESSION: BisectionMethod claims |root-x*| <= tol(=%g), observed %g at root=%g", tol, worst, worstAt)
 	}
 	t.Logf("PINNED rootfind.go:20 |root-x*| <= tol: worst observed error %g (tol %g)", worst, tol)
@@ -96,7 +97,7 @@ func TestLinearInterpolateRootExact(t *testing.T) {
 		}
 		return rel <= residBound
 	}
-	if err := quick.Check(prop, &quick.Config{MaxCount: 200000}); err != nil {
+	if err := quick.Check(prop, &quick.Config{Rand: rand.New(rand.NewSource(1)), MaxCount: 200000}); err != nil {
 		t.Errorf("PRECISION REGRESSION: LinearInterpolateRoot well-conditioned relative residual %g > %g", worst, residBound)
 	}
 	t.Logf("PINNED rootfind.go:110 LinearInterpolateRoot (well-conditioned): worst relative residual %g (< %g). NOTE: 'exact' is an operation-count claim; near-coincident abscissae are ill-conditioned and NOT pinned.", worst, residBound)

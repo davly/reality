@@ -13,6 +13,7 @@ package prob
 
 import (
 	"math"
+	"math/rand"
 	"sort"
 	"testing"
 	"testing/quick"
@@ -54,7 +55,7 @@ func TestQuantileWithinRange(t *testing.T) {
 		// allow tiny numerical slack at the endpoints
 		return got >= mn-1e-9 && got <= mx+1e-9
 	}
-	if err := quick.Check(prop, &quick.Config{MaxCount: 100000}); err != nil {
+	if err := quick.Check(prop, &quick.Config{Rand: rand.New(rand.NewSource(1)), MaxCount: 100000}); err != nil {
 		t.Errorf("PRECISION REGRESSION: Quantile output left [min,max]: %v", err)
 	}
 	t.Logf("PINNED percentile.go output-range: Quantile(data,q) in [min,max] for all q")
@@ -77,7 +78,7 @@ func TestQuantileMonotoneInQ(t *testing.T) {
 		}
 		return true
 	}
-	if err := quick.Check(prop, &quick.Config{MaxCount: 20000}); err != nil {
+	if err := quick.Check(prop, &quick.Config{Rand: rand.New(rand.NewSource(1)), MaxCount: 20000}); err != nil {
 		t.Errorf("PRECISION REGRESSION: Quantile not monotone non-decreasing in q: %v", err)
 	}
 }

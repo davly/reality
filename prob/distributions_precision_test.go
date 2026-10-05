@@ -19,6 +19,7 @@ package prob
 
 import (
 	"math"
+	"math/rand"
 	"testing"
 	"testing/quick"
 )
@@ -57,7 +58,7 @@ func TestNormalQuantileRoundTrip(t *testing.T) {
 		}
 		return err <= bound
 	}
-	if err := quick.Check(prop, &quick.Config{MaxCount: 200000}); err != nil {
+	if err := quick.Check(prop, &quick.Config{Rand: rand.New(rand.NewSource(1)), MaxCount: 200000}); err != nil {
 		t.Errorf("NormalQuantile CDF round-trip error %g at p=%g exceeds %g", worstBulk, worstBulkAt, bound)
 	}
 	t.Logf("NormalQuantile (bulk CDF round-trip): worst error %g at p=%g (<= %g)", worstBulk, worstBulkAt, bound)
@@ -171,7 +172,7 @@ func TestNormalCDFMonotone(t *testing.T) {
 		// symmetry about mean 0: CDF(-x) + CDF(x) == 1 (to ~1e-12)
 		return math.Abs(NormalCDF(-xa, 0, 1)+ca-1) <= 1e-12
 	}
-	if err := quick.Check(prop, &quick.Config{MaxCount: 100000}); err != nil {
+	if err := quick.Check(prop, &quick.Config{Rand: rand.New(rand.NewSource(1)), MaxCount: 100000}); err != nil {
 		t.Errorf("PRECISION REGRESSION: NormalCDF monotonicity/symmetry violated: %v", err)
 	}
 }

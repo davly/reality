@@ -14,6 +14,7 @@ package copula
 
 import (
 	"math"
+	"math/rand"
 	"testing"
 	"testing/quick"
 )
@@ -51,7 +52,7 @@ func TestStudentTQuantileRoundTrip(t *testing.T) {
 		}
 		return err <= bound
 	}
-	if err := quick.Check(prop, &quick.Config{MaxCount: 50000}); err != nil {
+	if err := quick.Check(prop, &quick.Config{Rand: rand.New(rand.NewSource(1)), MaxCount: 50000}); err != nil {
 		t.Errorf("PRECISION REGRESSION: StudentTQuantile claims ~1e-10 on x; CDF round-trip error %g at p=%g df=%g exceeds %g", worst, worstP, worstDF, bound)
 	}
 	t.Logf("PINNED studentt.go:53 StudentTQuantile round-trip: worst CDF error %g at p=%g df=%g (bound %g)", worst, worstP, worstDF, bound)
@@ -77,7 +78,7 @@ func TestStudentTCDFContract(t *testing.T) {
 		// Symmetry: CDF(0) == 0.5.
 		return math.Abs(StudentTCDF(0, df)-0.5) <= 1e-12
 	}
-	if err := quick.Check(prop, &quick.Config{MaxCount: 50000}); err != nil {
+	if err := quick.Check(prop, &quick.Config{Rand: rand.New(rand.NewSource(1)), MaxCount: 50000}); err != nil {
 		t.Errorf("PRECISION REGRESSION: StudentTCDF monotonicity/symmetry/[0,1] violated: %v", err)
 	}
 }

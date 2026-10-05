@@ -16,6 +16,7 @@ package audio
 
 import (
 	"math"
+	"math/rand"
 	"testing"
 	"testing/quick"
 )
@@ -42,7 +43,7 @@ func TestMelToHzRoundTripBound(t *testing.T) {
 		}
 		return err <= melRoundTripBound
 	}
-	if err := quick.Check(prop, &quick.Config{MaxCount: 200000}); err != nil {
+	if err := quick.Check(prop, &quick.Config{Rand: rand.New(rand.NewSource(1)), MaxCount: 200000}); err != nil {
 		// Enforced invariant: this bound holds today (worst ~9.09e-13), so a
 		// future regression must turn the suite RED, not silently SKIP.
 		t.Errorf("PRECISION REGRESSION: MelToHz docstring claims HzToMel(MelToHz(m)) <= %g of m for m in [0,8000], observed worst abs error %g at m=%g — needs a tightened impl or an honest docstring", melRoundTripBound, worst, worstAt)
@@ -85,7 +86,7 @@ func TestHzToMelMonotonicProperty(t *testing.T) {
 		}
 		return ma > mb
 	}
-	if err := quick.Check(prop, &quick.Config{MaxCount: 100000}); err != nil {
+	if err := quick.Check(prop, &quick.Config{Rand: rand.New(rand.NewSource(1)), MaxCount: 100000}); err != nil {
 		t.Fatalf("HzToMel monotonicity violated: %v", err)
 	}
 }
@@ -104,7 +105,7 @@ func TestMelToHzMonotonic(t *testing.T) {
 		}
 		return fa > fb
 	}
-	if err := quick.Check(prop, &quick.Config{MaxCount: 100000}); err != nil {
+	if err := quick.Check(prop, &quick.Config{Rand: rand.New(rand.NewSource(1)), MaxCount: 100000}); err != nil {
 		t.Fatalf("MelToHz monotonicity violated: %v", err)
 	}
 }

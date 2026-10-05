@@ -15,6 +15,7 @@ package separation
 import (
 	"math"
 	"math/cmplx"
+	"math/rand"
 	"testing"
 	"testing/quick"
 )
@@ -33,7 +34,7 @@ func TestWienerGainBounded(t *testing.T) {
 		ao := cmplx.Abs(out[0])
 		return ao <= ai+1e-12*math.Max(1, ai)
 	}
-	if err := quick.Check(prop, &quick.Config{MaxCount: 200000}); err != nil {
+	if err := quick.Check(prop, &quick.Config{Rand: rand.New(rand.NewSource(1)), MaxCount: 200000}); err != nil {
 		t.Errorf("PRECISION REGRESSION: WienerFilter gain not in [0,1] — |out| exceeded |in|: %v", err)
 	}
 }
@@ -46,7 +47,7 @@ func TestWienerNoNoisePassThrough(t *testing.T) {
 		out := WienerFilter(in, noise)
 		return out[0] == in[0] // bit-exact: G=1 => complex(1,0)*in == in
 	}
-	if err := quick.Check(prop, &quick.Config{MaxCount: 100000}); err != nil {
+	if err := quick.Check(prop, &quick.Config{Rand: rand.New(rand.NewSource(1)), MaxCount: 100000}); err != nil {
 		t.Errorf("PRECISION REGRESSION: WienerFilter with zero noise is not a bit-exact pass-through: %v", err)
 	}
 }
