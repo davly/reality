@@ -274,9 +274,8 @@ func BetaPDF(x, alpha, beta float64) float64 {
 // Valid range: x in [0, 1], alpha > 0, beta > 0
 // Returns NaN if alpha <= 0 or beta <= 0, and in the cases listed for
 // RegularizedBetaInc
-// Precision: absolute error at most 2e-15 (measured for parameters from
-// 1e-3 to 1e7); relative error below 1e-13 for results >= 1e-150 (see
-// RegularizedBetaInc)
+// Precision: absolute error at most 2.2e-15 (measured for parameters from
+// 1e-3 to 1e7); for the relative error see RegularizedBetaInc
 // Reference: see RegularizedBetaInc in mathutil.go
 func BetaCDF(x, alpha, beta float64) float64 {
 	if alpha <= 0 || beta <= 0 {
@@ -334,10 +333,11 @@ func PoissonPMF(k int, lambda float64) float64 {
 // its iteration budget (only for k and lambda above about 1e12 near the
 // median)
 // Precision: relative error below 1e-12 wherever the result is at least
-// 1e-300 (measured at most 5e-15 for results >= 1e-10, for k up to 1e7);
-// in the far lower tail the error grows in proportion to |ln CDF|, about
-// 3e-16*|ln CDF|. Near the median of still larger means the error grows
-// slowly, to about 2e-13 at 1e13 to 1e17 (see GammaCDF).
+// 1e-300 (measured for k up to 1e7: at most 7e-15 for results >= 1e-10; a
+// smaller result carries an additional error proportional to |ln CDF|, the
+// float64 rounding of the exponent, at most about 5e-16*|ln CDF|). Near the
+// median of still larger means the error grows slowly, to about 2e-13 at
+// 1e13 to 1e17 (see GammaCDF).
 // Cost: about 9*sqrt(k) series terms when lambda is just below k+1, and
 // about 9.4*k^(1/3) continued-fraction iterations at or above it.
 // Reference: DLMF 8.4 (Q(n+1, z) = e^-z sum_{j=0}^{n} z^j / j!)
@@ -403,13 +403,13 @@ func GammaPDF(x, k, theta float64) float64 {
 // above about 1e12, with x/theta just below k)
 // Returns 0 if x <= 0
 // Precision: for shapes from 1e-3 to 1e7 (the measured range), relative
-// error below 1e-13 wherever the result is at least 1e-150 (at most 5e-15
-// for results >= 1e-10 and 4.4e-14 down to 1e-150). Below 1e-150 the error
-// is set by the float64 rounding of the exponent and grows in proportion to
-// |ln P|, about 3e-16*|ln P|, i.e. 2e-13 near 1e-300. For larger shapes the
-// continued fraction's rounding near the peak grows slowly with k: against
-// the asymptotic form at x/theta = k, 9e-15 at k = 1e10, 7e-14 at 1e12 and
-// up to 2.1e-13 for k from 1e13 to 1e17.
+// error at most 6e-15 for results >= 1e-10. A smaller result carries an
+// additional error proportional to |ln P|, the float64 rounding of the
+// exponent: measured at most 4.7e-16*|ln P| (7.1e-14 at 1e-100, 2.2e-13
+// at 1e-200, 1.7e-13 at 1e-300). For larger shapes the continued
+// fraction's rounding near the peak grows slowly with k: against the
+// asymptotic form at x/theta = k, 9e-15 at k = 1e10, 7e-14 at 1e12 and up
+// to 2.1e-13 for k from 1e13 to 1e17.
 // Cost: about 9*sqrt(k) series terms when x/theta is just below k, and
 // about 9.4*k^(1/3) continued-fraction iterations at or above it.
 // Reference: Abramowitz & Stegun, Chapter 6; DLMF 8.2; DiDonato & Morris
@@ -495,10 +495,11 @@ func BinomialPMF(k, n int, p float64) float64 {
 // Valid range: 0 <= k <= n, n >= 0, p in [0, 1]
 // Returns NaN if p < 0 or p > 1, or n < 0
 // Returns 0 if k < 0; returns 1 if k >= n
-// Precision: relative error at most 7e-15 for results >= 1e-10 and below
-// 1e-13 down to 1e-150 (measured for n up to 1e6 and p from 1e-10 to
-// 1 - 1e-6); in the far lower tail it grows in proportion to |ln CDF|, as
-// for RegularizedBetaInc. p is passed to the incomplete beta function as the
+// Precision: measured for n up to 1e6 and p from 1e-10 to 1 - 1e-6:
+// absolute error at most 1.3e-15; relative error at most 7e-15 for results
+// >= 1e-10, and for smaller results an additional error proportional to
+// |ln CDF| (at most 4.4e-16*|ln CDF|, 2.0e-13 at 5e-193), as for
+// RegularizedBetaInc. p is passed to the incomplete beta function as the
 // exact complement of 1 - p, so a small p is not rounded through 1 - p.
 // Reference: relation between binomial CDF and incomplete beta;
 // Abramowitz & Stegun, formula 26.5.24

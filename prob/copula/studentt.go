@@ -22,9 +22,10 @@ import "math"
 //
 // Uses prob.RegularizedBetaInc, with the complement x^2/(df + x^2) kept
 // exact (see studentTTailBeta).
-// Precision: relative error below 1e-13 for results >= 1e-150 (measured at
-// most 2.1e-15 for results >= 1e-10, df from 1 to 1e6, |x| up to 1e3); the
-// upper half 1 - CDF(-x) is exact to 2e-16 absolute.
+// Precision: measured for df from 1 to 1e6 and |x| up to 1e3: lower-tail
+// relative error at most 2.5e-15 for results >= 1e-10, and for smaller
+// results an additional error proportional to |ln CDF| (2.5e-14 at 2e-75,
+// 1.1e-13 at 2e-243); the upper half 1 - CDF(-x) is exact to 2e-16 absolute.
 //
 // Reference: Abramowitz & Stegun 26.5.27.
 func StudentTCDF(x, df float64) float64 {
