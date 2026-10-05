@@ -9,8 +9,9 @@ package combinatorics
 //   - Factorial: "correctly rounded for every n <= 170, and exact for
 //     n <= 22". We assert every value equals the float64 nearest to the exact
 //     big.Int n!, exactness for n <= 22, and relative error <= 2^-53 vs n!.
-//   - counting.go:48  BinomialCoeff: "relative error < 1e-12 for typical
-//     inputs." We assert rel err < 1e-12 vs a big.Int exact C(n,k).
+//   - BinomialCoeff: "correctly rounded". We assert relative error <= 2^-53
+//     vs a big.Int exact C(n,k); counting_exact_test.go checks the rounding
+//     itself, value by value.
 //   - counting.go:108 FibonacciNumber: "exact (integer arithmetic)". We assert
 //     the recurrence F_n = F_{n-1}+F_{n-2} holds bit-exact up to the documented
 //     n<=93 (uint64 limit).
@@ -145,16 +146,11 @@ func TestFactorialRelErrHalfUlp(t *testing.T) {
 }
 
 // binomialWorstRelErr returns the worst relative error of BinomialCoeff vs the
-// big.Int oracle over all 0<=k<=n for 2<=n<=maxN.
+// exact big.Int C(n,k) over all 0<=k<=n for 2<=n<=maxN.
 func binomialWorstRelErr(maxN int) (worst float64, atN, atK int) {
 	for n := 2; n <= maxN; n++ {
 		for k := 0; k <= n; k++ {
-			got := BinomialCoeff(n, k)
-			want, _ := new(big.Float).SetInt(bigBinomial(n, k)).Float64()
-			if math.IsInf(want, 0) || want == 0 {
-				continue
-			}
-			rel := math.Abs(got-want) / want
+			rel := relErrVsExact(BinomialCoeff(n, k), bigBinomial(n, k))
 			if rel > worst {
 				worst, atN, atK = rel, n, k
 			}
@@ -163,48 +159,38 @@ func binomialWorstRelErr(maxN int) (worst float64, atN, atK int) {
 	return
 }
 
-// TestBinomialRelErrTypical PINS counting.go:48 "relative error < 1e-12 for
-// typical inputs" on genuinely typical combinatorial inputs (n <= 200): the
-// log-gamma implementation stays under 1e-12 there.
+// TestBinomialRelErrTypical pins the consequence of correct rounding on the
+// whole triangle n <= 200: relative error <= 2^-53 against the exact C(n,k).
+// (The previous exp(lgamma) evaluation reached 3.09e-13 here.)
 func TestBinomialRelErrTypical(t *testing.T) {
-	const bound = 1e-12
+	const unitRoundoff = 0x1p-53
 	worst, n, k := binomialWorstRelErr(200)
-	if worst > bound {
-		t.Errorf("PRECISION REGRESSION: BinomialCoeff (counting.go:48) claims rel err < %g for typical inputs, but observed %g at C(%d,%d) (n<=200)", bound, worst, n, k)
+	if worst > unitRoundoff {
+		t.Errorf("BinomialCoeff relative error %g at C(%d,%d) exceeds 2^-53 (n<=200)", worst, n, k)
 	}
-	t.Logf("PINNED counting.go:48 BinomialCoeff (typical, n<=200): worst rel err %g at C(%d,%d) (< %g)", worst, n, k, bound)
+	t.Logf("BinomialCoeff (n<=200): worst relative error vs exact %g at C(%d,%d) (<= 2^-53)", worst, n, k)
 }
 
-// TestBinomialRelErrLargeN DOCUMENTS that the 1e-12 bound is exceeded for large
-// n (>~420), where the lgamma error accumulates: e.g. ~2.5e-12 at C(990,86).
-// The docstring's "for typical inputs" arguably scopes this out, but it is an
-// honest caveat worth surfacing for callers using large n. Skip keeps the suite
-// GREEN while the finding is visible.
-//
-// We scan only the error-peak band (large n, small-to-moderate k), where the
-// log-gamma cancellation is worst — scanning the whole triangle with a big.Int
-// oracle is O(n^2) bignum and needlessly slow.
+// TestBinomialRelErrLargeN checks the same bound on the band where the
+// previous exp(lgamma) evaluation was worst (large n, small-to-moderate k:
+// 2.45e-12 at C(990,86)). Results that overflow are covered by
+// counting_exact_test.go.
 func TestBinomialRelErrLargeN(t *testing.T) {
-	const bound = 1e-12
+	const unitRoundoff = 0x1p-53
 	var worst float64
 	var atN, atK int
 	for n := 400; n <= 1000; n += 5 {
-		for k := 1; k <= 120; k++ { // peak is at small/moderate k
-			got := BinomialCoeff(n, k)
-			want, _ := new(big.Float).SetInt(bigBinomial(n, k)).Float64()
-			if math.IsInf(want, 0) || want == 0 {
-				continue
-			}
-			rel := math.Abs(got-want) / want
+		for k := 1; k <= 120; k++ {
+			rel := relErrVsExact(BinomialCoeff(n, k), bigBinomial(n, k))
 			if rel > worst {
 				worst, atN, atK = rel, n, k
 			}
 		}
 	}
-	if worst > bound {
-		t.Skipf("PRECISION CAVEAT: BinomialCoeff (counting.go:48) rel err reaches %g at C(%d,%d) for large n — exceeds the 1e-12 bound, which the docstring scopes to 'typical inputs'. Large-n callers should expect ~few×1e-12", worst, atN, atK)
+	if worst > unitRoundoff {
+		t.Errorf("BinomialCoeff relative error %g at C(%d,%d) exceeds 2^-53", worst, atN, atK)
 	}
-	t.Logf("BinomialCoeff large-n band: worst rel err %g at C(%d,%d)", worst, atN, atK)
+	t.Logf("BinomialCoeff large-n band: worst relative error vs exact %g at C(%d,%d)", worst, atN, atK)
 }
 
 // TestBinomialSymmetryExact pins the documented symmetry C(n,k)==C(n,n-k)
