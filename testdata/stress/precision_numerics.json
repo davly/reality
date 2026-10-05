@@ -49958,6 +49958,302 @@
    "tol": 1e-12,
    "tol_kind": "rel",
    "claim": "optim/transport/wasserstein1d.go Wasserstein1D: 'returns the closed-form Wasserstein-p distance' (and the '<=1e-12' cross-implementation contract) -> relative 1e-12 against the exact W_p of the samples (quantile integral in rationals); samples of order 1e160 (|d|^2 overflows)"
+  },
+  {
+   "id": "numerics/deriv/exp-x1-h1e-5",
+   "func": "calculus.NumericalDerivative",
+   "args": {
+    "f": "exp",
+    "x": 1.0,
+    "h": 1e-05
+   },
+   "want": 2.718281828459045,
+   "tol": 1.0566373524056137e-09,
+   "tol_kind": "abs",
+   "claim": "calculus/calculus.go NumericalDerivative: 'Precision: O(h^2) truncation error + O(eps/h) roundoff error.' -> the textbook bound of the cited Burden & Faires with 10x slack: |error| <= 10 * (h^2/6 * max|f^(3)| + 2^-52 * max|f| / h), both maxima over [x-h, x+h] = 1.06e-09"
+  },
+  {
+   "id": "numerics/deriv/exp-x1-h1e-12",
+   "func": "calculus.NumericalDerivative",
+   "args": {
+    "f": "exp",
+    "x": 1.0,
+    "h": 1e-12
+   },
+   "want": 2.718281828459045,
+   "tol": 0.00603579814675684,
+   "tol_kind": "abs",
+   "claim": "calculus/calculus.go NumericalDerivative: 'Precision: O(h^2) truncation error + O(eps/h) roundoff error.' -> the textbook bound of the cited Burden & Faires with 10x slack: |error| <= 10 * (h^2/6 * max|f^(3)| + 2^-52 * max|f| / h), both maxima over [x-h, x+h] = 0.00604"
+  },
+  {
+   "id": "numerics/deriv/sin-x1e4-h1e-5",
+   "func": "calculus.NumericalDerivative",
+   "args": {
+    "f": "sin",
+    "x": 10000.0,
+    "h": 1e-05
+   },
+   "want": -0.9521553682590148,
+   "tol": 3.8871127159169797e-10,
+   "tol_kind": "abs",
+   "claim": "calculus/calculus.go NumericalDerivative: 'Precision: O(h^2) truncation error + O(eps/h) roundoff error.' -> the textbook bound of the cited Burden & Faires with 10x slack: |error| <= 10 * (h^2/6 * max|f^(3)| + 2^-52 * max|f| / h), both maxima over [x-h, x+h] = 3.89e-10; x +- h are not representable exactly at x = 1e4"
+  },
+  {
+   "id": "numerics/gradient/h1e-4",
+   "func": "calculus.NumericalGradient",
+   "args": {
+    "f": "exp2d",
+    "x": [
+     1.0,
+     0.5
+    ],
+    "h": 0.0001,
+    "truth": [
+     2.718281828459045,
+     5.43656365691809
+    ],
+    "bound": [
+     4.5309227837229224e-08,
+     3.6251007189253315e-07
+    ]
+   },
+   "want": 0.0,
+   "tol": 1.0,
+   "tol_kind": "abs",
+   "claim": "calculus/calculus.go NumericalGradient: 'Precision: O(h^2) per component' (no roundoff term is stated) -> |error_i| <= 10 * h^2/6 * max|d^3 f/dx_i^3| over [x_i-h, x_i+h]; f = exp(x0) + exp(2 x1) at (1, 0.5); scalar = max_i |error_i| / bound_i, which must be <= 1; h = 0.0001"
+  },
+  {
+   "id": "numerics/gradient/h1e-8",
+   "func": "calculus.NumericalGradient",
+   "args": {
+    "f": "exp2d",
+    "x": [
+     1.0,
+     0.5
+    ],
+    "h": 1e-08,
+    "truth": [
+     2.718281828459045,
+     5.43656365691809
+    ],
+    "bound": [
+     4.5304697594031065e-16,
+     3.6243758437662435e-15
+    ]
+   },
+   "want": 0.0,
+   "tol": 1.0,
+   "tol_kind": "abs",
+   "claim": "calculus/calculus.go NumericalGradient: 'Precision: O(h^2) per component' (no roundoff term is stated) -> |error_i| <= 10 * h^2/6 * max|d^3 f/dx_i^3| over [x_i-h, x_i+h]; f = exp(x0) + exp(2 x1) at (1, 0.5); scalar = max_i |error_i| / bound_i, which must be <= 1; h = 1e-08"
+  },
+  {
+   "id": "numerics/trapezoid/exp-n100",
+   "func": "calculus.TrapezoidalRule",
+   "args": {
+    "f": "exp",
+    "a": 0.0,
+    "b": 1.0,
+    "n": 100
+   },
+   "want": 1.7182818284590453,
+   "tol": 2.2652348570492043e-05,
+   "tol_kind": "abs",
+   "claim": "calculus/calculus.go TrapezoidalRule: 'Precision: O(h^2) \u2014 error proportional to h^2 * max|f\u2033|' -> the constant of the cited Burden & Faires: |error| <= (b-a)/12 * h^2 * max|f^(2)|; f = exp on [0, 1]; n = 100, bound 2.27e-05"
+  },
+  {
+   "id": "numerics/trapezoid/exp-n4e6",
+   "func": "calculus.TrapezoidalRule",
+   "args": {
+    "f": "exp",
+    "a": 0.0,
+    "b": 1.0,
+    "n": 4000000
+   },
+   "want": 1.7182818284590453,
+   "tol": 1.4157717856557527e-14,
+   "tol_kind": "abs",
+   "claim": "calculus/calculus.go TrapezoidalRule: 'Precision: O(h^2) \u2014 error proportional to h^2 * max|f\u2033|' -> the constant of the cited Burden & Faires: |error| <= (b-a)/12 * h^2 * max|f^(2)|; f = exp on [0, 1]; n = 4000000, bound 1.42e-14"
+  },
+  {
+   "id": "numerics/simpson/exp-n10",
+   "func": "calculus.SimpsonsRule",
+   "args": {
+    "f": "exp",
+    "a": 0.0,
+    "b": 1.0,
+    "n": 10
+   },
+   "want": 1.7182818284590453,
+   "tol": 1.5101565713661362e-06,
+   "tol_kind": "abs",
+   "claim": "calculus/calculus.go SimpsonsRule: 'Precision: O(h^4) \u2014 error proportional to h^4 * max|f\u2074|' -> the constant of the cited Burden & Faires: |error| <= (b-a)/180 * h^4 * max|f^(4)|; f = exp on [0, 1]; n = 10, bound 1.51e-06"
+  },
+  {
+   "id": "numerics/simpson/exp-n1e4",
+   "func": "calculus.SimpsonsRule",
+   "args": {
+    "f": "exp",
+    "a": 0.0,
+    "b": 1.0,
+    "n": 10000
+   },
+   "want": 1.7182818284590453,
+   "tol": 1.5101565713661362e-18,
+   "tol_kind": "abs",
+   "claim": "calculus/calculus.go SimpsonsRule: 'Precision: O(h^4) \u2014 error proportional to h^4 * max|f\u2074|' -> the constant of the cited Burden & Faires: |error| <= (b-a)/180 * h^4 * max|f^(4)|; f = exp on [0, 1]; n = 10000, bound 1.51e-18"
+  },
+  {
+   "id": "numerics/gausslegendre/x3-2pt",
+   "func": "calculus.GaussLegendre",
+   "args": {
+    "coef": [
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "a": 0.0,
+    "b": 1.0,
+    "points": 2
+   },
+   "want": 0.25,
+   "tol": 4.440892098500626e-15,
+   "tol_kind": "rel",
+   "claim": "calculus/calculus.go GaussLegendre: 'Precision: exact for polynomials of degree <= 2*points - 1' -> read as no truncation error: relative error within 10*points*2^-52, the rounding allowance of a points-term weighted sum of rounded nodes, weights and polynomial values (a degree-2*points term would leave an error orders above this); polynomial degree 3 on [0, 1]"
+  },
+  {
+   "id": "numerics/gausslegendre/x9-5pt",
+   "func": "calculus.GaussLegendre",
+   "args": {
+    "coef": [
+     1.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "a": 0.0,
+    "b": 1.0,
+    "points": 5
+   },
+   "want": 0.1,
+   "tol": 1.1102230246251565e-14,
+   "tol_kind": "rel",
+   "claim": "calculus/calculus.go GaussLegendre: 'Precision: exact for polynomials of degree <= 2*points - 1' -> read as no truncation error: relative error within 10*points*2^-52, the rounding allowance of a points-term weighted sum of rounded nodes, weights and polynomial values (a degree-2*points term would leave an error orders above this); polynomial degree 9 on [0, 1]"
+  },
+  {
+   "id": "numerics/gausslegendre/mixed-deg7-4pt",
+   "func": "calculus.GaussLegendre",
+   "args": {
+    "coef": [
+     0.5,
+     0.0,
+     -3.0,
+     1.0,
+     0.0,
+     2.0,
+     -1.0,
+     0.25
+    ],
+    "a": -1.0,
+    "b": 2.0,
+    "points": 4
+   },
+   "want": -3.7125,
+   "tol": 8.881784197001252e-15,
+   "tol_kind": "rel",
+   "claim": "calculus/calculus.go GaussLegendre: 'Precision: exact for polynomials of degree <= 2*points - 1' -> read as no truncation error: relative error within 10*points*2^-52, the rounding allowance of a points-term weighted sum of rounded nodes, weights and polynomial values (a degree-2*points term would leave an error orders above this); polynomial degree 7 on [-1, 2]"
+  },
+  {
+   "id": "numerics/gausslegendre/mixed-deg9-5pt",
+   "func": "calculus.GaussLegendre",
+   "args": {
+    "coef": [
+     1.0,
+     0.0,
+     0.0,
+     0.0,
+     -3.0,
+     0.0,
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ],
+    "a": -1.0,
+    "b": 2.0,
+    "points": 5
+   },
+   "want": 72.3,
+   "tol": 1.1102230246251565e-14,
+   "tol_kind": "rel",
+   "claim": "calculus/calculus.go GaussLegendre: 'Precision: exact for polynomials of degree <= 2*points - 1' -> read as no truncation error: relative error within 10*points*2^-52, the rounding allowance of a points-term weighted sum of rounded nodes, weights and polynomial values (a degree-2*points term would leave an error orders above this); polynomial degree 9 on [-1, 2]"
+  },
+  {
+   "id": "numerics/euler/exp-dt0.1",
+   "func": "chaos.EulerStep",
+   "args": {
+    "dt": 0.1
+   },
+   "want": 1.1051709180756477,
+   "tol": 0.005525854590378239,
+   "tol_kind": "abs",
+   "claim": "chaos/ode.go EulerStep: 'First-order accurate.' -> the local error of one step is bounded by dt^2/2 * max|y''| over the step; y' = y, y(0) = 1; dt = 0.1"
+  },
+  {
+   "id": "numerics/euler/exp-dt1e-3",
+   "func": "chaos.EulerStep",
+   "args": {
+    "dt": 0.001
+   },
+   "want": 1.0010005001667084,
+   "tol": 5.005002500833542e-07,
+   "tol_kind": "abs",
+   "claim": "chaos/ode.go EulerStep: 'First-order accurate.' -> the local error of one step is bounded by dt^2/2 * max|y''| over the step; y' = y, y(0) = 1; dt = 0.001"
+  },
+  {
+   "id": "numerics/logistic/r2.5",
+   "func": "chaos.LogisticMap",
+   "args": {
+    "r": 2.5,
+    "x0": 0.2,
+    "iters": 500
+   },
+   "want": 0.6,
+   "tol": 1.7763568394002505e-15,
+   "tol_kind": "rel",
+   "claim": "chaos/systems.go LogisticMap: '1 < r < 3: x converges to a fixed point (r-1)/r'; 'r < 1: x converges to 0' -> after the given iterations x is exactly 0 (r < 1), or within the fixed point of the rounded map: relative 4*2^-52 / (1 - |f'(x*)|), f'(x*) = 2 - r (a few ulps of rounding per step, amplified by the contraction); r = 2.5"
+  },
+  {
+   "id": "numerics/logistic/r2.9",
+   "func": "chaos.LogisticMap",
+   "args": {
+    "r": 2.9,
+    "x0": 0.7,
+    "iters": 5000
+   },
+   "want": 0.6551724137931034,
+   "tol": 8.881784197001244e-15,
+   "tol_kind": "rel",
+   "claim": "chaos/systems.go LogisticMap: '1 < r < 3: x converges to a fixed point (r-1)/r'; 'r < 1: x converges to 0' -> after the given iterations x is exactly 0 (r < 1), or within the fixed point of the rounded map: relative 4*2^-52 / (1 - |f'(x*)|), f'(x*) = 2 - r (a few ulps of rounding per step, amplified by the contraction); r = 2.9"
+  },
+  {
+   "id": "numerics/logistic/r0.5",
+   "func": "chaos.LogisticMap",
+   "args": {
+    "r": 0.5,
+    "x0": 0.9,
+    "iters": 2000
+   },
+   "want": 0.0,
+   "tol": 0.0,
+   "tol_kind": "rel",
+   "claim": "chaos/systems.go LogisticMap: '1 < r < 3: x converges to a fixed point (r-1)/r'; 'r < 1: x converges to 0' -> after the given iterations x is exactly 0 (r < 1), or within the fixed point of the rounded map: relative 4*2^-52 / (1 - |f'(x*)|), f'(x*) = 2 - r (a few ulps of rounding per step, amplified by the contraction); r = 0.5"
   }
  ]
 }

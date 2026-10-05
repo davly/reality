@@ -18,6 +18,8 @@ import (
 	"math"
 	"math/big"
 
+	"github.com/davly/reality/calculus"
+	"github.com/davly/reality/chaos"
 	"github.com/davly/reality/linalg"
 	"github.com/davly/reality/optim"
 	"github.com/davly/reality/optim/hrp"
@@ -195,6 +197,7 @@ func init() {
 	registerOptimEvaluators()
 	registerPortfolioEvaluators()
 	registerProxTransportEvaluators()
+	registerCalculusChaosEvaluators()
 	registerKnownPrecisionViolations(numericsKnownViolations)
 }
 
@@ -257,6 +260,12 @@ var numericsKnownViolations = map[string]string{
 	"numerics/sinkhorn/n50-shifted-eps0.01": "does not converge even at the internal cap of 1000 iterations",
 	"numerics/wasserstein/p4-scale-1e-90":   "returns 0 for distinct samples of order 1e-90: |d|^4 underflows",
 	"numerics/wasserstein/p2-scale-1e160":   "returns +Inf for samples of order 1e160: |d|^2 overflows",
+
+	// calculus
+	"numerics/deriv/sin-x1e4-h1e-5": "error 2.4e-8 > bound 3.9e-10: x+h and x-h round at x = 1e4, but the quotient divides by the nominal 2h",
+	"numerics/gradient/h1e-8":       "error 8.3e7 times the stated O(h^2) bound (absolute ~1e-7): the roundoff term eps*|f|/h, which the doc does not state, dominates",
+	"numerics/trapezoid/exp-n4e6":   "error 5.4e-14 > (b-a)/12*h^2*max|f^(2)| = 1.4e-14: the rounding of the n-term sum dominates",
+	"numerics/simpson/exp-n1e4":     "error 5.8e-15 > (b-a)/180*h^4*max|f^(4)| = 1.5e-18: the rounding of the n-term sum dominates",
 }
 
 func registerLinalgEvaluators() {
@@ -345,6 +354,8 @@ func registerLinalgEvaluators() {
 // between builds.
 
 var numFuncs1D = map[string]func(float64) float64{
+	"exp":         math.Exp,
+	"sin":         math.Sin,
 	"x2minus2":    func(x float64) float64 { return float64(x*x) - 2 },
 	"expminus1e5": func(x float64) float64 { return math.Exp(x) - 1e5 },
 	"sq_xminus2": func(x float64) float64 {
@@ -633,5 +644,55 @@ func registerProxTransportEvaluators() {
 	})
 	registerPrecisionEvaluator("transport.Wasserstein1D", func(c precisionCase) (float64, error) {
 		return transport.Wasserstein1D(numVec(c, "u"), numVec(c, "v"), argF(c, "p"))
+	})
+}
+
+func registerCalculusChaosEvaluators() {
+	registerPrecisionEvaluator("calculus.NumericalDerivative", func(c precisionCase) (float64, error) {
+		return calculus.NumericalDerivative(numFunc1D(c), argF(c, "x"), argF(c, "h")), nil
+	})
+	registerPrecisionEvaluator("calculus.NumericalGradient", func(c precisionCase) (float64, error) {
+		if numStr(c, "f") != "exp2d" {
+			return 0, fmt.Errorf("unknown function %q", numStr(c, "f"))
+		}
+		f := func(x []float64) float64 { return math.Exp(x[0]) + math.Exp(2*x[1]) }
+		x := numVec(c, "x")
+		out := make([]float64, len(x))
+		calculus.NumericalGradient(f, x, argF(c, "h"), out)
+		truth, bound := numVec(c, "truth"), numVec(c, "bound")
+		worst := 0.0
+		for i := range out {
+			worst = math.Max(worst, math.Abs(out[i]-truth[i])/bound[i])
+		}
+		return worst, nil
+	})
+	registerPrecisionEvaluator("calculus.TrapezoidalRule", func(c precisionCase) (float64, error) {
+		return calculus.TrapezoidalRule(numFunc1D(c), argF(c, "a"), argF(c, "b"), argI(c, "n")), nil
+	})
+	registerPrecisionEvaluator("calculus.SimpsonsRule", func(c precisionCase) (float64, error) {
+		return calculus.SimpsonsRule(numFunc1D(c), argF(c, "a"), argF(c, "b"), argI(c, "n")), nil
+	})
+	registerPrecisionEvaluator("calculus.GaussLegendre", func(c precisionCase) (float64, error) {
+		coef := numVec(c, "coef")
+		poly := func(x float64) float64 {
+			acc := 0.0
+			for _, k := range coef {
+				acc = float64(acc*x) + k
+			}
+			return acc
+		}
+		return calculus.GaussLegendre(poly, argF(c, "a"), argF(c, "b"), argI(c, "points")), nil
+	})
+	registerPrecisionEvaluator("chaos.EulerStep", func(c precisionCase) (float64, error) {
+		out := make([]float64, 1)
+		chaos.EulerStep(func(_ float64, y, dydt []float64) { dydt[0] = y[0] }, 0, []float64{1}, argF(c, "dt"), out)
+		return out[0], nil
+	})
+	registerPrecisionEvaluator("chaos.LogisticMap", func(c precisionCase) (float64, error) {
+		r, x := argF(c, "r"), argF(c, "x0")
+		for i := argI(c, "iters"); i > 0; i-- {
+			x = chaos.LogisticMap(r, x)
+		}
+		return x, nil
 	})
 }

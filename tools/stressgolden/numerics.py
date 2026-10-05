@@ -913,12 +913,96 @@ def prox_transport_cases():
     return C
 
 
+# ---------------------------------------------------------------------------
+# calculus and chaos
+# ---------------------------------------------------------------------------
+
+def poly_int(coef, a, b):
+    """Exact integral of the polynomial with coefficients coef (highest
+    degree first) over [a, b], in rationals."""
+    d = len(coef) - 1
+    F = lambda x: sum(Fraction(c) * Fraction(x) ** (d - k + 1) / (d - k + 1) for k, c in enumerate(coef))
+    return F(b) - F(a)
+
+
+def calc_chaos_cases():
+    C = []
+    E = mp.e
+
+    # NumericalDerivative --------------------------------------------------------
+    nd = ("calculus/calculus.go NumericalDerivative: 'Precision: O(h^2) truncation error + O(eps/h) roundoff error.' -> "
+          "the textbook bound of the cited Burden & Faires with 10x slack: |error| <= 10 * (h^2/6 * max|f^(3)| + 2^-52 * "
+          "max|f| / h), both maxima over [x-h, x+h]")
+    for cid, fn, x, h, truth, m3, m0 in (
+            ("deriv/exp-x1-h1e-5", "exp", 1.0, 1e-5, E, mp.exp(1 + M(1e-5)), mp.exp(1 + M(1e-5))),
+            ("deriv/exp-x1-h1e-12", "exp", 1.0, 1e-12, E, mp.exp(1 + M(1e-12)), mp.exp(1 + M(1e-12))),
+            ("deriv/sin-x1e4-h1e-5", "sin", 1e4, 1e-5, mp.cos(M(1e4)), mp.mpf(1), mp.mpf(1))):
+        bound = 10 * (M(h) ** 2 / 6 * m3 + M(ULP) * m0 / M(h))
+        C.append(case(cid, "calculus.NumericalDerivative", {"f": fn, "x": x, "h": h}, f64(truth), f64(bound), "abs",
+                      nd + " = %.3g" % f64(bound) + ("; x +- h are not representable exactly at x = 1e4" if "sin" in cid else "")))
+
+    # NumericalGradient ------------------------------------------------------------
+    ng = ("calculus/calculus.go NumericalGradient: 'Precision: O(h^2) per component' (no roundoff term is stated) -> "
+          "|error_i| <= 10 * h^2/6 * max|d^3 f/dx_i^3| over [x_i-h, x_i+h]; f = exp(x0) + exp(2 x1) at (1, 0.5); scalar = "
+          "max_i |error_i| / bound_i, which must be <= 1")
+    for cid, h in (("gradient/h1e-4", 1e-4), ("gradient/h1e-8", 1e-8)):
+        b0 = 10 * M(h) ** 2 / 6 * mp.exp(1 + M(h))
+        b1 = 10 * M(h) ** 2 / 6 * 8 * mp.exp(2 * (M(0.5) + M(h)))
+        C.append(case(cid, "calculus.NumericalGradient", {"f": "exp2d", "x": [1.0, 0.5], "h": h, "truth": [f64(E), f64(2 * E)],
+                                                          "bound": [f64(b0), f64(b1)]}, 0.0, 1.0, "abs",
+                      ng + "; h = %g" % h))
+
+    # TrapezoidalRule / SimpsonsRule -------------------------------------------------
+    tr = ("calculus/calculus.go TrapezoidalRule: 'Precision: O(h^2) — error proportional to h^2 * max|f″|' -> the "
+          "constant of the cited Burden & Faires: |error| <= (b-a)/12 * h^2 * max|f^(2)|; f = exp on [0, 1]")
+    for cid, n in (("trapezoid/exp-n100", 100), ("trapezoid/exp-n4e6", 4000000)):
+        h = M(1) / n
+        bound = h ** 2 / 12 * E
+        C.append(case(cid, "calculus.TrapezoidalRule", {"f": "exp", "a": 0.0, "b": 1.0, "n": n}, f64(E - 1), f64(bound), "abs",
+                      tr + "; n = %d, bound %.3g" % (n, f64(bound))))
+    sp = ("calculus/calculus.go SimpsonsRule: 'Precision: O(h^4) — error proportional to h^4 * max|f⁴|' -> the constant "
+          "of the cited Burden & Faires: |error| <= (b-a)/180 * h^4 * max|f^(4)|; f = exp on [0, 1]")
+    for cid, n in (("simpson/exp-n10", 10), ("simpson/exp-n1e4", 10000)):
+        h = M(1) / n
+        bound = h ** 4 / 180 * E
+        C.append(case(cid, "calculus.SimpsonsRule", {"f": "exp", "a": 0.0, "b": 1.0, "n": n}, f64(E - 1), f64(bound), "abs",
+                      sp + "; n = %d, bound %.3g" % (n, f64(bound))))
+
+    # GaussLegendre --------------------------------------------------------------------
+    gl = ("calculus/calculus.go GaussLegendre: 'Precision: exact for polynomials of degree <= 2*points - 1' -> read as no "
+          "truncation error: relative error within 10*points*2^-52, the rounding allowance of a points-term weighted sum of "
+          "rounded nodes, weights and polynomial values (a degree-2*points term would leave an error orders above this)")
+    for cid, pts, coef, a, b in (("gausslegendre/x3-2pt", 2, [1.0, 0.0, 0.0, 0.0], 0.0, 1.0),
+                                 ("gausslegendre/x9-5pt", 5, [1.0] + [0.0] * 9, 0.0, 1.0),
+                                 ("gausslegendre/mixed-deg7-4pt", 4, [0.5, 0.0, -3.0, 1.0, 0.0, 2.0, -1.0, 0.25], -1.0, 2.0),
+                                 ("gausslegendre/mixed-deg9-5pt", 5, [1.0, 0.0, 0.0, 0.0, -3.0, 0.0, 0.0, 0.0, 1.0, 0.0], -1.0, 2.0)):
+        assert len(coef) - 1 <= 2 * pts - 1
+        C.append(case(cid, "calculus.GaussLegendre", {"coef": coef, "a": a, "b": b, "points": pts}, f64(poly_int(coef, a, b)),
+                      10 * pts * ULP, "rel", gl + "; polynomial degree %d on [%g, %g]" % (len(coef) - 1, a, b)))
+
+    # chaos ------------------------------------------------------------------------------
+    eu = ("chaos/ode.go EulerStep: 'First-order accurate.' -> the local error of one step is bounded by dt^2/2 * max|y''| "
+          "over the step; y' = y, y(0) = 1")
+    for cid, dt in (("euler/exp-dt0.1", 0.1), ("euler/exp-dt1e-3", 1e-3)):
+        bound = M(dt) ** 2 / 2 * mp.exp(M(dt))
+        C.append(case(cid, "chaos.EulerStep", {"dt": dt}, f64(mp.exp(M(dt))), f64(bound), "abs", eu + "; dt = %g" % dt))
+    lm = ("chaos/systems.go LogisticMap: '1 < r < 3: x converges to a fixed point (r-1)/r'; 'r < 1: x converges to 0' -> "
+          "after the given iterations x is exactly 0 (r < 1), or within the fixed point of the rounded map: relative "
+          "4*2^-52 / (1 - |f'(x*)|), f'(x*) = 2 - r (a few ulps of rounding per step, amplified by the contraction)")
+    for cid, r, x0, it in (("logistic/r2.5", 2.5, 0.2, 500), ("logistic/r2.9", 2.9, 0.7, 5000), ("logistic/r0.5", 0.5, 0.9, 2000)):
+        fp = (M(r) - 1) / M(r) if r > 1 else mp.mpf(0)
+        tol = 4 * ULP / (1 - abs(2 - r)) if r > 1 else 0.0
+        C.append(case(cid, "chaos.LogisticMap", {"r": r, "x0": x0, "iters": it}, f64(fp), tol, "rel", lm + "; r = %g" % r))
+    return C
+
+
 def main():
     C = []
     C += linalg_cases()
     C += optim_cases()
     C += portfolio_cases()
     C += prox_transport_cases()
+    C += calc_chaos_cases()
     ids = [c["id"] for c in C]
     assert len(ids) == len(set(ids)), "duplicate case id"
     doc = {
