@@ -38,8 +38,8 @@ import (
 //
 // All functions are pure, deterministic, and depend only on the Go standard
 // library plus reality's own constants and normal primitives (NormalCDF via
-// math.Erfc for ~15-digit CDF accuracy; the Acklam quantile with documented
-// relative error < 1.15e-9 for the inverse-normal used by ExpectedMaxSharpe).
+// math.Erfc for ~15-digit CDF accuracy; a normal quantile within 2.5 ulps of
+// the exact value for the inverse-normal used by ExpectedMaxSharpe).
 //
 // Consumer: RubberDuck's MultipleTestingGate issues an EdgeCertificate whose
 // pass/fail is a minimum-Deflated-Sharpe threshold; the same ExpectedMaxSharpe
@@ -102,7 +102,7 @@ func ProbabilisticSharpeRatio(observedSR float64, n int, skew, kurt, benchmark f
 // Valid range: nTrials >= 1, srVariance >= 0. Returns 0 for nTrials == 1 (the
 // maximum of a single trial has zero expected excess under the null) and for
 // srVariance == 0. Returns NaN if nTrials < 1 or srVariance < 0.
-// Precision: dominated by the Acklam quantile (relative error < 1.15e-9); the
+// Precision: limited by the normal quantile (within 2.5 ulps of the exact value); the
 // closed form is itself an asymptotic approximation to the true expected
 // maximum order statistic (within ~1-2% for the tabulated N).
 func ExpectedMaxSharpe(nTrials int, srVariance float64) float64 {
@@ -158,7 +158,7 @@ func DeflatedSharpeRatio(observedSR float64, n int, skew, kurt float64, nTrials 
 // never establish a Sharpe it does not beat); kurt >= 1 (raw).
 // Returns NaN if confidence is outside (0, 1), if observedSR <= benchmark, or if
 // the variance term is non-positive.
-// Precision: dominated by the Acklam quantile (relative error < 1.15e-9).
+// Precision: limited by the normal quantile (within 2.5 ulps of the exact value).
 func MinTrackRecordLength(observedSR float64, skew, kurt, benchmark, confidence float64) float64 {
 	if confidence <= 0 || confidence >= 1 {
 		return math.NaN()

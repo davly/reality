@@ -427,7 +427,7 @@ func PoissonCDF(k int, lambda float64) float64 {
 // ---------------------------------------------------------------------------
 
 // GammaPDF returns the probability density function of the Gamma distribution
-// at x, with shape parameter k (alpha) and rate parameter theta (inverse scale).
+// at x, with shape parameter k (alpha) and scale parameter theta.
 //
 // Formula: (1 / (Gamma(k) * theta^k)) * x^{k-1} * exp(-x/theta)
 // Computed in log-space as: exp((k-1)*ln(x) - x/theta - k*ln(theta) - lgamma(k))

@@ -130,12 +130,10 @@ func StudentTQuantile(p, df float64) float64 {
 }
 
 // standardNormalQuantileLocal is the Acklam 2004 rational approximation
-// to the standard-normal inverse CDF, kept local to the copula package
-// to keep StudentTQuantile self-contained.  The reality/prob package
-// also exposes NormalQuantile which is byte-equivalent — both helpers
-// converge on the same root, but keeping a local copy avoids a
-// circular import when copula's StudentTQuantile is itself used from
-// inside copula's gaussian.go boundary tests.
+// to the standard-normal inverse CDF (relative error below 1.15e-9).
+// StudentTQuantile uses it only to place the upper end of its bisection
+// bracket, so its accuracy does not reach the result. prob.NormalQuantile
+// starts from the same approximation and refines it to within 2.5 ulps.
 func standardNormalQuantileLocal(p float64) float64 {
 	const (
 		a1 = -3.969683028665376e+01

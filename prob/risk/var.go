@@ -86,7 +86,7 @@ func HistoricalCVaR(returns []float64, confidence float64) float64 {
 // kurtosis = 0.
 //
 // Valid range: stdDev >= 0; confidence in (0,1). Returns NaN otherwise.
-// Precision: dominated by the Acklam quantile (relative error < 1.15e-9).
+// Precision: limited by the normal quantile (within 2.5 ulps of the exact value).
 func ParametricVaR(mean, stdDev, confidence float64) float64 {
 	if stdDev < 0 || confidence <= 0 || confidence >= 1 {
 		return math.NaN()
@@ -114,7 +114,7 @@ func ParametricVaR(mean, stdDev, confidence float64) float64 {
 // non-monotone in the quantile and should be used with care.
 //
 // Valid range: stdDev >= 0; confidence in (0,1). Returns NaN otherwise.
-// Precision: dominated by the Acklam quantile (relative error < 1.15e-9); the
+// Precision: limited by the normal quantile (within 2.5 ulps of the exact value); the
 // closed-form expansion is itself an approximation to the true modified
 // quantile.
 func CornishFisherVaR(mean, stdDev, skew, excessKurtosis, confidence float64) float64 {
@@ -144,7 +144,7 @@ func CornishFisherVaR(mean, stdDev, skew, excessKurtosis, confidence float64) fl
 // (e.g. 2.0627 at c = 0.95, 2.6652 at c = 0.99).
 //
 // Valid range: stdDev >= 0; confidence in (0,1). Returns NaN otherwise.
-// Precision: dominated by the Acklam quantile (relative error < 1.15e-9); the
+// Precision: limited by the normal quantile (within 2.5 ulps of the exact value); the
 // PDF is exact to ~15 significant digits.
 func ParametricCVaR(mean, stdDev, confidence float64) float64 {
 	if stdDev < 0 || confidence <= 0 || confidence >= 1 {
