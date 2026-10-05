@@ -37,9 +37,9 @@ import (
 	"github.com/davly/reality/physics"
 )
 
-// registerAppliedFloat registers the evaluator of a function of float arguments. keys names
-// the arguments in call order, separated by spaces; they are the parameter
-// names in the case file.
+// registerAppliedFloat registers the evaluator of a function of float
+// arguments. keys names the arguments in call order, separated by spaces; they
+// are the parameter names in the case file.
 func registerAppliedFloat(name, keys string, f func(a []float64) float64) {
 	ks := strings.Fields(keys)
 	registerPrecisionEvaluator(name, func(c precisionCase) (float64, error) {
@@ -72,14 +72,15 @@ func appliedList(c precisionCase) ([]float64, error) {
 	return out, nil
 }
 
-// appliedHeatTruncation returns the truncation error per unit time of one step of
-// physics.HeatEquation1DStep on the discrete sine mode sin(pi x_i), x_i =
-// i/(n-1), measured at the midpoint node. The mode is an exact eigenvector of
-// the three-point stencil, so the step multiplies it by one factor g, and the
-// exact heat equation multiplies it by exp(-alpha pi^2 dt): the difference,
-// divided by dt, is the truncation error per unit time. Its expansion is
-// alpha pi^4 dx^2 / 12 - alpha^2 pi^4 dt / 2 + ..., so it is first order in
-// dt and second order in dx exactly when the documented orders hold.
+// appliedHeatTruncation returns the truncation error per unit time of one
+// step of physics.HeatEquation1DStep on the discrete sine mode sin(pi x_i),
+// x_i = i/(n-1), measured at the midpoint node. The mode is an exact
+// eigenvector of the three-point stencil, so the step multiplies it by one
+// factor g, and the exact heat equation multiplies it by exp(-alpha pi^2 dt):
+// the difference, divided by dt, is the truncation error per unit time. Its
+// expansion is alpha pi^4 dx^2 / 12 - alpha^2 pi^4 dt / 2 + ..., so it is
+// first order in dt and second order in dx exactly when the documented orders
+// hold.
 func appliedHeatTruncation(n int, alpha, dt float64) float64 {
 	dx := 1 / float64(n-1)
 	u := make([]float64, n)
