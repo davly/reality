@@ -12,7 +12,7 @@ Reality is the foundational math and science library for the Limitless ecosystem
 **Go version:** 1.24+
 **External dependencies:** None (only Go stdlib)
 **Packages:** 70 importable (41 top-level + 29 sub-packages under audio/finance/info/optim/prob/timeseries/topology) — via `GO111MODULE=on go list ./...`, excluding the repo-root package (`honesty_test.go` only, no importable source)
-**Public functions:** 797 exported — via `git ls-files '*.go' | grep -v '_test\.go' | xargs grep -hE '^func ([A-Z][A-Za-z0-9_]*(\[[^]]*\])?\(|\([a-zA-Z0-9_]+ \*?[A-Za-z0-9_.\[\]]+\) [A-Z][A-Za-z0-9_]*\()' | wc -l`
+**Public functions:** 809 exported — via `git ls-files '*.go' | grep -v '_test\.go' | xargs grep -hE '^func ([A-Z][A-Za-z0-9_]*(\[[^]]*\])?\(|\([a-zA-Z0-9_]+ \*?[A-Za-z0-9_.\[\]]+\) [A-Z][A-Za-z0-9_]*\()' | wc -l`
 **Tests:** 3,008 top-level `--- PASS` (4,372 invocations including subtests; all passing under Go 1.24, zero failures)
 **Golden-file fixtures:** 138 JSON files under `testdata/` — via `find . -name "*.json" -path "*testdata*" | wc -l`
 
