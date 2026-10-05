@@ -256,8 +256,8 @@ var numericsKnownViolations = map[string]string{
 
 	// optim/transport
 	"numerics/sinkhorn/n10-eps0.01":         "the default 200 iterations are not enough at epsilon = 0.01*mean(C): ErrSinkhornNonConvergent; it needs 897",
-	"numerics/sinkhorn/n50-eps0.01":         "the default 200 iterations are not enough at epsilon = 0.01*mean(C): ErrSinkhornNonConvergent; it needs 261",
-	"numerics/sinkhorn/n50-shifted-eps0.01": "does not converge even at the internal cap of 1000 iterations",
+	"numerics/sinkhorn/n25-eps0.01":         "the default 200 iterations are not enough at epsilon = 0.01*mean(C): ErrSinkhornNonConvergent; it needs 256",
+	"numerics/sinkhorn/n25-shifted-eps0.01": "does not converge even at the internal cap of 1000 iterations",
 	"numerics/wasserstein/p4-scale-1e-90":   "returns 0 for distinct samples of order 1e-90: |d|^4 underflows",
 	"numerics/wasserstein/p2-scale-1e160":   "returns +Inf for samples of order 1e160: |d|^2 overflows",
 

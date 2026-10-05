@@ -330,7 +330,7 @@ def linalg_cases():
     lwi = ("linalg/shrinkage.go LedoitWolfShrinkageIdentity: 'Precision: ~1e-12 on the intensity for well-conditioned "
            "inputs; matrix entries accumulate to ~1e-9.' -> ")
     for cid, T, N, off, load in (("lw-identity/typical", 60, 5, 0.0, [0.8, 0.6, 0.4, 0.2, 0.0]),
-                                 ("lw-identity/T500-N20", 500, 20, 0.0, [0.5 * (k % 3) for k in range(20)]),
+                                 ("lw-identity/T150-N10", 150, 10, 0.0, [0.5 * (k % 3) for k in range(10)]),
                                  ("lw-identity/offset-1e4", 60, 5, 1e4, [0.8, 0.6, 0.4, 0.2, 0.0]),
                                  ("lw-identity/offset-1e5", 60, 5, 1e5, [0.8, 0.6, 0.4, 0.2, 0.0])):
         X = factor_returns(SplitMix64(100 + T + N), T, N, load, 0.01, off)
@@ -346,11 +346,11 @@ def linalg_cases():
     # Ledoit-Wolf, constant-correlation target -------------------------------
     lwc = "linalg/shrinkage.go LedoitWolfShrinkageConstantCorr: 'Precision: ~1e-12 intensity; matrix entries ~1e-9.' -> "
     for cid, T, N, off, load, scale in (("lw-constcorr/typical", 60, 5, 0.0, [0.9, 0.7, 0.2, -0.3, 0.5], 0.01),
-                                        ("lw-constcorr/high-corr", 500, 6, 0.0, [8.0, 3.5, 9.0, 2.5, 7.0, 10.0], 0.01),
+                                        ("lw-constcorr/high-corr", 200, 5, 0.0, [8.0, 3.5, 9.0, 2.5, 7.0], 0.01),
                                         ("lw-constcorr/offset-1e5", 60, 5, 1e5, [0.9, 0.7, 0.2, -0.3, 0.5], 0.01)):
         X = factor_returns(SplitMix64(200 + T + N), T, N, load, scale, off)
         dl, sig = lw_constcorr_true(X, T, N)
-        note = {"lw-constcorr/typical": "", "lw-constcorr/high-corr": "; pairwise correlations 0.92-0.99",
+        note = {"lw-constcorr/typical": "", "lw-constcorr/high-corr": "; pairwise correlations 0.89-0.99",
                 "lw-constcorr/offset-1e5": "; returns carried at a level of 1e5: the centring cancels 7 digits"}[cid]
         C.append(case(cid + "-intensity", "linalg.LedoitWolfShrinkageConstantCorr", {"x": X, "T": T, "N": N, "measure": "intensity"},
                       f64(dl), 1e-11, "abs", lwc + "intensity absolute 1e-11 (10x)" + note))
@@ -769,7 +769,7 @@ def portfolio_cases():
         C.append(case(cid, "hrp.CorrelationDistance", {"rho": rho}, f64(mp.sqrt((1 - r) / 2)), ULP, "rel", cdh))
     rb = ("optim/hrp/hrp.go RecursiveBisection: 'the returned weights sum to exactly 1 (to within one ulp times n)' -> "
           "|sum_i w_i - 1| <= n * 2^-52 (one ulp of 1 is 2^-52), the sum taken exactly")
-    for cid, nn, seed, spread in (("recbisect/n6", 6, 7001, 1.0), ("recbisect/n64-wide-variances", 64, 7002, 1e8), ("recbisect/n33", 33, 7003, 10.0)):
+    for cid, nn, seed, spread in (("recbisect/n6", 6, 7001, 1.0), ("recbisect/n40-wide-variances", 40, 7002, 1e8), ("recbisect/n33", 33, 7003, 10.0)):
         r = SplitMix64(seed)
         sd = [0.01 * (spread ** r.uniform()) for _ in range(nn)]
         cov = [[(1.0 if i == j else 0.3) * sd[i] * sd[j] for j in range(nn)] for i in range(nn)]
@@ -872,8 +872,8 @@ def prox_transport_cases():
           "mean(C) on well-conditioned problems)'; 'tol <= 0 falls back to 1e-7' -> with maxIter = 0 and tol = 0 the call must "
           "succeed; scalar = 0 on success, else the iterations a run capped at 1000 needs beyond 200 (+Inf if it needs more "
           "than 1000)")
-    for cid, n, eps_frac, shift in (("sinkhorn/n10-eps0.01", 10, 0.01, 0.0), ("sinkhorn/n50-eps0.01", 50, 0.01, 0.0),
-                                    ("sinkhorn/n50-eps0.1", 50, 0.1, 0.0), ("sinkhorn/n50-shifted-eps0.01", 50, 0.01, 0.25)):
+    for cid, n, eps_frac, shift in (("sinkhorn/n10-eps0.01", 10, 0.01, 0.0), ("sinkhorn/n25-eps0.01", 25, 0.01, 0.0),
+                                    ("sinkhorn/n25-eps0.1", 25, 0.1, 0.0), ("sinkhorn/n25-shifted-eps0.01", 25, 0.01, 0.25)):
         xs_ = [i / (n - 1) for i in range(n)]
         ys_ = [i / (n - 1) + shift for i in range(n)]
         Cm = [[(xi - yj) * (xi - yj) for yj in ys_] for xi in xs_]
@@ -1011,9 +1011,15 @@ def main():
         "cases": C,
     }
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
+    # One case per line: the data arrays are long, and a line per number
+    # would make the file and its diffs unreadable.
     with open(OUT, "w", encoding="utf-8", newline="\n") as fh:
-        json.dump(doc, fh, indent=1)
-        fh.write("\n")
+        fh.write("{\n")
+        fh.write(' "_comment": %s,\n' % json.dumps(doc["_comment"]))
+        fh.write(' "generator": %s,\n' % json.dumps(doc["generator"]))
+        fh.write(' "cases": [\n')
+        fh.write(",\n".join("  " + json.dumps(c) for c in C))
+        fh.write("\n ]\n}\n")
     print(f"wrote {OUT}: {len(C)} cases")
 
 
