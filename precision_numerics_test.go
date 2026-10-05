@@ -19,6 +19,8 @@ import (
 
 	"github.com/davly/reality/linalg"
 	"github.com/davly/reality/optim"
+	"github.com/davly/reality/optim/hrp"
+	"github.com/davly/reality/optim/portfolio"
 )
 
 func numVec(c precisionCase, k string) []float64 {
@@ -35,6 +37,41 @@ func numVec(c precisionCase, k string) []float64 {
 		v[i] = f
 	}
 	return v
+}
+
+func numMat(c precisionCase, k string) [][]float64 {
+	raw, ok := c.Args[k].([]any)
+	if !ok {
+		panic(fmt.Sprintf("%s: argument %q is not an array", c.ID, k))
+	}
+	m := make([][]float64, len(raw))
+	for i, r := range raw {
+		row, ok := r.([]any)
+		if !ok {
+			panic(fmt.Sprintf("%s: argument %q[%d] is not an array", c.ID, k, i))
+		}
+		m[i] = make([]float64, len(row))
+		for j, x := range row {
+			f, ok := x.(float64)
+			if !ok {
+				panic(fmt.Sprintf("%s: argument %q[%d][%d] is not a number", c.ID, k, i, j))
+			}
+			m[i][j] = f
+		}
+	}
+	return m
+}
+
+func numInts(c precisionCase, k string) []int {
+	v := numVec(c, k)
+	out := make([]int, len(v))
+	for i, x := range v {
+		if x != math.Trunc(x) {
+			panic(fmt.Sprintf("%s: argument %q[%d] is not an integer", c.ID, k, i))
+		}
+		out[i] = int(x)
+	}
+	return out
 }
 
 func numStr(c precisionCase, k string) string {
@@ -98,6 +135,48 @@ func numExactNorm2(v []float64) float64 {
 	return f
 }
 
+// numMaxRelErr returns max_i |got_i - want_i| / |want_i| (absolute where
+// want_i is 0); a missing result is +Inf.
+func numMaxRelErr(got, want []float64) float64 {
+	if len(got) != len(want) {
+		return math.Inf(1)
+	}
+	var e float64
+	for i := range want {
+		d := math.Abs(got[i] - want[i])
+		if want[i] != 0 {
+			d /= math.Abs(want[i])
+		}
+		if math.IsNaN(d) {
+			return math.Inf(1)
+		}
+		e = math.Max(e, d)
+	}
+	return e
+}
+
+// numSumMinusOne returns sum(v) - 1, with the sum taken exactly.
+func numSumMinusOne(v []float64) float64 {
+	const prec = 4096
+	sum := new(big.Float).SetPrec(prec).SetInt64(-1)
+	for _, x := range v {
+		if math.IsNaN(x) || math.IsInf(x, 0) {
+			return math.NaN()
+		}
+		sum.Add(sum, new(big.Float).SetPrec(prec).SetFloat64(x))
+	}
+	f, _ := sum.Float64()
+	return f
+}
+
+func numFlatten(m [][]float64) []float64 {
+	var out []float64
+	for _, r := range m {
+		out = append(out, r...)
+	}
+	return out
+}
+
 func numBool(b bool) float64 {
 	if b {
 		return 1
@@ -108,6 +187,7 @@ func numBool(b bool) float64 {
 func init() {
 	registerLinalgEvaluators()
 	registerOptimEvaluators()
+	registerPortfolioEvaluators()
 	registerKnownPrecisionViolations(numericsKnownViolations)
 }
 
@@ -148,6 +228,21 @@ var numericsKnownViolations = map[string]string{
 	"numerics/simplex/row-scaled-1e-11":        "returns the INFEASIBLE x = (0, 2), value -4, nil error (optimum -3): the ratio test ignores pivot entries below an absolute 1e-10, so the row is dropped",
 	"numerics/simplex/single-row-scaled-1e-11": "returns an 'unbounded' error for an LP with optimum x = 1: its only pivot entry 1e-11 is below the absolute 1e-10 threshold",
 	"numerics/simplex/costs-1e-11":             "returns x = 0, value 0 (optimum -1e-11): reduced costs above an absolute -1e-10 count as optimal",
+
+	// optim/portfolio and optim/hrp
+	"numerics/roundtrip/correlation-0.9999":                     "the round trip is off by 6.0e-12 (relative) for a nonsingular Sigma of condition 6e4",
+	"numerics/roundtrip/cond-1e10":                              "the round trip is off by 1.1e-7 (relative) for a nonsingular Sigma of condition 1e10",
+	"numerics/omega/hedge-view":                                 "rel err 2.8e-13: P Sigma P' cancels for a near-riskless hedge view",
+	"numerics/meanvarianceweights/singular-rank2-integer":       "returns weights up to 3.2e17 for an exactly singular Sigma: the elimination's pivot test is an absolute 1e-300",
+	"numerics/meanvarianceweights/singular-sample-cov-T3-N4":    "returns weights up to 3.8e19 for the exactly singular sample covariance of 3 observations of 4 assets",
+	"numerics/continuouskellyweights/singular-rank2-integer":    "returns weights for an exactly singular Sigma (same elimination as MeanVarianceWeights)",
+	"numerics/continuouskellyweights/singular-sample-cov-T3-N4": "returns weights for the exactly singular sample covariance of 3 observations of 4 assets",
+	"numerics/bl/near-singular-perfect-correlation":             "returns (0.0273, 0.0391) where the exact posterior is (0.0233, 0.0300), 17% and 30% off, instead of nil: condition 8e16 passes LU's absolute 1e-300 pivot test",
+	"numerics/projsimplex/magnitude-1e5-weights":                "weights off by 4.9e-12: theta is formed at the inputs' scale (1.2e5)",
+	"numerics/projsimplex/magnitude-1e5-sum":                    "sums to 1 + 1.5e-11 for inputs near 1.2e5",
+	"numerics/projsimplex/magnitude-1e8-weights":                "weights off by 9.9e-9 for inputs near 1e8",
+	"numerics/projsimplex/magnitude-1e8-sum":                    "sums to 1 - 3.0e-8 for inputs near 1e8",
+	"numerics/projsimplex/magnitude-1e17-weights":               "returns (0.5, 0.5) for the projection (1, 0): cumsum - 1 loses the 1 and the uniform fallback is taken",
 }
 
 func registerLinalgEvaluators() {
@@ -368,5 +463,78 @@ func registerOptimEvaluators() {
 			return math.NaN(), nil
 		}
 		return val, nil
+	})
+}
+
+func registerPortfolioEvaluators() {
+	registerPrecisionEvaluator("portfolio.ImpliedEquilibriumReturns", func(c precisionCase) (float64, error) {
+		pi := portfolio.ImpliedEquilibriumReturns(numVec(c, "w"), numMat(c, "Sigma"), argF(c, "delta"))
+		return numMaxRelErr(pi, numVec(c, "truth")), nil
+	})
+	registerPrecisionEvaluator("portfolio.RoundTrip", func(c precisionCase) (float64, error) {
+		w, sigma, delta := numVec(c, "w"), numMat(c, "Sigma"), argF(c, "delta")
+		back := portfolio.MeanVarianceWeights(portfolio.ImpliedEquilibriumReturns(w, sigma, delta), sigma, delta)
+		return numNormwiseErr(back, w), nil
+	})
+	registerPrecisionEvaluator("portfolio.HeLittermanOmega", func(c precisionCase) (float64, error) {
+		om := portfolio.HeLittermanOmega(numMat(c, "P"), numMat(c, "Sigma"), argF(c, "tau"))
+		if om == nil {
+			return math.NaN(), nil
+		}
+		return om[0][0], nil
+	})
+	registerPrecisionEvaluator("portfolio.BlackLittermanPosterior", func(c precisionCase) (float64, error) {
+		mu := portfolio.BlackLittermanPosterior(numVec(c, "pi"), numMat(c, "Sigma"), numMat(c, "P"), numVec(c, "Q"), numMat(c, "Omega"), argF(c, "tau"))
+		if m, ok := c.Args["measure"]; ok && m == "returned" {
+			return numBool(mu != nil), nil
+		}
+		return numMaxRelErr(mu, numVec(c, "truth")), nil
+	})
+	registerPrecisionEvaluator("portfolio.BlackLittermanPosteriorCovariance", func(c precisionCase) (float64, error) {
+		m := portfolio.BlackLittermanPosteriorCovariance(numMat(c, "Sigma"), numMat(c, "P"), numMat(c, "Omega"), argF(c, "tau"))
+		return numNormwiseErr(numFlatten(m), numVec(c, "truth")), nil
+	})
+	weights := func(f func([]float64, [][]float64, float64) []float64) func(precisionCase) (float64, error) {
+		return func(c precisionCase) (float64, error) {
+			w := f(numVec(c, "mu"), numMat(c, "Sigma"), argF(c, "param"))
+			switch numStr(c, "measure") {
+			case "returned":
+				return numBool(w != nil), nil
+			case "relerr":
+				return numMaxRelErr(w, numVec(c, "truth")), nil
+			}
+			return 0, fmt.Errorf("unknown measure %q", numStr(c, "measure"))
+		}
+	}
+	registerPrecisionEvaluator("portfolio.MeanVarianceWeights", weights(portfolio.MeanVarianceWeights))
+	registerPrecisionEvaluator("portfolio.ContinuousKellyWeights", weights(portfolio.ContinuousKellyWeights))
+	registerPrecisionEvaluator("portfolio.MeanVarianceWeightsLongOnly", func(c precisionCase) (float64, error) {
+		w := portfolio.MeanVarianceWeightsLongOnly(numVec(c, "mu"), numMat(c, "Sigma"), argF(c, "delta"))
+		return numMaxAbsErr(w, numVec(c, "truth")), nil
+	})
+	registerPrecisionEvaluator("portfolio.ProjectSimplex", func(c precisionCase) (float64, error) {
+		w := portfolio.ProjectSimplex(numVec(c, "v"))
+		switch numStr(c, "measure") {
+		case "weights":
+			return numMaxAbsErr(w, numVec(c, "truth")), nil
+		case "sum":
+			return math.Abs(numSumMinusOne(w)), nil
+		}
+		return 0, fmt.Errorf("unknown measure %q", numStr(c, "measure"))
+	})
+	registerPrecisionEvaluator("hrp.CorrelationDistance", func(c precisionCase) (float64, error) {
+		rho := argF(c, "rho")
+		d, err := hrp.CorrelationDistance([][]float64{{1, rho}, {rho, 1}})
+		if err != nil {
+			return 0, err
+		}
+		return d[0][1], nil
+	})
+	registerPrecisionEvaluator("hrp.RecursiveBisection", func(c precisionCase) (float64, error) {
+		w, err := hrp.RecursiveBisection(numMat(c, "cov"), numInts(c, "order"))
+		if err != nil {
+			return 0, err
+		}
+		return math.Abs(numSumMinusOne(w)), nil
 	})
 }

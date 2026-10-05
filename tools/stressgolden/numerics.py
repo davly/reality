@@ -576,10 +576,217 @@ def optim_cases():
     return C
 
 
+# ---------------------------------------------------------------------------
+# optim/portfolio and optim/hrp
+# ---------------------------------------------------------------------------
+
+HL = os.path.join("optim", "portfolio", "testdata", "he_litterman_1999.json")
+
+
+def mpm(rows):
+    return mp.matrix([[M(v) for v in r] for r in rows])
+
+
+def mat_rows(Mt):
+    return [[Mt[i, j] for j in range(Mt.cols)] for i in range(Mt.rows)]
+
+
+def bl_posterior_true(pi, Sig, P, Q, Om, tau):
+    S = mpm(Sig) * M(tau)
+    Si = S ** -1
+    Pm, Omi = mpm(P), mpm(Om) ** -1
+    A = Si + Pm.T * Omi * Pm
+    rhs = Si * mp.matrix([M(v) for v in pi]) + Pm.T * Omi * mp.matrix([M(v) for v in Q])
+    return A ** -1 * rhs, A ** -1
+
+
+def proj_simplex_exact(v):
+    """Euclidean projection onto the probability simplex, in rationals."""
+    u = sorted((Fraction(x) for x in v), reverse=True)
+    css, theta = Fraction(0), None
+    for j, uj in enumerate(u):
+        css += uj
+        t = (css - 1) / (j + 1)
+        if uj - t > 0:
+            theta = t
+    return [max(Fraction(x) - theta, Fraction(0)) for x in v]
+
+
+def spd_with_spectrum(evals, seed):
+    """Q diag(evals) Q' rounded to float, Q a Householder product from splitmix
+    data; returns the float rows (symmetric by construction)."""
+    n = len(evals)
+    r = SplitMix64(seed)
+    Q = mp.eye(n)
+    for _ in range(3):
+        v = mp.matrix([M(r.normal()) for _ in range(n)])
+        H = mp.eye(n) - 2 * (v * v.T) / (v.T * v)[0]
+        Q = Q * H
+    A = Q * mp.diag([M(e) for e in evals]) * Q.T
+    rows = [[f64(A[i, j]) for j in range(n)] for i in range(n)]
+    for i in range(n):
+        for j in range(i + 1, n):
+            rows[j][i] = rows[i][j]
+    return rows
+
+
+def portfolio_cases():
+    C = []
+    with open(HL, encoding="utf-8") as fh:
+        hl = json.load(fh)
+    vol = [v / 100 for v in hl["volatility_pct"]]
+    corr = hl["correlation"]
+    n = len(vol)
+    Sig = [[corr[i][j] * vol[i] * vol[j] for j in range(n)] for i in range(n)]
+    w_mkt = [v / 100 for v in hl["market_weight_pct"]]
+    delta, tau = hl["delta"], hl["tau"]
+    P, Q, Om = hl["view"]["P"], hl["view"]["Q"], hl["view"]["Omega"]
+    pi_hl = hl["expected"]["equilibrium_returns"]
+    sd15 = "'Precision: ~15 significant digits (float64)' -> relative 1e-14 (10x)"
+
+    # ImpliedEquilibriumReturns --------------------------------------------------
+    ie = "optim/portfolio/portfolio.go ImpliedEquilibriumReturns: " + sd15 + "; scalar = max_i |pi_i - true_i| / |true_i|"
+    for cid, w in (("implied/he-litterman", w_mkt), ("implied/long-short", [0.3, -0.2, 0.25, -0.35, 0.1, -0.05, -0.05])):
+        t = M(delta) * (mpm(Sig) * mp.matrix([M(v) for v in w]))
+        C.append(case(cid, "portfolio.ImpliedEquilibriumReturns", {"w": w, "Sigma": Sig, "delta": delta, "truth": [f64(t[i]) for i in range(n)]},
+                      0.0, 1e-14, "abs", ie + ("; He-Litterman (1999) inputs" if "he-" in cid else "; market-neutral weights")))
+    rt = ("optim/portfolio/portfolio.go ImpliedEquilibriumReturns: 'MeanVarianceWeights(ImpliedEquilibriumReturns(w, Sigma, "
+          "delta), Sigma, delta) == w for any nonsingular Sigma' -> '==' read at the functions' own ~15 significant digits: "
+          "max |w_roundtrip - w| / max |w| <= 1e-14")
+    rho6 = 0.9999
+    Sig6 = [[(1.0 if i == j else rho6) * 0.04 for j in range(6)] for i in range(6)]
+    Sig5 = spd_with_spectrum([1.0, 0.3, 1e-3, 1e-6, 1e-10], 4242)
+    for cid, w, Sg, note in (("roundtrip/he-litterman", w_mkt, Sig, "; He-Litterman (1999) inputs"),
+                             ("roundtrip/correlation-0.9999", [0.3, 0.1, 0.2, 0.15, 0.05, 0.2], Sig6,
+                              "; 6 assets, pairwise correlation 0.9999 (cond 6e4), nonsingular"),
+                             ("roundtrip/cond-1e10", [0.3, 0.1, 0.2, 0.25, 0.15], Sig5, "; SPD Sigma with eigenvalues 1 .. 1e-10, nonsingular")):
+        C.append(case(cid, "portfolio.RoundTrip", {"w": w, "Sigma": Sg, "delta": delta}, 0.0, 1e-14, "abs", rt + note))
+
+    # HeLittermanOmega -----------------------------------------------------------
+    om = "optim/portfolio/portfolio.go HeLittermanOmega: " + sd15 + "; scalar = relative error of Omega_00 = tau * P_0 Sigma P_0'"
+    t = M(tau) * (mpm(P) * mpm(Sig) * mpm(P).T)[0, 0]
+    C.append(case("omega/he-litterman", "portfolio.HeLittermanOmega", {"P": P, "Sigma": Sig, "tau": tau}, f64(t), 1e-14, "rel",
+                  om + "; He-Litterman (1999) view"))
+    Ph = [[0.3, -0.7, 0.4]]
+    Sh = [[0.04 * (1.0 if i == j else 0.9999) for j in range(3)] for i in range(3)]
+    t = M(tau) * (mpm(Ph) * mpm(Sh) * mpm(Ph).T)[0, 0]
+    C.append(case("omega/hedge-view", "portfolio.HeLittermanOmega", {"P": Ph, "Sigma": Sh, "tau": tau}, f64(t), 1e-14, "rel",
+                  om + "; a view portfolio summing to 0 over assets with correlation 0.9999 (a near-riskless hedge)"))
+
+    # BlackLittermanPosterior / Covariance ------------------------------------------
+    bl = ("optim/portfolio/portfolio.go BlackLittermanPosterior: 'Precision: ~15 significant digits (float64) for a "
+          "well-conditioned system' -> relative 1e-14 (10x); scalar = max_i |mu_i - true_i| / |true_i|")
+    mu, Mcov = bl_posterior_true(pi_hl, Sig, P, Q, Om, tau)
+    C.append(case("bl/he-litterman", "portfolio.BlackLittermanPosterior",
+                  {"pi": pi_hl, "Sigma": Sig, "P": P, "Q": Q, "Omega": Om, "tau": tau, "truth": [f64(mu[i]) for i in range(n)]},
+                  0.0, 1e-14, "abs", bl + "; He-Litterman (1999) inputs"))
+    blc = ("optim/portfolio/portfolio.go BlackLittermanPosteriorCovariance: " + sd15 +
+           "; scalar = max_ij |M_ij - true_ij| / max_ij |true_ij| (normwise)")
+    C.append(case("blcov/he-litterman", "portfolio.BlackLittermanPosteriorCovariance",
+                  {"Sigma": Sig, "P": P, "Omega": Om, "tau": tau, "truth": [f64(Mcov[i, j]) for i in range(n) for j in range(n)]},
+                  0.0, 1e-14, "abs", blc + "; He-Litterman (1999) inputs"))
+
+    # singular / near-singular covariances -------------------------------------------
+    k = 2.0 ** -13
+    Ssing = [[26 * k, 8 * k, 11 * k], [8 * k, 10 * k, 5 * k], [11 * k, 5 * k, 5 * k]]
+    assert exact_det([[Fraction(v) for v in r] for r in Ssing]) == 0
+    # sample covariance of T = 3 observations of 4 assets (rank 2), exactly
+    # representable: integer returns in units of 2^-10 with column sums divisible by 3
+    X = [[5, -4, 2, 9], [-2, 7, 2, -3], [3, 0, -1, 3]]
+    means = [Fraction(sum(X[t][i] for t in range(3)), 3) for i in range(4)]
+    Ssamp = []
+    for i in range(4):
+        row = []
+        for j in range(4):
+            cv = sum((X[t][i] - means[i]) * (X[t][j] - means[j]) for t in range(3)) / 2 * Fraction(1, 1 << 20)
+            assert float(cv) == cv
+            row.append(float(cv))
+        Ssamp.append(row)
+    assert exact_det([[Fraction(v) for v in r] for r in Ssamp]) == 0
+    Snear = [[0.04, 0.06], [0.06, 0.09]]
+    sing = ("-> scalar = 1 when a result is returned, 0 for nil; an exactly singular Sigma (exact rational determinant 0) "
+            "must give 0")
+    for fn, doc in (("portfolio.MeanVarianceWeights", "optim/portfolio/portfolio.go MeanVarianceWeights: 'Returns nil if ... Sigma is singular' "),
+                    ("portfolio.ContinuousKellyWeights", "optim/portfolio/portfolio.go ContinuousKellyWeights: 'Returns nil if ... Sigma is singular' ")):
+        short = fn.split(".")[1]
+        for cid, Sg, note in (("rank2-integer", Ssing, "; rank-2 3x3 covariance (integers times 2^-13)"),
+                              ("sample-cov-T3-N4", Ssamp, "; sample covariance of 3 observations of 4 assets (rank 2), exact in float64")):
+            mu_ = [0.05, 0.07, 0.06, 0.04][:len(Sg)]
+            C.append(case("%s/singular-%s" % (short.lower(), cid), fn, {"mu": mu_, "Sigma": Sg, "param": 2.5 if "Mean" in fn else 0.25, "measure": "returned"},
+                          0.0, 0.0, "abs", doc + sing + note))
+    blsing = ("optim/portfolio/portfolio.go BlackLittermanPosterior: 'Returns nil on ... a singular / near-singular Sigma, "
+              "Omega, or precision matrix' " + sing.replace("exactly singular Sigma (exact rational determinant 0)", "singular or near-singular Sigma"))
+    for cid, Sg, note in (("bl/singular-rank2-integer", Ssing, "; exactly singular rank-2 3x3 Sigma"),
+                          ("bl/near-singular-perfect-correlation", Snear, "; the decimal perfect-correlation matrix [[.04,.06],[.06,.09]] (determinant 4e-19 after rounding, condition ~4e17)")):
+        nn = len(Sg)
+        Pv = [[1.0, -1.0] + [0.0] * (nn - 2)]
+        C.append(case(cid, "portfolio.BlackLittermanPosterior",
+                      {"pi": [0.05, 0.07, 0.06][:nn], "Sigma": Sg, "P": Pv, "Q": [0.02], "Omega": [[0.001]], "tau": 0.05, "measure": "returned"},
+                      0.0, 0.0, "abs", blsing + note))
+
+    # MeanVarianceWeights / ContinuousKellyWeights / LongOnly at He-Litterman ---------------
+    mvt = mpm(Sig) ** -1 * mp.matrix([M(v) for v in pi_hl])
+    for fn, par, doc in (("portfolio.MeanVarianceWeights", delta,
+                          "optim/portfolio/portfolio.go MeanVarianceWeights: 'Precision: ~15 significant digits (float64) for a well-conditioned Sigma'"),
+                         ("portfolio.ContinuousKellyWeights", 0.25,
+                          "optim/portfolio/portfolio.go ContinuousKellyWeights: 'Precision: ~15 significant digits (float64) for a well-conditioned Sigma'")):
+        scale = 1 / M(par) if "Mean" in fn else M(par)
+        C.append(case(fn.split(".")[1].lower() + "/he-litterman", fn,
+                      {"mu": pi_hl, "Sigma": Sig, "param": par, "measure": "relerr", "truth": [f64(scale * mvt[i]) for i in range(n)]},
+                      0.0, 1e-14, "abs", doc + " -> relative 1e-14 (10x); scalar = max_i |w_i - true_i| / |true_i|; He-Litterman (1999) inputs"))
+    mvr = [M(v) for v in hl["market_weight_pct"]]  # unused, keeps the fixture fields visible
+    del mvr
+    mu_lo = [0.08, 0.02, 0.05, 0.11, 0.03, 0.06, 0.04]
+    raw = (mpm(Sig) ** -1 * mp.matrix([M(v) for v in mu_lo])) / M(delta)
+    lo = proj_simplex_exact([Fraction(f64(raw[i])) for i in range(n)])
+    C.append(case("mvlongonly/he-litterman-sigma", "portfolio.MeanVarianceWeightsLongOnly",
+                  {"mu": mu_lo, "Sigma": Sig, "delta": delta, "truth": [float(v) for v in lo]}, 0.0, 1e-14, "abs",
+                  "optim/portfolio/portfolio.go MeanVarianceWeightsLongOnly: 'Precision: the underlying solve is ~15 significant "
+                  "digits; the projection is exact' -> absolute 1e-14 on the weights (which lie in [0, 1]); the reference projects "
+                  "the correctly rounded unconstrained weights exactly"))
+
+    # ProjectSimplex -------------------------------------------------------------
+    ps = ("optim/portfolio/portfolio.go ProjectSimplex: 'Precision: exact up to float64 rounding'; 'The result always sums to "
+          "exactly 1 (up to float rounding)' -> 'up to float64 rounding' read as the accumulated-rounding bound 10*n*2^-52, "
+          "absolute (the weights lie in [0, 1]); ")
+    for cid, v, note in (("projsimplex/typical", [0.3, -0.2, 0.9, 0.05, 0.4], ""),
+                         ("projsimplex/magnitude-1e5", [123456.789 + 0.13, 123456.789 + 0.71, 123456.789 + 0.37, 123456.789 + 0.59], "; inputs near 1.2e5"),
+                         ("projsimplex/magnitude-1e8", [1e8 + 0.13, 1e8 + 0.71, 1e8 + 0.37, 1e8 + 0.59], "; inputs near 1e8"),
+                         ("projsimplex/magnitude-1e17", [1e17 + 32, 1e17], "; inputs near 1e17 (projection (1, 0))")):
+        exact = proj_simplex_exact(v)
+        nn = len(v)
+        C.append(case(cid + "-weights", "portfolio.ProjectSimplex", {"v": v, "measure": "weights", "truth": [float(x) for x in exact]},
+                      0.0, 10 * nn * ULP, "abs", ps + "scalar = max_i |w_i - true_i|" + note))
+        C.append(case(cid + "-sum", "portfolio.ProjectSimplex", {"v": v, "measure": "sum"}, 0.0, 10 * nn * ULP, "abs",
+                      ps + "scalar = |sum_i w_i - 1|, the sum taken exactly" + note))
+
+    # hrp ------------------------------------------------------------------------
+    cdh = ("optim/hrp/hrp.go CorrelationDistance: 'the result is correct to within one ulp of the true distance' -> "
+           "relative 2^-52 against sqrt((1 - rho)/2) at the clamped rho")
+    for cid, rho in (("corrdist/0.3", 0.3), ("corrdist/-0.7", -0.7), ("corrdist/0.9999999", 0.9999999), ("corrdist/1e-17", 1e-17),
+                     ("corrdist/0.1", 0.1), ("corrdist/-0.999999999", -0.999999999), ("corrdist/above-1", 1 + 2 * ULP)):
+        r = min(M(rho), M(1))
+        C.append(case(cid, "hrp.CorrelationDistance", {"rho": rho}, f64(mp.sqrt((1 - r) / 2)), ULP, "rel", cdh))
+    rb = ("optim/hrp/hrp.go RecursiveBisection: 'the returned weights sum to exactly 1 (to within one ulp times n)' -> "
+          "|sum_i w_i - 1| <= n * 2^-52 (one ulp of 1 is 2^-52), the sum taken exactly")
+    for cid, nn, seed, spread in (("recbisect/n6", 6, 7001, 1.0), ("recbisect/n64-wide-variances", 64, 7002, 1e8), ("recbisect/n33", 33, 7003, 10.0)):
+        r = SplitMix64(seed)
+        sd = [0.01 * (spread ** r.uniform()) for _ in range(nn)]
+        cov = [[(1.0 if i == j else 0.3) * sd[i] * sd[j] for j in range(nn)] for i in range(nn)]
+        order = list(range(nn))
+        for i in range(nn - 1, 0, -1):
+            j = r.next() % (i + 1)
+            order[i], order[j] = order[j], order[i]
+        C.append(case(cid, "hrp.RecursiveBisection", {"cov": cov, "order": order}, 0.0, nn * ULP, "abs",
+                      rb + "; %d assets, volatilities spread over a factor %g" % (nn, spread)))
+    return C
+
+
 def main():
     C = []
     C += linalg_cases()
     C += optim_cases()
+    C += portfolio_cases()
     ids = [c["id"] for c in C]
     assert len(ids) == len(set(ids)), "duplicate case id"
     doc = {
