@@ -253,3 +253,26 @@ func TestPrecisionClaims(t *testing.T) {
 		t.Errorf("knownPrecisionViolations lists cases that no longer exist: %v", stale)
 	}
 }
+
+// TestPrecisionRegistryRejectsDuplicates checks that two area files cannot
+// silently shadow each other's evaluators or listed violations.
+func TestPrecisionRegistryRejectsDuplicates(t *testing.T) {
+	mustPanic := func(what string, f func()) {
+		t.Helper()
+		defer func() {
+			if recover() == nil {
+				t.Errorf("a duplicate %s was accepted", what)
+			}
+		}()
+		f()
+	}
+	mustPanic("evaluator", func() {
+		registerPrecisionEvaluator("GammaCDF", func(precisionCase) (float64, error) { return 0, nil })
+	})
+	const id = "test/registry-duplicate"
+	registerKnownPrecisionViolations(map[string]string{id: "registered by this test"})
+	defer delete(knownPrecisionViolations, id)
+	mustPanic("listed violation", func() {
+		registerKnownPrecisionViolations(map[string]string{id: "registered twice"})
+	})
+}
