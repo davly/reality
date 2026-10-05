@@ -195,7 +195,7 @@ def acoustics():
         ("typ-speaker", dict(P=0.01, r=3.7)),
         ("hard-near-field", dict(P=1e5, r=1e-3)),
         ("hard-far-field", dict(P=1e3, r=1e10)),
-        ("extreme-r2-overflow", dict(P=1e300, r=1e160)),
+        ("extreme-r-squared-overflow", dict(P=1e300, r=1e160)),
     ])
 
     # Decibel scales

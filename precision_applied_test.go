@@ -450,7 +450,7 @@ var appliedKnownViolations = map[string]string{
 	"applied/snell-cond-near-critical-1e-12":                       "ill-conditioned: asin amplifies the 1.1e-16 rounding of sin(thetaR) by 1/cos(thetaR) near the critical angle [rel error 5.74e-11 vs claim 1e-14]",
 	"applied/snell-cond-near-critical-1e-14":                       "ill-conditioned: asin amplifies the 1.1e-16 rounding of sin(thetaR) by 1/cos(thetaR) near the critical angle [rel error 3.56e-10 vs claim 1e-14]",
 	"applied/snell-cond-near-critical-1e-9":                        "ill-conditioned: asin amplifies the 1.1e-16 rounding of sin(thetaR) by 1/cos(thetaR) near the critical angle [rel error 9.5e-13 vs claim 1e-14]",
-	"applied/soundintensity-extreme-r2-overflow":                   "4*pi*r*r overflows to +Inf, so the intensity comes out 0 [got 0, want 7.958e-22]",
+	"applied/soundintensity-extreme-r-squared-overflow":            "4*pi*r*r overflows to +Inf, so the intensity comes out 0 [got 0, want 7.958e-22]",
 	"applied/spring-hard-spring-balances-damper-1":                 "-k*x and c*v nearly cancel, and each rounded product misses the exact one by more than their difference [got 0, want 1.332e-17]",
 	"applied/spring-hard-spring-balances-damper-2":                 "-k*x and c*v nearly cancel, and each rounded product misses the exact one by more than their difference [got 0, want -3.469e-16]",
 	"applied/spring-hard-spring-balances-damper-3":                 "-k*x and c*v nearly cancel, and each rounded product misses the exact one by more than their difference [rel error 0.21 vs claim 3.33e-16]",

@@ -110,7 +110,7 @@
    "claim": "acoustics/acoustics.go SoundIntensity: 'Precision: limited by float64 representation of \u03c0 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
   },
   {
-   "id": "applied/soundintensity-extreme-r2-overflow",
+   "id": "applied/soundintensity-extreme-r-squared-overflow",
    "func": "acoustics.SoundIntensity",
    "args": {
     "P": 1e+300,
