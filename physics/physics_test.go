@@ -417,7 +417,7 @@ func TestGriffithCriterion_Known(t *testing.T) {
 func TestParisLaw_Known(t *testing.T) {
 	// C=1e-11, m=3, deltaK=20e6 -> da/dN = 1e-11 * (20e6)^3
 	rate := ParisLaw(1e-11, 3, 20e6)
-	expected := 1e-11 * math.Pow(20e6, 3)
+	expected := 1e-11 * (20e6 * 20e6 * 20e6)
 	assertClose(t, "paris", rate, expected, 1e-6)
 }
 

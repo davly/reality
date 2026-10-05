@@ -644,7 +644,7 @@ func TestGameOfLife_GliderMoves(t *testing.T) {
 	out := makeGrid(rows, cols)
 	for i := 0; i < 4; i++ {
 		GameOfLife(grid, rows, cols, out)
-		grid, out = out, grid
+		grid = out
 		out = makeGrid(rows, cols)
 	}
 

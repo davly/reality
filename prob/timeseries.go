@@ -277,7 +277,11 @@ func levinsonDurbin(autocorr []float64, p int) []float64 {
 }
 
 // arimaAutocovariance computes sample autocovariance at lag k.
-// Not exported; used internally by ARIMA.
+//
+// Parked: nothing calls this today (it was added alongside the ARIMA code but
+// never wired in). It is kept for future ARIMA work rather than deleted.
+//
+//nolint:unused // parked: no caller yet; kept deliberately
 func arimaAutocovariance(data []float64, mean float64, k int) float64 {
 	n := len(data)
 	if k >= n || k < 0 {
@@ -290,13 +294,17 @@ func arimaAutocovariance(data []float64, mean float64, k int) float64 {
 	return sum / float64(n)
 }
 
-// Sigmoid returns the logistic sigmoid function: 1 / (1 + exp(-x)).
-// Used internally by logistic regression and other functions.
+// sigmoid returns the logistic sigmoid function: 1 / (1 + exp(-x)).
+//
+// Parked: nothing calls this today (no logistic-regression code uses it yet).
+// It is kept for that work rather than deleted.
 //
 // Formula: 1 / (1 + exp(-x))
 // Valid range: all float64
 // Output range: (0, 1)
 // Precision: ~15 significant digits (float64)
+//
+//nolint:unused // parked: no caller yet; kept deliberately
 func sigmoid(x float64) float64 {
 	if x >= 0 {
 		return 1.0 / (1.0 + math.Exp(-x))

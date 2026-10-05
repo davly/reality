@@ -90,13 +90,17 @@ func TestEDetector_DetectsMeanShift(t *testing.T) {
 		}
 		for s := 0; s < preLen; s++ {
 			d.Update(rng.Float64() * 1.0) // mean 0.5
-			d.Fired(alpha)
+			if _, err := d.Fired(alpha); err != nil {
+				t.Fatalf("Fired: %v", err)
+			}
 		}
 		for s := 0; s < postLen; s++ {
 			// Post-change: Uniform on [shiftTo-0.15, shiftTo+0.15] -> mean shiftTo.
 			x := shiftTo - 0.15 + 0.30*rng.Float64()
 			d.Update(x)
-			d.Fired(alpha)
+			if _, err := d.Fired(alpha); err != nil {
+				t.Fatalf("Fired: %v", err)
+			}
 		}
 		if d.FireTime() > 0 {
 			detected++

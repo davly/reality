@@ -28,15 +28,21 @@ func TestBakedConstants_TypeWidth(t *testing.T) {
 	// exercise the compiler's type checker — if any constant is not
 	// assignable to the named type, this fails at compile time, not at
 	// test time.
-	var off uint64 = CanonicalFnvOffset
-	var prime uint64 = CanonicalFnvPrime
-	var alphaBps uint16 = CanonicalJeffreysAlphaBps
-	var betaBps uint16 = CanonicalJeffreysBetaBps
-	var timeoutMs int = CanonicalConduitTimeoutMs
-	var marker uint16 = SubstrateBakedForge
-	var floorBps uint16 = CanonicalVerdictConvergedFloor
-	var ceilingBps uint16 = CanonicalVerdictNotConvergedCeiling
-	var minObs int = CanonicalMinObservations
+	//
+	// ST1023 ("omit the type") is suppressed on purpose: the explicit types
+	// ARE the assertion. Dropping them would delete the compile-time check.
+	//nolint:staticcheck // ST1023: the explicit types are the compile-time assertion
+	var (
+		off        uint64 = CanonicalFnvOffset
+		prime      uint64 = CanonicalFnvPrime
+		alphaBps   uint16 = CanonicalJeffreysAlphaBps
+		betaBps    uint16 = CanonicalJeffreysBetaBps
+		timeoutMs  int    = CanonicalConduitTimeoutMs
+		marker     uint16 = SubstrateBakedForge
+		floorBps   uint16 = CanonicalVerdictConvergedFloor
+		ceilingBps uint16 = CanonicalVerdictNotConvergedCeiling
+		minObs     int    = CanonicalMinObservations
+	)
 
 	if off == 0 || prime == 0 {
 		t.Fatal("FNV constants must be non-zero")

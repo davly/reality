@@ -42,7 +42,7 @@ func PointInTriangle2D(px, py, ax, ay, bx, by, cx, cy float64) bool {
 	hasNeg := (d1 < 0) || (d2 < 0) || (d3 < 0)
 	hasPos := (d1 > 0) || (d2 > 0) || (d3 > 0)
 
-	return !(hasNeg && hasPos)
+	return !hasNeg || !hasPos
 }
 
 // sign2D computes the sign of the cross product (p2-p1) x (p3-p1).

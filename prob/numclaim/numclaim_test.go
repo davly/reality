@@ -16,7 +16,7 @@ type goldenOptions struct {
 }
 
 func (g goldenOptions) opts() Options {
-	return Options{MaxRoundDP: g.MaxRoundDP, PercentScale: g.PercentScale, Tolerance: g.Tolerance}
+	return Options(g)
 }
 
 func loadJSON(t *testing.T, path string, v any) {

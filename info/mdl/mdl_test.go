@@ -155,9 +155,9 @@ func TestNMLMultinomial_K2_MatchesDirectSum(t *testing.T) {
 		t.Fatalf("err: %v", err)
 	}
 	// Hand-computed reference.
-	cn2 := 1.0 + 4*0.25*math.Pow(0.75, 3) +
-		6*math.Pow(0.5, 2)*math.Pow(0.5, 2) +
-		4*math.Pow(0.75, 3)*0.25 + 1.0
+	cn2 := 1.0 + 4*0.25*(0.75*0.75*0.75) +
+		6*(0.5*0.5)*(0.5*0.5) +
+		4*(0.75*0.75*0.75)*0.25 + 1.0
 	want := math.Log(cn2)
 	if math.Abs(got-want) > 1e-10 {
 		t.Errorf("k=2, n=4: got %v, want %v (cn2=%v)", got, want, cn2)

@@ -98,10 +98,10 @@ func TestHedge_BowArcWitness(t *testing.T) {
 	}
 	// F = {X,Y}, F' = {Y}: the confounded component is {X,Y}; the inner forest
 	// rooted in An(Y) excluding X is {Y}.
-	if !(len(h.Forest) == 2 && inSlice(h.Forest, "X") && inSlice(h.Forest, "Y")) {
+	if len(h.Forest) != 2 || !inSlice(h.Forest, "X") || !inSlice(h.Forest, "Y") {
 		t.Errorf("bow arc Forest = %v, want {X,Y}", h.Forest)
 	}
-	if !(len(h.Subforest) == 1 && inSlice(h.Subforest, "Y")) {
+	if len(h.Subforest) != 1 || !inSlice(h.Subforest, "Y") {
 		t.Errorf("bow arc Subforest = %v, want {Y}", h.Subforest)
 	}
 }

@@ -95,15 +95,14 @@ func betaCF(x, a, b float64) float64 {
 	const eps = 1e-14
 	const tiny = 1e-30
 
-	// Lentz's method: f = h = 1, then iterate.
-	f := 1.0
+	// Lentz's method, started from C_0 = 1 and D_1 = 1/d (f = D_1).
 	c := 1.0
 	d := 1.0 - (a+b)*x/(a+1)
 	if math.Abs(d) < tiny {
 		d = tiny
 	}
 	d = 1.0 / d
-	f = d
+	f := d
 
 	for m := 1; m <= maxIter; m++ {
 		mf := float64(m)
@@ -167,28 +166,6 @@ func studentTCDF(t float64, df float64) float64 {
 		return 1.0 - 0.5*iBeta
 	}
 	return 0.5 * iBeta
-}
-
-// chiSquaredCDF computes the CDF of the chi-squared distribution with df
-// degrees of freedom, evaluated at x. Used by the chi-squared goodness-of-fit
-// test for p-value computation.
-//
-// Formula: CDF(x; df) = regularizedGammaLower(df/2, x/2)
-//
-//	which equals I_{x/(x+df)}(df/2, ...) via the beta function relation,
-//	or directly via the incomplete gamma series.
-//
-// This implementation uses the series expansion of the lower regularized
-// gamma function P(a, x) = gamma(a, x) / Gamma(a).
-//
-// Valid range: x >= 0, df > 0
-// Precision: ~1e-12 for typical inputs
-// Reference: Abramowitz & Stegun, formula 6.5.29 (series expansion)
-func chiSquaredCDF(x float64, df float64) float64 {
-	if x <= 0 || df <= 0 {
-		return 0
-	}
-	return regularizedGammaP(df/2.0, x/2.0)
 }
 
 // regularizedGammaLowerSeries computes the lower regularized incomplete

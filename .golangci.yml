@@ -1,0 +1,18 @@
+# golangci-lint configuration. CI pins golangci-lint v2.14.0
+# (.github/workflows/ci.yml), so this file and the linter version change
+# together.
+#
+# Linters: the v2 "standard" set (errcheck, govet, ineffassign, staticcheck,
+# unused). Nothing is excluded globally: every suppression is a per-line
+# //nolint directive that states its reason, so each one stays visible where
+# it applies.
+version: "2"
+
+linters:
+  default: standard
+
+# Report every issue. The defaults (3 per identical message, 50 per linter)
+# hid 7 of the 36 issues CI was failing on.
+issues:
+  max-same-issues: 0
+  max-issues-per-linter: 0

@@ -142,12 +142,8 @@ func TestComputeBarcode_SquareLoop_H1Detected(t *testing.T) {
 	// adjacent edges length 1, diagonal 1.5.  At maxDim=1 we expect
 	// 3 finite H_0 bars dying at 1 + 1 essential H_0 + 1 H_1 bar
 	// born at 1.0 dying at 1.5.
-	pts := [][]float64{
-		{0, 0},
-		{1, 0},
-		{1, 1},
-		{0, 1},
-	}
+	// A unit square, (0,0) (1,0) (1,1) (0,1), was the first candidate fixture;
+	// its diagonal is sqrt(2), not 1.5, so it is not used (see below).
 	// Shift one diagonal so the diagonal distance is 1.5 (matches
 	// the FW C# fixture's distance matrix).  We achieve this by
 	// using a custom point cloud where Euclidean diagonals are
@@ -180,7 +176,7 @@ func TestComputeBarcode_SquareLoop_H1Detected(t *testing.T) {
 	// at 1.0, dies at 2.0 (the opposite-vertex distance).  We use
 	// that instead.
 
-	pts = []([]float64){
+	pts := []([]float64){
 		{1, 0},
 		{0.5, math.Sqrt(3) / 2},
 		{-0.5, math.Sqrt(3) / 2},

@@ -56,7 +56,7 @@ func TestNegLogLikGrad_AutodiffEquivalence(t *testing.T) {
 	// Want omega = 1e-6, alpha = 0.05, beta = 0.90, slack = 0.05.
 	theta := [4]float64{
 		math.Log(1e-6),        // theta_omega
-		math.Log(0.05 / 0.05), // theta_a (alpha / slack)
+		0.0,                   // theta_a = log(alpha / slack) = log(0.05 / 0.05) = log(1)
 		math.Log(0.90 / 0.05), // theta_b (beta / slack)
 		0.0,                   // theta_s (slack reference, set to 0)
 	}

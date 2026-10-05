@@ -17,7 +17,7 @@ func TestBarrierOptionReflection_BarrierOnNode(t *testing.T) {
 	n := 4
 	dt := tt / float64(n)
 	u := math.Exp(sigma * math.Sqrt(dt))
-	barrier := s0 * math.Pow(u, 2) // exactly on node m=2
+	barrier := s0 * math.Pow(u, 2) //nolint:staticcheck // QF1005: mirrors the lattice-node formula u^m; exactly on node m=2
 
 	got := BarrierOptionReflection(s0, k, r, sigma, tt, barrier, n)
 	if math.IsNaN(got) || math.Abs(got) > 1e-9 {

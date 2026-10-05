@@ -212,7 +212,7 @@ func TestCrossComplexity_NonNegativeAndPinned(t *testing.T) {
 	}
 	selfCost, _ := CrossComplexity(per, repeat([]int{0, 1, 2}, 40), 3)
 	rndCost, _ := CrossComplexity(per, rnd, 3)
-	if !(rndCost > selfCost) {
+	if rndCost <= selfCost {
 		t.Errorf("expected random-given-structured cost %d > self-copy cost %d",
 			rndCost, selfCost)
 	}

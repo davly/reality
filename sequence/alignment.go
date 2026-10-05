@@ -152,16 +152,17 @@ func SmithWaterman(a, b string, match, mismatch, gap float64) (string, string, f
 		if ra[i-1] == rb[j-1] {
 			s = match
 		}
-		if dp[i][j] == dp[i-1][j-1]+s {
+		switch dp[i][j] {
+		case dp[i-1][j-1] + s:
 			alignA = append(alignA, ra[i-1])
 			alignB = append(alignB, rb[j-1])
 			i--
 			j--
-		} else if dp[i][j] == dp[i-1][j]+gap {
+		case dp[i-1][j] + gap:
 			alignA = append(alignA, ra[i-1])
 			alignB = append(alignB, '-')
 			i--
-		} else {
+		default:
 			alignA = append(alignA, '-')
 			alignB = append(alignB, rb[j-1])
 			j--

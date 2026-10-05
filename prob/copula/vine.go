@@ -45,7 +45,7 @@ var ErrVineInvalidDimension = errors.New(
 // ErrVineEdgeMismatch is returned by NewDVine when the supplied edges
 // have inconsistent length for the dimension.
 var ErrVineEdgeMismatch = errors.New(
-	"copula: D-vine tree must have n-1 edges in T_1, n-2 in T_2, etc.")
+	"copula: D-vine tree must have n-1 edges in T_1, n-2 in T_2, and so on")
 
 // ErrVineEdgeInvalid is returned by NewDVine when an edge has invalid
 // theta / family combination.
@@ -122,7 +122,7 @@ func NewDVine(dim int, trees [][]VineEdge) (*DVine, error) {
 		}
 		for e, edge := range trees[k] {
 			if err := edge.Validate(); err != nil {
-				return nil, fmt.Errorf("T_%d edge %d: %w", k+1, e, err)
+				return nil, fmt.Errorf("tree T_%d edge %d: %w", k+1, e, err)
 			}
 		}
 	}

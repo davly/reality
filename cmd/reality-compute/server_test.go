@@ -37,7 +37,7 @@ func doReq(t *testing.T, srv *httptest.Server, method, path, token, userID, body
 	if err != nil {
 		t.Fatalf("do request: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	raw, _ := io.ReadAll(resp.Body)
 	var res mcpResult
 	if len(raw) > 0 {
@@ -64,7 +64,7 @@ func TestManifestReachable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("do: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("manifest: want 200, got %d", resp.StatusCode)
 	}
@@ -347,7 +347,7 @@ func TestOversizeBody(t *testing.T) {
 	if err != nil {
 		t.Fatalf("do: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusRequestEntityTooLarge {
 		t.Fatalf("oversize: want 413, got %d", resp.StatusCode)
 	}

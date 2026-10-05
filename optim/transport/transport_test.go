@@ -370,7 +370,7 @@ func TestSinkhorn_ConvergenceCuturi(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Sinkhorn err: %v", err)
 	}
-	if !(res.Iterations > 0 && res.Iterations < 500) {
+	if res.Iterations <= 0 || res.Iterations >= 500 {
 		t.Errorf("Iterations: got %d, want in (0, 500)", res.Iterations)
 	}
 	// Plan row-sums should match a; col-sums should match b.
@@ -518,7 +518,7 @@ func TestMinPairwise_FindsClosestPair(t *testing.T) {
 		t.Fatalf("unexpected err: %v", err)
 	}
 	// Closest pair should be (0, 2) — A and A' (shift of 0.5).
-	if !((idx == [2]int{0, 2}) || (idx == [2]int{2, 0})) {
+	if idx != [2]int{0, 2} && idx != [2]int{2, 0} {
 		t.Errorf("closest pair: got %v, want (0, 2)", idx)
 	}
 	if !(dist > 0 && dist < 1.0) {
