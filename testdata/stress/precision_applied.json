@@ -3705,6 +3705,22 @@
    "claim": "physics/materials.go CreepArrhenius: 'Precision: limited by float64 exp and pow' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
   },
   {
+   "id": "applied/creep-extreme-exp-subnormal-before-the-product",
+   "func": "physics.CreepArrhenius",
+   "args": {
+    "A": 1e+300,
+    "Q": 270000.0,
+    "R": 8.31446261815324,
+    "T": 44.0,
+    "sigma": 1.0,
+    "n": 3.0
+   },
+   "want": 2.9889104024395903e-21,
+   "tol": 1e-14,
+   "tol_kind": "rel",
+   "claim": "physics/materials.go CreepArrhenius: 'Precision: limited by float64 exp and pow' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
+  },
+  {
    "id": "applied/mixture-typ-carbon-epoxy",
    "func": "physics.CompositeMixture",
    "args": {
@@ -4640,6 +4656,19 @@
     "x": 1000.0
    },
    "want": 123.456,
+   "tol": 1e-14,
+   "tol_kind": "rel",
+   "claim": "physics/optics.go BeerLambertLaw: 'Precision: limited by float64 exp (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
+  },
+  {
+   "id": "applied/beer-extreme-exp-subnormal-before-the-product",
+   "func": "physics.BeerLambertLaw",
+   "args": {
+    "I0": 1e+300,
+    "mu": 1.0,
+    "x": 740.0
+   },
+   "want": 4.1887398800480493e-22,
    "tol": 1e-14,
    "tol_kind": "rel",
    "claim": "physics/optics.go BeerLambertLaw: 'Precision: limited by float64 exp (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"

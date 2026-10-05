@@ -385,6 +385,8 @@ def em():
         vals = kw["r"] if "r" in kw else [kw["value"]] * kw["count"]
         return fl(1 / sum((1 / Fr(x) for x in vals), Fr(0)))
 
+    ORACLES["em.ResistorsInParallel"] = parallel
+
     def parallel_rule(n):
         t = tol_ops(n + 1)
         return Rule(t, "rel", f"accumulation of n={n} terms: n+1 roundings on any path, relative {t:.3g} = (n+1)*2^-53*(1+(n+1)*2^-53)")
@@ -849,6 +851,8 @@ def physics():
         ("hard-activation-ratio-108", dict(A=1e-30, Q=2.7e5, R=gas, T=300.0, sigma=1e8, n=4.0)),
         ("hard-activation-ratio-258-worst-rounding", dict(A=1e-30, Q=2.7e5, R=gas, T=t_creep(258.0), sigma=1e8, n=3.0)),
         ("hard-activation-ratio-513-worst-rounding", dict(A=1e-30, Q=2.7e5, R=gas, T=t_creep(513.0), sigma=1e8, n=3.0)),
+        # exp(-738) is subnormal (about 250 grains) although 1e300*exp(-738) is an ordinary number
+        ("extreme-exp-subnormal-before-the-product", dict(A=1e300, Q=2.7e5, R=gas, T=44.0, sigma=1.0, n=3.0)),
     ])
 
     def o(Vf, Ef, Em):
@@ -1006,6 +1010,8 @@ def physics():
         ("hard-optical-depth-258-worst-rounding", dict(I0=1e30, mu=1.7, x=x_beer(1.7, 258.0))),
         ("hard-optical-depth-513-worst-rounding", dict(I0=1e10, mu=3.3, x=x_beer(3.3, 513.0))),
         ("hard-no-attenuation", dict(I0=123.456, mu=0.0, x=1e3)),
+        # exp(-740) is subnormal (about 90 grains) although 1e300*exp(-740) is an ordinary number
+        ("extreme-exp-subnormal-before-the-product", dict(I0=1e300, mu=1.0, x=740.0)),
     ])
 
 
