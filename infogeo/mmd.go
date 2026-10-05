@@ -1,6 +1,10 @@
 package infogeo
 
-import "math"
+import (
+	"cmp"
+	"math"
+	"slices"
+)
 
 // A Kernel is a positive-semidefinite kernel function k(x, y) on R^d.  It
 // is invoked once per (i, j) pair inside MMD and must be deterministic.
@@ -188,19 +192,19 @@ func MedianHeuristicBandwidth(X, Y [][]float64) float64 {
 	return median(dists)
 }
 
+// median returns the median of xs, sorting xs in place (the caller's slice is
+// mutated).
+//
+// It uses the standard library's stable sort (O(n log n) comparisons). A
+// hand-rolled insertion sort used here before was O(n^2); because
+// MedianHeuristicBandwidth passes N(N-1)/2 pairwise distances, the old cost
+// grew as N^4 (about 5 s at N = 600, and past a 10-minute test timeout under
+// the race detector). The sort is stable, like the old one, so the result is
+// bit-identical for finite inputs, including which signed zero is returned.
+// If xs contains NaN the result is unspecified, as it was before.
 func median(xs []float64) float64 {
-	// Local insertion sort to avoid pulling in sort and to keep imports
-	// minimal.  Caller-supplied slice is mutated.
 	n := len(xs)
-	for i := 1; i < n; i++ {
-		v := xs[i]
-		j := i - 1
-		for j >= 0 && xs[j] > v {
-			xs[j+1] = xs[j]
-			j--
-		}
-		xs[j+1] = v
-	}
+	slices.SortStableFunc(xs, cmp.Compare[float64])
 	if n%2 == 1 {
 		return xs[n/2]
 	}

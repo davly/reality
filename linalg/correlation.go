@@ -1,6 +1,10 @@
 package linalg
 
-import "math"
+import (
+	"cmp"
+	"math"
+	"slices"
+)
 
 // PearsonCorrelation computes the Pearson product-moment correlation coefficient
 // between two equal-length slices. Returns 0 if fewer than 2 data points or
@@ -86,12 +90,12 @@ func ranks(data []float64) []float64 {
 	for i := range idx {
 		idx[i] = i
 	}
-	// Insertion sort (stable, good for typical correlation dataset sizes).
-	for i := 1; i < n; i++ {
-		for j := i; j > 0 && data[idx[j]] < data[idx[j-1]]; j-- {
-			idx[j], idx[j-1] = idx[j-1], idx[j]
-		}
-	}
+	// Stable O(n log n) sort; tied values keep their input order, exactly as
+	// the stable insertion sort used here before (which was O(n^2): about 10 s
+	// at n = 100,000). NaN inputs give unspecified ranks, as before.
+	slices.SortStableFunc(idx, func(a, b int) int {
+		return cmp.Compare(data[a], data[b])
+	})
 
 	rnk := make([]float64, n)
 	i := 0

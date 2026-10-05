@@ -1,6 +1,7 @@
 package graph
 
 import (
+	"container/heap"
 	"errors"
 	"math"
 )
@@ -134,33 +135,49 @@ func TopologicalSort(adj IntAdjacency, n int) ([]int, error) {
 		}
 	}
 
-	// Use a sorted insertion approach for determinism: always pick the
-	// smallest available node. For simplicity, we scan linearly since
-	// this is a pure math library and the graph sizes are moderate.
-	var order []int
-	removed := make([]bool, n)
-
-	for len(order) < n {
-		found := -1
-		for i := 0; i < n; i++ {
-			if !removed[i] && inDeg[i] == 0 {
-				found = i
-				break
-			}
+	// Determinism: always take the smallest available node. A min-heap of the
+	// zero-in-degree nodes gives exactly that order in O((V + E) log V); a
+	// linear scan for the smallest such node, used here before, was O(V^2).
+	ready := make(minIntHeap, 0, n)
+	for i := 0; i < n; i++ {
+		if inDeg[i] == 0 {
+			ready = append(ready, i)
 		}
-		if found == -1 {
+	}
+	heap.Init(&ready)
+
+	var order []int
+	for len(order) < n {
+		if ready.Len() == 0 {
 			return order, ErrCycleDetected
 		}
+		found := heap.Pop(&ready).(int)
 		order = append(order, found)
-		removed[found] = true
 		for _, v := range adj[found] {
 			if v >= 0 && v < n {
 				inDeg[v]--
+				if inDeg[v] == 0 {
+					heap.Push(&ready, v)
+				}
 			}
 		}
 	}
 
 	return order, nil
+}
+
+// minIntHeap is a container/heap of node indices, smallest first.
+type minIntHeap []int
+
+func (h minIntHeap) Len() int           { return len(h) }
+func (h minIntHeap) Less(i, j int) bool { return h[i] < h[j] }
+func (h minIntHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+func (h *minIntHeap) Push(x any)        { *h = append(*h, x.(int)) }
+func (h *minIntHeap) Pop() any {
+	old := *h
+	x := old[len(old)-1]
+	*h = old[:len(old)-1]
+	return x
 }
 
 // appendUnique appends v to slice s only if v is not already present.
