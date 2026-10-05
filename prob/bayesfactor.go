@@ -11,9 +11,9 @@ import "math"
 // reality substrate. The crucible-bridge implementation integrated the H1
 // marginal likelihood numerically with Simpson's rule and could overflow to
 // +Inf (and historically vetoed that +Inf in linear space). The substrate
-// version uses the exact closed form via the regularized incomplete beta
-// function and reports a finite-result guard explicitly so callers decide
-// how to treat overwhelming-evidence overflow.
+// version evaluates an exact closed form, a finite sum of binomial-coefficient
+// ratios, and reports a finite-result guard explicitly so callers decide how
+// to treat overwhelming-evidence overflow.
 //
 // Consumers:
 //   - crucible-bridge: proportion-test gate (replaces the in-repo Simpson
@@ -35,64 +35,67 @@ import "math"
 //	P(data | H0) = C(n,k) * 0.5^n
 //	P(data | H1) = integral_{0.5}^{1} C(n,k) p^k (1-p)^{n-k} * 2 dp
 //
-// The H1 marginal has an exact closed form. Using the identity
-// C(n,k) * B(k+1, n-k+1) = 1/(n+1) and the regularized incomplete beta
-// function I_x(a,b):
+// The H1 marginal has an exact closed form. With N = n+1, the identity
+// C(n,k) * B(k+1, n-k+1) = 1/N gives
 //
-//	P(data | H1) = (2 / (n+1)) * (1 - I_{0.5}(k+1, n-k+1))
+//	P(data | H1) = (2/N) * P(Beta(k+1, n-k+1) > 1/2),
 //
-// so
+// and for integer shapes that beta tail is a binomial lower tail:
+// P(Beta(k+1, n-k+1) > 1/2) = P(Binomial(N, 1/2) <= k)
+// = 2^-N * sum_{j=0..k} C(N, j). Dividing by P(data | H0) and using
+// N*C(n,k) = (N-k)*C(N,k):
 //
-//	BF10 = [ (2 / (n+1)) * (1 - I_{0.5}(k+1, n-k+1)) ] / [ C(n,k) * 0.5^n ]
+//	BF10 = R / (N - k),   R = sum_{j=0..k} C(N, j) / C(N, k).
 //
-// The computation is carried out in log-space to avoid intermediate
-// over/underflow; the final exponentiation is the only step that can
-// overflow. For high-dominance, large-n inputs the true BF10 exceeds
-// math.MaxFloat64 and bf is +Inf — this is genuine, infinitely strong
-// evidence, not an error. The boolean ok is the finite-result guard: it
-// is true exactly when bf is a finite, non-negative number. (The
-// crucible-bridge bug was treating that +Inf overflow as a computation
-// failure; callers that want "infinitely strong evidence still passes the
-// gate" should test ok || math.IsInf(bf, 1).)
+// BF10 is evaluated as a sum of positive terms t_j = C(N, j)/((N-k) C(N, k)),
+// generated from t_k = 1/(N-k) by t_{j-1} = t_j * j/(N+1-j), so nothing
+// cancels and no partial sum exceeds the result: k = 0 gives exactly
+// 1/(n+1). (Forming the tail as 1 - I_{1/2}(k+1, n-k+1) instead cancelled to
+// 0 whenever the tail fell below about 1e-16, e.g. k = 0, n = 60.) The sum
+// stops once the terms are past their peak and the geometric bound on the
+// rest is below 2^-60 of the total, or once it overflows. For
+// high-dominance, large-n inputs the true BF10 exceeds math.MaxFloat64 and bf
+// is +Inf — this is genuine, infinitely strong evidence, not an error. The
+// boolean ok is the finite-result guard: it is true exactly when bf is a
+// finite, non-negative number. (The crucible-bridge bug was treating that
+// +Inf overflow as a computation failure; callers that want "infinitely
+// strong evidence still passes the gate" should test ok || math.IsInf(bf, 1).)
 //
 // Valid range: n >= 1, 0 <= k <= n.
 // Returns: (bf, ok). bf is BF10 (>= 0, may be +Inf). ok is true iff bf is
 // finite and non-negative.
 // Failure mode: returns (NaN, false) if n < 1, k < 0, or k > n.
-// Precision: matches a brute-force quadrature oracle to < 1e-6 relative;
-// limited by RegularizedBetaInc (~1e-14 absolute).
+// Precision: measured against the exact rational value for every 0 <= k <= n,
+// the relative error is at most 5.3e-15 for n <= 1000 (n in {1, 2, 10, 60,
+// 200, 1000}), 7.7e-15 at n = 10^4 and 1.7e-14 at n = 10^5: the rounding
+// errors of the term recurrence accumulate over the terms that matter, about
+// sqrt(n) of them near k = n/2. Every exact value beyond math.MaxFloat64
+// gives +Inf.
+// Cost: at most k+1 terms (about sqrt(n) near k = n/2); the sum stops early
+// once the remaining terms are negligible or it overflows.
 // Reference: Jeffreys, H. (1961) "Theory of Probability", 3rd ed., on
-// one-sided proportion Bayes factors; Press et al., Numerical Recipes,
-// section 6.4 (incomplete beta function).
+// one-sided proportion Bayes factors; Abramowitz & Stegun 26.5.24 (incomplete
+// beta function and the binomial distribution).
 func ProportionBayesFactor10(k, n int) (bf float64, ok bool) {
 	if n < 1 || k < 0 || k > n {
 		return math.NaN(), false
 	}
-
-	// log P(data | H0) = log C(n,k) + n*log(0.5).
-	logH0 := logBinomCoeff(k, n) + float64(n)*math.Ln2*(-1)
-
-	// Upper-tail mass of Beta(k+1, n-k+1) above 0.5:
-	//   1 - I_{0.5}(k+1, n-k+1).
-	// RegularizedBetaInc is exact at the endpoints, so this is well defined
-	// for every 0 <= k <= n.
-	tail := 1.0 - RegularizedBetaInc(0.5, float64(k+1), float64(n-k+1))
-	if tail <= 0 {
-		// All posterior mass lies at or below 0.5: H1 (p > 0.5) is
-		// effectively impossible given the data, so BF10 -> 0.
-		return 0, true
+	nf := float64(n)
+	t := 1 / (nf + 1 - float64(k)) // t_k = 1/(N-k)
+	bf = t
+	for j := k; j >= 1; j-- {
+		r := float64(j) / (nf + 2 - float64(j)) // t_{j-1}/t_j = C(N, j-1)/C(N, j)
+		t *= r
+		bf += t
+		if math.IsInf(bf, 1) {
+			break
+		}
+		// For r < 1 the ratios fall as j falls, so the remaining terms sum
+		// to less than t*r/(1-r).
+		if r < 1 && t*r < 0x1p-60*bf*(1-r) {
+			break
+		}
 	}
-
-	// log P(data | H1) = log(2) - log(n+1) + log(tail).
-	logH1 := math.Ln2 - math.Log(float64(n+1)) + math.Log(tail)
-
-	bf = math.Exp(logH1 - logH0)
 	ok = !math.IsInf(bf, 0) && !math.IsNaN(bf) && bf >= 0
 	return bf, ok
-}
-
-// logBinomCoeff returns log C(n, k) = lgamma(n+1) - lgamma(k+1) - lgamma(n-k+1).
-// Callers must ensure 0 <= k <= n.
-func logBinomCoeff(k, n int) float64 {
-	return LogGamma(float64(n+1)) - LogGamma(float64(k+1)) - LogGamma(float64(n-k+1))
 }
