@@ -139,15 +139,35 @@ func TestChiSquaredTestManyCells(t *testing.T) {
 }
 
 // TestGammaCDFNonConvergenceIsNaN checks that a shape so large that the
-// expansions cannot converge within their iteration budget yields NaN, not
+// power series cannot converge within its iteration budget yields NaN, not
 // a plausible-looking probability.
 func TestGammaCDFNonConvergenceIsNaN(t *testing.T) {
 	if testing.Short() {
 		t.Skip("exhausts a 1e7-iteration budget")
 	}
-	for _, x := range []float64{1e17 - 1e9, 1e17} {
-		if got := GammaCDF(x, 1e17, 1); !math.IsNaN(got) {
-			t.Errorf("GammaCDF(%v, 1e17, 1) = %v, want NaN (no convergence)", x, got)
+	if got := GammaCDF(1e17-1e9, 1e17, 1); !math.IsNaN(got) {
+		t.Errorf("GammaCDF(1e17-1e9, 1e17, 1) = %v, want NaN (no convergence)", got)
+	}
+}
+
+// TestGammaCDFHugeShapeAtPeak checks the peak value P(k, k) for shapes far
+// beyond the measured range against the asymptotic expansion
+// P(a, a) = 1/2 + (1/3 + 1/(540a)) / sqrt(2 pi a) + O(a^-5/2) (Temme; DLMF
+// 8.12), evaluated with mpmath and exact to far below float64 precision at
+// these shapes. The continued fraction converges in about 9.4*a^(1/3)
+// iterations; its rounding grows slowly with a, to about 2e-13 (documented
+// in GammaCDF). Before the first term was formed as (x-a)+1, x+1-a lost the
+// 1 for x > 2^53 and the fraction did not converge at a = 1e17.
+func TestGammaCDFHugeShapeAtPeak(t *testing.T) {
+	cases := []struct{ a, want float64 }{
+		{1e10, 0.5000013298076013388477085},
+		{1e13, 0.5000000420522087003360242},
+		{1e17, 0.50000000042052208700336},
+	}
+	for _, c := range cases {
+		got := GammaCDF(c.a, c.a, 1)
+		if e := relErrGamma(got, c.want); !(e <= 5e-13) {
+			t.Errorf("GammaCDF(%v, %v, 1) = %.17g, want %.17g (rel err %.3g > 5e-13)", c.a, c.a, got, c.want, e)
 		}
 	}
 }
