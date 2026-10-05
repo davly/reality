@@ -33,10 +33,10 @@ import "math"
 // identical (zero variance)
 // Precision: the p-value I_{df/(df+t^2)}(df/2, 1/2) is computed directly,
 // not as 1 - CDF. Given the statistic, its relative error is at most 3e-15
-// for p >= 1e-10 and below 1e-13 down to 1e-150 (measured for df from 1 to
-// 1e6 and |t| up to 1e3), growing in proportion to |ln p| below that. The
-// statistic's own rounding (a few ulp) moves p by up to min(t^2, df+1)
-// times as much, relatively.
+// for p >= 1e-10; a smaller p carries an additional error proportional to
+// |ln p| (measured for df from 1 to 1e6 and |t| up to 1e3: 4.3e-14 at
+// 6e-89, 1.1e-13 at 4e-243). The statistic's own rounding (a few ulp)
+// moves p by up to min(t^2, df+1) times as much, relatively.
 // Reference: Student (Gosset), W.S. (1908) "The Probable Error of a Mean"
 func TTestOneSample(data []float64, mu0 float64) (tStat, pValue float64) {
 	n := len(data)
@@ -168,8 +168,10 @@ func TTestTwoSample(data1, data2 []float64) (tStat, pValue float64) {
 // than about 2e12 cells, with the statistic near its mean)
 // Precision: the statistic is summed with compensation (relative error of
 // a few ulp for any number of cells). The p-value, Q(df/2, chi2/2), is
-// computed directly in the upper tail; its relative error is below 1e-12
-// for p >= 1e-300 and grows in proportion to |ln p| (about 3e-16*|ln p|).
+// computed directly in the upper tail. Given the statistic, its relative
+// error is at most 5e-15 for p >= 1e-10 and below 1e-12 for p >= 1e-300 (a
+// smaller p carries an additional error of at most about 5e-16*|ln p|;
+// measured for df up to 1e6).
 // Reference: Pearson, K. (1900) "On the criterion that a given system
 // of deviations from the probable in the case of a correlated system of
 // variables is such that it can be reasonably supposed to have arisen

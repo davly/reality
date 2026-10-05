@@ -59,10 +59,10 @@ func Erfc(x float64) float64 {
 // Valid range: x in [0, 1], a > 0, b > 0
 // Precision: measured against 60-digit references for a, b from 1e-3 to
 // 1e7, with x from the far tails through the mean: absolute error at most
-// 2e-15; relative error at most 8e-15 for results >= 1e-10 and below 1e-13
-// down to 1e-150. Below 1e-150 the relative error is set by the float64
-// rounding of the exponent and grows in proportion to |ln I|, about
-// 5e-16*|ln I| (2.6e-13 near 1e-263). Near the mean of still larger
+// 2.2e-15; relative error at most 8e-15 for results >= 1e-10. A smaller
+// result carries an additional error proportional to |ln I|, the float64
+// rounding of the exponent: at most 4.5e-16*|ln I| (9.3e-14 at 6e-125,
+// 3.1e-13 at 1e-300). Near the mean of still larger
 // parameters the continued fraction's rounding grows slowly with its
 // iteration count (2.7e-15 at a = b = 1e10, 1.5e-13 at a = b = 1e15).
 // Cost: O(1) in the tails; near the mean about 5.5*min(a, b)^(1/3)
@@ -516,8 +516,9 @@ func betaCF(a, b, x, y, lambda float64) (float64, bool) {
 //	For t < 0: CDF = 0.5 * I_x(df/2, 1/2)
 //
 // Valid range: any t, df > 0
-// Precision: relative error below 1e-13 in the lower tail (t < 0) wherever
-// the result is at least 1e-150; absolute error below 1e-15 otherwise
+// Precision: absolute error at most 2.3e-16; in the lower tail (t < 0)
+// relative error at most 3e-15 for results >= 1e-10, plus an error
+// proportional to |ln CDF| for smaller results (see TTestOneSample)
 // Reference: Abramowitz & Stegun, formula 26.5.27
 func studentTCDF(t float64, df float64) float64 {
 	if df <= 0 {
