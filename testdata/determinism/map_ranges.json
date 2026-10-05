@@ -1,0 +1,225 @@
+{
+  "_comment": "Determinism ratchet: every range over a map in non-test code, classified. See determinism_test.go.",
+  "sites": {
+    "causal.placeboATE#1": {
+      "class": "order-insensitive",
+      "note": "map copy"
+    },
+    "causal.sortedStratumKeys#1": {
+      "class": "sorted-after",
+      "note": "keys sorted before return"
+    },
+    "graph.ADMG.IdentifyEffect#1": {
+      "class": "known-nondeterministic",
+      "note": "the overlap error names whichever overlapping node map iteration reaches first"
+    },
+    "graph.ADMG.IdentifyEffectWithWitness#1": {
+      "class": "known-nondeterministic",
+      "note": "the overlap error names whichever overlapping node map iteration reaches first"
+    },
+    "graph.ADMG.cComponents#1": {
+      "class": "sorted-after",
+      "note": "members sorted; components sorted by first member"
+    },
+    "graph.BackdoorAdjustmentSet#1": {
+      "class": "order-insensitive",
+      "note": "builds a set; returned through setToSlice, which sorts"
+    },
+    "graph.ConnectedComponents#1": {
+      "class": "sorted-after",
+      "note": "adjacency order only changes BFS order; each component and the component list are sorted"
+    },
+    "graph.DAGDepth#1": {
+      "class": "order-insensitive",
+      "note": "Kahn order with longest-path relaxation: integer depths do not depend on processing order"
+    },
+    "graph.DAGDepth#2": {
+      "class": "order-insensitive",
+      "note": "map copy"
+    },
+    "graph.DSeparated#1": {
+      "class": "order-insensitive",
+      "note": "boolean any-of"
+    },
+    "graph.DegreeCentrality#1": {
+      "class": "order-insensitive",
+      "note": "integer degree counts"
+    },
+    "graph.Leaves#1": {
+      "class": "order-insensitive",
+      "note": "returns a set"
+    },
+    "graph.LouvainCommunities#1": {
+      "class": "known-nondeterministic",
+      "note": "neighbour lists and the total-weight float sum follow map order: different partitions for the same input"
+    },
+    "graph.LouvainCommunities#2": {
+      "class": "known-nondeterministic",
+      "note": "arg-max over a map with a strict > tie-break: the first-seen community wins ties"
+    },
+    "graph.MaxFlow#1": {
+      "class": "unreviewed",
+      "note": "residual adjacency follows map order, so augmenting paths can differ; the flow value is order-independent in exact arithmetic, but float sums along different paths may round differently; a fractional-capacity probe gave 1 distinct output over 200 calls (evidence, not proof)"
+    },
+    "graph.NewADMG#1": {
+      "class": "sorted-after",
+      "note": "node list sorted"
+    },
+    "graph.NodeImportance#1": {
+      "class": "order-insensitive",
+      "note": "per-key initialisation"
+    },
+    "graph.NodeImportance#2": {
+      "class": "order-insensitive",
+      "note": "per-key independent computation"
+    },
+    "graph.Roots#1": {
+      "class": "known-nondeterministic",
+      "note": "returned slice follows map order"
+    },
+    "graph.ancestorsOf#1": {
+      "class": "order-insensitive",
+      "note": "result is a set"
+    },
+    "graph.ancestorsOf#2": {
+      "class": "order-insensitive",
+      "note": "result is a set"
+    },
+    "graph.descendantsOf#1": {
+      "class": "order-insensitive",
+      "note": "result is a set"
+    },
+    "graph.descendantsOf#2": {
+      "class": "order-insensitive",
+      "note": "result is a set"
+    },
+    "graph.diff#1": {
+      "class": "order-insensitive",
+      "note": "set operation"
+    },
+    "graph.graphSize#1": {
+      "class": "order-insensitive",
+      "note": "integer maximum"
+    },
+    "graph.idSortedKeys#1": {
+      "class": "sorted-after",
+      "note": "sorted before return"
+    },
+    "graph.inter#1": {
+      "class": "order-insensitive",
+      "note": "set operation"
+    },
+    "graph.merge#1": {
+      "class": "order-insensitive",
+      "note": "map copy"
+    },
+    "graph.merge#2": {
+      "class": "order-insensitive",
+      "note": "map copy; b overrides a after a is fully copied"
+    },
+    "graph.reachableFrom#1": {
+      "class": "order-insensitive",
+      "note": "result is a set"
+    },
+    "graph.reachableFrom#2": {
+      "class": "order-insensitive",
+      "note": "result is a set"
+    },
+    "graph.reachableFrom#3": {
+      "class": "order-insensitive",
+      "note": "result is a set"
+    },
+    "graph.reachableFrom#4": {
+      "class": "order-insensitive",
+      "note": "result is a set"
+    },
+    "graph.reachableFrom#5": {
+      "class": "order-insensitive",
+      "note": "result is a set"
+    },
+    "graph.setToSlice#1": {
+      "class": "sorted-after",
+      "note": "sorted before return"
+    },
+    "graph.subsetEq#1": {
+      "class": "order-insensitive",
+      "note": "boolean all-of"
+    },
+    "graph.union#1": {
+      "class": "order-insensitive",
+      "note": "set operation"
+    },
+    "graph.union#2": {
+      "class": "order-insensitive",
+      "note": "set operation"
+    },
+    "prob/agreement.KrippendorffAlpha#1": {
+      "class": "sorted-after",
+      "note": "categories sorted"
+    },
+    "prob/agreement.confusionMatrix#1": {
+      "class": "sorted-after",
+      "note": "categories sorted"
+    },
+    "prob/conformal.MondrianQuantile#1": {
+      "class": "order-insensitive",
+      "note": "per-stratum independent computation"
+    },
+    "reliability.BirnbaumImportances#1": {
+      "class": "order-insensitive",
+      "note": "per-node independent loop; the values inherit productOver (known-nondeterministic): measured 41 distinct outputs over 200 calls"
+    },
+    "reliability.LimitingDependency#1": {
+      "class": "order-insensitive",
+      "note": "arg-min over (availability, name): a total order"
+    },
+    "reliability.productOver#1": {
+      "class": "known-nondeterministic",
+      "note": "float product in map order: last-bit differences between calls"
+    },
+    "sequence.NGramDiceCoefficient#1": {
+      "class": "order-insensitive",
+      "note": "integer intersection count"
+    },
+    "sequence.NGramSimilarity#1": {
+      "class": "order-insensitive",
+      "note": "integer intersection count"
+    },
+    "setsim.MapKeyJaccard#1": {
+      "class": "order-insensitive",
+      "note": "integer intersection count"
+    },
+    "setsim.intersectionSize#1": {
+      "class": "order-insensitive",
+      "note": "integer intersection count"
+    },
+    "testutil.SortedMapBits#1": {
+      "class": "sorted-after",
+      "note": "keys sorted before the fingerprint is built"
+    },
+    "trust.DempsterCombine#1": {
+      "class": "order-insensitive",
+      "note": "per-key independent division"
+    },
+    "trust.MassFunction.Belief#1": {
+      "class": "known-nondeterministic",
+      "note": "float sum in map order: Bel(Theta) is not always exactly 1"
+    },
+    "trust.MassFunction.Plausibility#1": {
+      "class": "known-nondeterministic",
+      "note": "float sum in map order"
+    },
+    "trust.MassFunction.sortedSets#1": {
+      "class": "sorted-after",
+      "note": "sorted before return"
+    },
+    "trust.NewMassFunction#1": {
+      "class": "unreviewed",
+      "note": "float sum in map order feeds the additivity tolerance check; can only matter at the tolerance boundary"
+    },
+    "trust.YagerCombine#1": {
+      "class": "order-insensitive",
+      "note": "map copy"
+    }
+  }
+}
