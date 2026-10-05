@@ -34,9 +34,20 @@ import (
 //
 // where n = a+b+c+d, computed in log-space for numerical stability.
 //
+// "As extreme or more extreme" means at most as probable as the observed
+// table. Tables that are exactly as probable (for instance by symmetry of the
+// margins) come out of the log-space evaluation differing in their last
+// digits, so a table counts when its probability is at most 1 + 1e-7 times
+// the observed one, the convention of R's fisher.test. For n <= 40 no two
+// distinct probabilities of tables with the same margins are that close, so
+// there this is exactly the definition.
+//
 // Valid range: a, b, c, d >= 0, a+b+c+d > 0
 // Returns: two-tailed p-value
-// Precision: ~1e-12 (limited by LogGamma)
+// Precision: relative error at most 7.5e-14 against the exact p-value for
+// every table with n <= 40, and below 6e-12 on random tables with n up to
+// 2000 (measured against exact rational arithmetic); the error of the
+// log-gamma evaluation grows roughly in proportion to n*log(n).
 // Reference: Fisher, R.A. (1922) "On the Interpretation of Chi-Squared
 // from Contingency Tables, and the Calculation of P"
 func FisherExactTest(a, b, c, d int) float64 {
@@ -74,14 +85,16 @@ func FisherExactTest(a, b, c, d int) float64 {
 		aMax = c1
 	}
 
+	// Two-tailed: sum the probabilities of the tables at most as probable as
+	// the observed one, counting ties within a relative 1e-7 (see above).
+	threshold := pObs * (1 + 1e-7)
 	pValue := 0.0
 	for ai := aMin; ai <= aMax; ai++ {
 		bi := r1 - ai
 		ci := c1 - ai
 		di := r2 - ci
 		p := math.Exp(logHyper(ai, bi, ci, di))
-		// Two-tailed: sum probabilities of tables at least as extreme.
-		if p <= pObs+1e-14 { // small tolerance for floating-point comparison
+		if p <= threshold {
 			pValue += p
 		}
 	}
