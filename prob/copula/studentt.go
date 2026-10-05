@@ -58,6 +58,21 @@ func StudentTCDF(x, df float64) float64 {
 // Reference: Hill, G. W. (1970).  Algorithm 396: Student's t-Quantiles.
 // Communications of the ACM 13: 619-620.  Also Abramowitz & Stegun
 // 26.7.5.
+//
+// Measured accuracy (against 60-digit solutions, df from 1 to 1e4, p from
+// 1e-12 to 1 - 1e-6): the bisection stops when |StudentTCDF(x) - p| < 1e-10,
+// which bounds the CDF residual, not the error of x, so the figure above does
+// not hold. The relative error of x is 2e-11 to 5e-9 for 0.01 <= p <= 0.99,
+// up to 1.1e-5 at p = 1e-6 and up to 0.44 at p = 1e-12, and p = 0.5 returns
+// 7e-9 to 5e-7 instead of 0. prob.StudentTQuantile bisects to the resolution
+// of the CDF instead: relative errors of 5e-16 to 8e-13, at most 8.4e-11 and
+// at most 3.3e-5 on the same points, and exactly 0 at p = 0.5. It is the more
+// accurate function at every one of the 64 grid points. Of 700 further random
+// points (df up to 1e5) there are 15 where it is the less accurate one, all
+// with df >= 260 and 14 of them within |p - 0.5| < 1e-3, and its relative
+// error at those is at most 3.4e-6.
+//
+// Deprecated: use prob.StudentTQuantile, which is at least as accurate at every point of the grid measured above.
 func StudentTQuantile(p, df float64) float64 {
 	if math.IsNaN(p) || math.IsNaN(df) || p <= 0 || p >= 1 || df < 1 {
 		return math.NaN()
