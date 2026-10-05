@@ -218,6 +218,30 @@
    "claim": "acoustics/acoustics.go DecibelSPL: 'Precision: limited by float64 log10 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
   },
   {
+   "id": "applied/dbspl-extreme-ratio-overflow",
+   "func": "acoustics.DecibelSPL",
+   "args": {
+    "p": 1e+200,
+    "pRef": 1e-200
+   },
+   "want": 8000.0,
+   "tol": 1e-14,
+   "tol_kind": "rel",
+   "claim": "acoustics/acoustics.go DecibelSPL: 'Precision: limited by float64 log10 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
+  },
+  {
+   "id": "applied/dbspl-extreme-ratio-underflow",
+   "func": "acoustics.DecibelSPL",
+   "args": {
+    "p": 1e-200,
+    "pRef": 1e+200
+   },
+   "want": -8000.0,
+   "tol": 1e-14,
+   "tol_kind": "rel",
+   "claim": "acoustics/acoustics.go DecibelSPL: 'Precision: limited by float64 log10 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
+  },
+  {
    "id": "applied/dbintensity-typ-1e-6",
    "func": "acoustics.DecibelFromIntensity",
    "args": {
@@ -297,6 +321,30 @@
     "IRef": 1e-12
    },
    "want": 0.0,
+   "tol": 1e-14,
+   "tol_kind": "rel",
+   "claim": "acoustics/acoustics.go DecibelFromIntensity: 'Precision: limited by float64 log10 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
+  },
+  {
+   "id": "applied/dbintensity-extreme-ratio-overflow",
+   "func": "acoustics.DecibelFromIntensity",
+   "args": {
+    "I": 1e+200,
+    "IRef": 1e-200
+   },
+   "want": 4000.0,
+   "tol": 1e-14,
+   "tol_kind": "rel",
+   "claim": "acoustics/acoustics.go DecibelFromIntensity: 'Precision: limited by float64 log10 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
+  },
+  {
+   "id": "applied/dbintensity-extreme-ratio-underflow",
+   "func": "acoustics.DecibelFromIntensity",
+   "args": {
+    "I": 1e-200,
+    "IRef": 1e+200
+   },
+   "want": -4000.0,
    "tol": 1e-14,
    "tol_kind": "rel",
    "claim": "acoustics/acoustics.go DecibelFromIntensity: 'Precision: limited by float64 log10 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
@@ -529,6 +577,18 @@
     "c": 1.0
    },
    "want": 0.3333333333333333,
+   "tol": 0.0,
+   "tol_kind": "rel",
+   "claim": "acoustics/acoustics.go WaveLength: 'Precision: exact (single division)' -> a single correctly rounded operation: exact match with the nearest float64"
+  },
+  {
+   "id": "applied/wavelength-hard-subnormal-result",
+   "func": "acoustics.WaveLength",
+   "args": {
+    "f": 30000000000.0,
+    "c": 1e-300
+   },
+   "want": 3.333333333333e-311,
    "tol": 0.0,
    "tol_kind": "rel",
    "claim": "acoustics/acoustics.go WaveLength: 'Precision: exact (single division)' -> a single correctly rounded operation: exact match with the nearest float64"
@@ -842,6 +902,18 @@
    "claim": "em/em.go OhmsLaw: 'Precision: exact (single division)' -> a single correctly rounded operation: exact match with the nearest float64"
   },
   {
+   "id": "applied/ohm-hard-subnormal-result",
+   "func": "em.OhmsLaw",
+   "args": {
+    "V": 1e-300,
+    "R": 30000000000.0
+   },
+   "want": 3.333333333333e-311,
+   "tol": 0.0,
+   "tol_kind": "rel",
+   "claim": "em/em.go OhmsLaw: 'Precision: exact (single division)' -> a single correctly rounded operation: exact match with the nearest float64"
+  },
+  {
    "id": "applied/power-typ-mains",
    "func": "em.PowerElectric",
    "args": {
@@ -885,6 +957,18 @@
     "I": 3.3e-09
    },
    "want": 3.3000000000000005e-18,
+   "tol": 0.0,
+   "tol_kind": "rel",
+   "claim": "em/em.go PowerElectric: 'Precision: exact (single multiplication)' -> a single correctly rounded operation: exact match with the nearest float64"
+  },
+  {
+   "id": "applied/power-hard-subnormal-result",
+   "func": "em.PowerElectric",
+   "args": {
+    "V": 1e-160,
+    "I": 3.3e-150
+   },
+   "want": 3.3e-310,
    "tol": 0.0,
    "tol_kind": "rel",
    "claim": "em/em.go PowerElectric: 'Precision: exact (single multiplication)' -> a single correctly rounded operation: exact match with the nearest float64"
@@ -1227,6 +1311,18 @@
     "C": 0.001
    },
    "want": 1000000000000.0,
+   "tol": 0.0,
+   "tol_kind": "rel",
+   "claim": "em/em.go RCTimeConstant: 'Precision: exact (single multiplication)' -> a single correctly rounded operation: exact match with the nearest float64"
+  },
+  {
+   "id": "applied/rc-hard-subnormal-result",
+   "func": "em.RCTimeConstant",
+   "args": {
+    "R": 1e-160,
+    "C": 3.3e-150
+   },
+   "want": 3.3e-310,
    "tol": 0.0,
    "tol_kind": "rel",
    "claim": "em/em.go RCTimeConstant: 'Precision: exact (single multiplication)' -> a single correctly rounded operation: exact match with the nearest float64"
@@ -2084,6 +2180,18 @@
    "claim": "fluids/fluids.go VolumetricFlowRate: 'Precision: exact (single multiplication)' -> a single correctly rounded operation: exact match with the nearest float64"
   },
   {
+   "id": "applied/volflow-hard-subnormal-result",
+   "func": "fluids.VolumetricFlowRate",
+   "args": {
+    "v": 1e-160,
+    "A": 3.3e-150
+   },
+   "want": 3.3e-310,
+   "tol": 0.0,
+   "tol_kind": "rel",
+   "claim": "fluids/fluids.go VolumetricFlowRate: 'Precision: exact (single multiplication)' -> a single correctly rounded operation: exact match with the nearest float64"
+  },
+  {
    "id": "applied/newton2-typ-10n-3kg",
    "func": "physics.NewtonSecondLaw",
    "args": {
@@ -2127,6 +2235,18 @@
     "m": 7.0
    },
    "want": 0.14285714285714285,
+   "tol": 0.0,
+   "tol_kind": "rel",
+   "claim": "physics/mechanics.go NewtonSecondLaw: 'Precision: exact (single division)' -> a single correctly rounded operation: exact match with the nearest float64"
+  },
+  {
+   "id": "applied/newton2-hard-subnormal-result",
+   "func": "physics.NewtonSecondLaw",
+   "args": {
+    "F": 1e-300,
+    "m": 30000000000.0
+   },
+   "want": 3.333333333333e-311,
    "tol": 0.0,
    "tol_kind": "rel",
    "claim": "physics/mechanics.go NewtonSecondLaw: 'Precision: exact (single division)' -> a single correctly rounded operation: exact match with the nearest float64"
@@ -2802,6 +2922,20 @@
    "claim": "physics/mechanics.go Pendulum: 'Precision: limited by float64 sin (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
   },
   {
+   "id": "applied/pendulum-hard-theta-max-float",
+   "func": "physics.Pendulum",
+   "args": {
+    "theta": 1.7976931348623157e+308,
+    "L": 1.0,
+    "g": 9.80665,
+    "damping": 0.1
+   },
+   "want": -0.04915634941227028,
+   "tol": 1e-14,
+   "tol_kind": "rel",
+   "claim": "physics/mechanics.go Pendulum: 'Precision: limited by float64 sin (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
+  },
+  {
    "id": "applied/pendulum-hard-theta-pi-over-2",
    "func": "physics.Pendulum",
    "args": {
@@ -2959,6 +3093,18 @@
     "epsilon": -0.0029
    },
    "want": -492999999.99999994,
+   "tol": 0.0,
+   "tol_kind": "rel",
+   "claim": "physics/materials.go HookesLaw: 'Precision: exact (single multiplication)' -> a single correctly rounded operation: exact match with the nearest float64"
+  },
+  {
+   "id": "applied/hooke-hard-subnormal-result",
+   "func": "physics.HookesLaw",
+   "args": {
+    "E": 1e-160,
+    "epsilon": 3.3e-150
+   },
+   "want": 3.3e-310,
    "tol": 0.0,
    "tol_kind": "rel",
    "claim": "physics/materials.go HookesLaw: 'Precision: exact (single multiplication)' -> a single correctly rounded operation: exact match with the nearest float64"
@@ -7040,6 +7186,38 @@
    "claim": "color/difference.go DeltaE76: 'Precision: exact to float64 sqrt precision' -> 4 roundings (three differences, squares, sums and the sqrt: 3.5 roundings): relative 4.44e-16 = 4*2^-53*(1+4*2^-53)"
   },
   {
+   "id": "applied/de76-extreme-squares-overflow",
+   "func": "color.DeltaE76",
+   "args": {
+    "L1": 1e+160,
+    "a1": 0.0,
+    "b1": 0.0,
+    "L2": 0.0,
+    "a2": 0.0,
+    "b2": 0.0
+   },
+   "want": 1e+160,
+   "tol": 4.440892098500628e-16,
+   "tol_kind": "rel",
+   "claim": "color/difference.go DeltaE76: 'Precision: exact to float64 sqrt precision' -> 4 roundings (three differences, squares, sums and the sqrt: 3.5 roundings): relative 4.44e-16 = 4*2^-53*(1+4*2^-53)"
+  },
+  {
+   "id": "applied/de76-extreme-squares-underflow",
+   "func": "color.DeltaE76",
+   "args": {
+    "L1": 1e-170,
+    "a1": 0.0,
+    "b1": 0.0,
+    "L2": 0.0,
+    "a2": 0.0,
+    "b2": 0.0
+   },
+   "want": 1e-170,
+   "tol": 4.440892098500628e-16,
+   "tol_kind": "rel",
+   "claim": "color/difference.go DeltaE76: 'Precision: exact to float64 sqrt precision' -> 4 roundings (three differences, squares, sums and the sqrt: 3.5 roundings): relative 4.44e-16 = 4*2^-53*(1+4*2^-53)"
+  },
+  {
    "id": "applied/de2000-typ-sharma-01",
    "func": "color.DeltaE2000",
    "args": {
@@ -7959,7 +8137,7 @@
    "want": 1.0,
    "tol": 0.0,
    "tol_kind": "rel",
-   "claim": "color/spectral.go BlackbodyToXYZ.Y: 'The result is normalized so that Y=1 (valid range: T > 0 (Kelvin))' -> 'The result is normalized so that Y=1' for every valid T > 0: Y must equal 1"
+   "claim": "color/spectral.go BlackbodyToXYZ.Y: 'The result is normalized so that Y=1 for a perfect white diffuser; Valid range: T > 0 (Kelvin)' -> 'The result is normalized so that Y=1' for every valid T > 0: Y must equal 1"
   },
   {
    "id": "applied/blackbody-Y-hard-cold-30k",
@@ -7970,7 +8148,7 @@
    "want": 1.0,
    "tol": 0.0,
    "tol_kind": "rel",
-   "claim": "color/spectral.go BlackbodyToXYZ.Y: 'The result is normalized so that Y=1 (valid range: T > 0 (Kelvin))' -> 'The result is normalized so that Y=1' for every valid T > 0: Y must equal 1"
+   "claim": "color/spectral.go BlackbodyToXYZ.Y: 'The result is normalized so that Y=1 for a perfect white diffuser; Valid range: T > 0 (Kelvin)' -> 'The result is normalized so that Y=1' for every valid T > 0: Y must equal 1"
   },
   {
    "id": "applied/blackbody-Y-extreme-below-26k-25k",
@@ -7981,7 +8159,7 @@
    "want": 1.0,
    "tol": 0.0,
    "tol_kind": "rel",
-   "claim": "color/spectral.go BlackbodyToXYZ.Y: 'The result is normalized so that Y=1 (valid range: T > 0 (Kelvin))' -> 'The result is normalized so that Y=1' for every valid T > 0: Y must equal 1"
+   "claim": "color/spectral.go BlackbodyToXYZ.Y: 'The result is normalized so that Y=1 for a perfect white diffuser; Valid range: T > 0 (Kelvin)' -> 'The result is normalized so that Y=1' for every valid T > 0: Y must equal 1"
   },
   {
    "id": "applied/blackbody-Y-extreme-below-26k-10k",
@@ -7992,7 +8170,7 @@
    "want": 1.0,
    "tol": 0.0,
    "tol_kind": "rel",
-   "claim": "color/spectral.go BlackbodyToXYZ.Y: 'The result is normalized so that Y=1 (valid range: T > 0 (Kelvin))' -> 'The result is normalized so that Y=1' for every valid T > 0: Y must equal 1"
+   "claim": "color/spectral.go BlackbodyToXYZ.Y: 'The result is normalized so that Y=1 for a perfect white diffuser; Valid range: T > 0 (Kelvin)' -> 'The result is normalized so that Y=1' for every valid T > 0: Y must equal 1"
   },
   {
    "id": "applied/blackbody-Y-extreme-below-26k-0.1k",
@@ -8003,7 +8181,7 @@
    "want": 1.0,
    "tol": 0.0,
    "tol_kind": "rel",
-   "claim": "color/spectral.go BlackbodyToXYZ.Y: 'The result is normalized so that Y=1 (valid range: T > 0 (Kelvin))' -> 'The result is normalized so that Y=1' for every valid T > 0: Y must equal 1"
+   "claim": "color/spectral.go BlackbodyToXYZ.Y: 'The result is normalized so that Y=1 for a perfect white diffuser; Valid range: T > 0 (Kelvin)' -> 'The result is normalized so that Y=1' for every valid T > 0: Y must equal 1"
   },
   {
    "id": "applied/tonemap-r-typ-mid-gray",

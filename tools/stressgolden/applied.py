@@ -201,6 +201,8 @@ def acoustics():
         ("hard-adjacent-floats", dict(p=1.0000000000000002, pRef=1.0)),
         ("hard-equal", dict(p=20e-6, pRef=20e-6)),
         ("hard-huge-ratio", dict(p=1e5, pRef=1e-300)),
+        ("extreme-ratio-overflow", dict(p=1e200, pRef=1e-200)),
+        ("extreme-ratio-underflow", dict(p=1e-200, pRef=1e200)),
     ]
     run("dbspl", "acoustics.DecibelSPL", AC, "Precision: limited by float64 log10 (~15 significant digits)", D15(), spl, items_spl)
     items_il = [
@@ -211,6 +213,8 @@ def acoustics():
         ("hard-near-0db-below", dict(I=0.9999999999, IRef=1.0)),
         ("hard-adjacent-floats", dict(I=1.0000000000000002, IRef=1.0)),
         ("hard-equal", dict(I=1e-12, IRef=1e-12)),
+        ("extreme-ratio-overflow", dict(I=1e200, IRef=1e-200)),
+        ("extreme-ratio-underflow", dict(I=1e-200, IRef=1e200)),
     ]
     run("dbintensity", "acoustics.DecibelFromIntensity", AC, "Precision: limited by float64 log10 (~15 significant digits)", D15(), il, items_il)
 
@@ -254,6 +258,7 @@ def acoustics():
         ("typ-20khz", dict(f=20000.0, c=343.0)),
         ("hard-radio", dict(f=1e-3, c=3e8)),
         ("hard-odd-quotient", dict(f=3.0, c=1.0)),
+        ("hard-subnormal-result", dict(f=3e10, c=1e-300)),
     ])
 
     # AWeighting: the documented analytic approximation, constants as written
@@ -320,6 +325,7 @@ def em():
         ("typ-3v3-4k7", dict(V=3.3, R=4.7e3)),
         ("hard-micro-volts-mega-ohms", dict(V=1e-6, R=1e6)),
         ("hard-thirds", dict(V=1.0, R=3.0)),
+        ("hard-subnormal-result", dict(V=1e-300, R=3e10)),
     ])
 
     def o(V, I):
@@ -329,6 +335,7 @@ def em():
         ("typ-logic", dict(V=3.3, I=0.7e-3)),
         ("hard-power-line", dict(V=7.65e5, I=1.9e3)),
         ("hard-nano", dict(V=1e-9, I=3.3e-9)),
+        ("hard-subnormal-result", dict(V=1e-160, I=3.3e-150)),
     ])
 
     def series(**kw):
@@ -393,6 +400,7 @@ def em():
         ("typ-10m-100pf", dict(R=1e7, C=1e-10)),
         ("hard-odd-values", dict(R=4.7e3, C=3.3e-9)),
         ("hard-leakage", dict(R=1e15, C=1e-3)),
+        ("hard-subnormal-result", dict(R=1e-160, C=3.3e-150)),
     ])
 
     def o(L, C):
@@ -556,6 +564,7 @@ def fluids():
         ("typ-duct", dict(v=8.0, A=0.09)),
         ("hard-river", dict(v=1.7, A=5.4e3)),
         ("hard-odd", dict(v=0.1, A=0.3)),
+        ("hard-subnormal-result", dict(v=1e-160, A=3.3e-150)),
     ])
 
 
@@ -614,6 +623,7 @@ def physics():
         ("typ-weight", dict(F=-784.532, m=80.0)),
         ("hard-electron", dict(F=1e-3, m=9.1093837015e-31)),
         ("hard-sevenths", dict(F=1.0, m=7.0)),
+        ("hard-subnormal-result", dict(F=1e-300, m=3e10)),
     ])
 
     proj = "Precision: limited by float64 trig (~15 significant digits)"
@@ -700,6 +710,7 @@ def physics():
         ("hard-theta-1000pi", dict(theta=1000 * math.pi, L=2.0, g=9.80665, damping=0.0)),
         ("hard-theta-355", dict(theta=355.0, L=1.0, g=9.80665, damping=0.0)),
         ("hard-theta-1e22", dict(theta=1e22, L=1.0, g=9.80665, damping=0.0)),
+        ("hard-theta-max-float", dict(theta=1.7976931348623157e308, L=1.0, g=9.80665, damping=0.1)),
         ("hard-theta-pi-over-2", dict(theta=math.pi / 2, L=3.0, g=9.80665, damping=0.05)),
     ])
 
@@ -729,6 +740,7 @@ def physics():
         ("typ-rubber", dict(E=0.01e9, epsilon=0.5)),
         ("hard-odd", dict(E=70e9, epsilon=3.3e-4)),
         ("hard-compressive", dict(E=1.7e11, epsilon=-2.9e-3)),
+        ("hard-subnormal-result", dict(E=1e-160, epsilon=3.3e-150)),
     ])
 
     def o(s1, s2, s3):
@@ -1347,6 +1359,8 @@ def color():
             ("hard-near-identical-1e-9", dict(L1=50.0, a1=10.0, b1=-10.0, L2=50.000000001, a2=10.000000001, b2=-10.000000001)),
             ("hard-one-axis", dict(L1=50.0, a1=0.0, b1=0.0, L2=50.0, a2=0.0, b2=1e-7)),
             ("hard-large-values", dict(L1=1e6, a1=-1e6, b1=2e6, L2=-3e6, a2=4e6, b2=-5e6)),
+            ("extreme-squares-overflow", dict(L1=1e160, a1=0.0, b1=0.0, L2=0.0, a2=0.0, b2=0.0)),
+            ("extreme-squares-underflow", dict(L1=1e-170, a1=0.0, b1=0.0, L2=0.0, a2=0.0, b2=0.0)),
         ])
 
     # DeltaE2000: the oracle reproduces the published values first
@@ -1400,7 +1414,7 @@ def color():
     def o(T):
         return 1.0
     y_rule = Rule(0.0, "rel", "'The result is normalized so that Y=1' for every valid T > 0: Y must equal 1")
-    run("blackbody-Y", "color.BlackbodyToXYZ.Y", CSG, "The result is normalized so that Y=1 (valid range: T > 0 (Kelvin))", y_rule, o, [
+    run("blackbody-Y", "color.BlackbodyToXYZ.Y", CSG, "The result is normalized so that Y=1 for a perfect white diffuser; Valid range: T > 0 (Kelvin)", y_rule, o, [
         ("typ-6500k", dict(T=6500.0)), ("hard-cold-30k", dict(T=30.0)),
         ("extreme-below-26k-25k", dict(T=25.0)), ("extreme-below-26k-10k", dict(T=10.0)), ("extreme-below-26k-0.1k", dict(T=0.1))])
 
