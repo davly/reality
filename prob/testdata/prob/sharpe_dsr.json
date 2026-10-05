@@ -13,7 +13,8 @@
         "srVariance": 0.09
       },
       "expected": 0.9991105301385781,
-      "tolerance": 1e-06
+      "tolerance": 1e-11,
+      "tolerance_kind": "rel"
     },
     {
       "description": "V=0 reduces to PSR against zero benchmark",
@@ -26,7 +27,8 @@
         "srVariance": 0.0
       },
       "expected": 0.9991105301385781,
-      "tolerance": 1e-06
+      "tolerance": 1e-11,
+      "tolerance_kind": "rel"
     },
     {
       "description": "many trials inflate bar, DSR drops",
@@ -39,7 +41,8 @@
         "srVariance": 0.04
       },
       "expected": 8.638820101616245e-07,
-      "tolerance": 1e-06
+      "tolerance": 1e-11,
+      "tolerance_kind": "rel"
     },
     {
       "description": "more trials -> lower DSR (1000 trials)",
@@ -52,7 +55,8 @@
         "srVariance": 0.04
       },
       "expected": 9.145867823965541e-13,
-      "tolerance": 1e-06
+      "tolerance": 1e-11,
+      "tolerance_kind": "rel"
     },
     {
       "description": "strong genuine edge survives deflation",
@@ -65,7 +69,8 @@
         "srVariance": 0.04
       },
       "expected": 0.4487167940431269,
-      "tolerance": 1e-06
+      "tolerance": 1e-11,
+      "tolerance_kind": "rel"
     },
     {
       "description": "overfit: modest SR, many trials, high var",
@@ -78,7 +83,8 @@
         "srVariance": 0.09
       },
       "expected": 9.078207237647021e-39,
-      "tolerance": 1e-06
+      "tolerance": 1e-11,
+      "tolerance_kind": "rel"
     },
     {
       "description": "fat-tailed strategy deflated, N=50",
@@ -91,7 +97,8 @@
         "srVariance": 0.06
       },
       "expected": 0.009447325031396732,
-      "tolerance": 1e-06
+      "tolerance": 1e-11,
+      "tolerance_kind": "rel"
     },
     {
       "description": "short track, many trials collapses DSR",
@@ -104,7 +111,8 @@
         "srVariance": 0.25
       },
       "expected": 0.0002512656197421222,
-      "tolerance": 1e-06
+      "tolerance": 1e-11,
+      "tolerance_kind": "rel"
     },
     {
       "description": "long daily track, few trials, clear edge",
@@ -117,7 +125,8 @@
         "srVariance": 0.02
       },
       "expected": 1.4446504121900448e-07,
-      "tolerance": 1e-06
+      "tolerance": 1e-11,
+      "tolerance_kind": "rel"
     },
     {
       "description": "N=100 V=0.09 SR=0.35 n=250",
@@ -130,7 +139,8 @@
         "srVariance": 0.09
       },
       "expected": 1.8324489202285442e-10,
-      "tolerance": 1e-06
+      "tolerance": 1e-11,
+      "tolerance_kind": "rel"
     },
     {
       "description": "N=200 V=0.16 SR=0.5 n=120 skewed",
@@ -143,7 +153,8 @@
         "srVariance": 0.16
       },
       "expected": 1.0648960969236596e-07,
-      "tolerance": 1e-06
+      "tolerance": 1e-11,
+      "tolerance_kind": "rel"
     },
     {
       "description": "borderline SR=0.25 n=250 N=100 V=0.04",
@@ -156,7 +167,8 @@
         "srVariance": 0.04
       },
       "expected": 3.448541297269531e-05,
-      "tolerance": 1e-06
+      "tolerance": 1e-11,
+      "tolerance_kind": "rel"
     }
   ]
 }

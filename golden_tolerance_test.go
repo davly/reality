@@ -23,15 +23,7 @@ import (
 
 // vacuousGoldenTolerances maps "<file>#<case description>" to why the case is
 // listed. Remove an entry in the change that fixes it.
-var vacuousGoldenTolerances = map[string]string{
-	// Deflated Sharpe ratios down to 9e-39 checked against an absolute 1e-6.
-	"prob/testdata/prob/sharpe_dsr.json#N=100 V=0.09 SR=0.35 n=250":                "DSR 1.8e-10 against absolute 1e-6",
-	"prob/testdata/prob/sharpe_dsr.json#N=200 V=0.16 SR=0.5 n=120 skewed":          "DSR 1.1e-7 against absolute 1e-6",
-	"prob/testdata/prob/sharpe_dsr.json#long daily track, few trials, clear edge":  "DSR 1.4e-7 against absolute 1e-6",
-	"prob/testdata/prob/sharpe_dsr.json#many trials inflate bar, DSR drops":        "DSR 8.6e-7 against absolute 1e-6",
-	"prob/testdata/prob/sharpe_dsr.json#more trials -> lower DSR (1000 trials)":    "DSR 9.1e-13 against absolute 1e-6",
-	"prob/testdata/prob/sharpe_dsr.json#overfit: modest SR, many trials, high var": "DSR 9.1e-39 against absolute 1e-6",
-}
+var vacuousGoldenTolerances = map[string]string{}
 
 type goldenToleranceCase struct {
 	Description   string   `json:"description"`
