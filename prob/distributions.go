@@ -390,15 +390,19 @@ func PoissonPMF(k int, lambda float64) float64 {
 // PoissonCDF returns the cumulative distribution function of the Poisson
 // distribution at k (P(X <= k)), with mean rate lambda.
 //
-// Computed as the sum of PMF values from 0 to k. For large lambda, this
-// uses the relation to the regularized upper incomplete gamma function,
-// but our straightforward summation is adequate for reasonable lambda values.
-//
-// Formula: sum_{i=0}^{k} PoissonPMF(i, lambda)
+// Formula: sum_{i=0}^{k} PoissonPMF(i, lambda) = Q(k+1, lambda), the upper
+// regularized incomplete gamma function. Q is computed directly when it is
+// the smaller tail, so a small lower-tail CDF keeps its relative accuracy.
 // Valid range: k >= 0, lambda > 0; returns NaN if lambda <= 0
 // Returns 0 if k < 0
-// Precision: accumulated float64 summation error
-// Reference: standard Poisson CDF
+// Returns NaN if the incomplete gamma expansion does not converge within
+// its iteration budget (only for k and lambda above about 1e12 near the
+// median)
+// Precision: relative error below 1e-12 wherever the result is at least
+// 1e-300 (measured at most 5e-15 for results >= 1e-10); in the far lower
+// tail the error grows in proportion to |ln CDF|, about 3e-16*|ln CDF|.
+// Cost: O(sqrt(k)) operations when lambda is within O(sqrt(k)) of k.
+// Reference: DLMF 8.4 (Q(n+1, z) = e^-z sum_{j=0}^{n} z^j / j!)
 func PoissonCDF(k int, lambda float64) float64 {
 	if lambda <= 0 {
 		return math.NaN()
@@ -406,10 +410,10 @@ func PoissonCDF(k int, lambda float64) float64 {
 	if k < 0 {
 		return 0
 	}
-	// Use the complementary regularized gamma function:
-	// P(X <= k) = 1 - P(a, x) where a = k+1, x = lambda
-	// This is more numerically stable for large k.
-	return 1.0 - regularizedGammaP(float64(k+1), lambda)
+	// P(X <= k) = Q(k+1, lambda), the upper regularized incomplete gamma
+	// function. regularizedGammaQ computes a small Q directly, so the lower
+	// tail is not lost to the cancellation of 1 - P.
+	return regularizedGammaQ(float64(k)+1, lambda)
 }
 
 // ---------------------------------------------------------------------------
@@ -456,10 +460,18 @@ func GammaPDF(x, k, theta float64) float64 {
 // gamma function.
 //
 // Valid range: k > 0, theta > 0, x >= 0
-// Returns NaN if k <= 0 or theta <= 0
+// Returns NaN if k <= 0 or theta <= 0, and NaN if the incomplete gamma
+// expansion does not converge within its iteration budget (only for shapes
+// above about 1e12, with x/theta within O(sqrt(k)) of k)
 // Returns 0 if x <= 0
-// Precision: ~1e-14 (via regularizedGammaLowerSeries)
-// Reference: Abramowitz & Stegun, Chapter 6; DLMF 8.2
+// Precision: relative error below 1e-13 wherever the result is at least
+// 1e-150 (measured at most 5e-15 for results >= 1e-10 and 4.4e-14 down to
+// 1e-150, on shapes from 1e-3 to 1e7). Below 1e-150 the error is set by the
+// float64 rounding of the exponent and grows in proportion to |ln P|, about
+// 3e-16*|ln P|, i.e. 2e-13 near 1e-300.
+// Cost: O(sqrt(k)) operations when x/theta is within O(sqrt(k)) of k.
+// Reference: Abramowitz & Stegun, Chapter 6; DLMF 8.2; DiDonato & Morris
+// (1986), ACM TOMS 12(4)
 func GammaCDF(x, k, theta float64) float64 {
 	if k <= 0 || theta <= 0 {
 		return math.NaN()

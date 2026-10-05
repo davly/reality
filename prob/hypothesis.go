@@ -161,8 +161,13 @@ func TTestTwoSample(data1, data2 []float64) (tStat, pValue float64) {
 //
 // Valid range: len(observed) >= 2, all expected[i] > 0
 // Returns: chi-squared statistic and p-value
-// Failure mode: returns (NaN, NaN) if inputs are invalid
-// Precision: ~1e-12 for p-values (limited by regularizedGammaLowerSeries)
+// Failure mode: returns (NaN, NaN) if inputs are invalid; the p-value is
+// NaN if the incomplete gamma expansion does not converge (only for more
+// than about 2e12 cells, with the statistic near its mean)
+// Precision: the statistic is summed with compensation (relative error of
+// a few ulp for any number of cells). The p-value, Q(df/2, chi2/2), is
+// computed directly in the upper tail; its relative error is below 1e-12
+// for p >= 1e-300 and grows in proportion to |ln p| (about 3e-16*|ln p|).
 // Reference: Pearson, K. (1900) "On the criterion that a given system
 // of deviations from the probable in the case of a correlated system of
 // variables is such that it can be reasonably supposed to have arisen
@@ -172,14 +177,22 @@ func ChiSquaredTest(observed, expected []float64) (chiSq, pValue float64) {
 		return math.NaN(), math.NaN()
 	}
 
-	chiSq = 0
+	// Compensated (Neumaier) summation: with many cells the rounding error of
+	// a plain running sum grows with the number of cells, and the p-value of
+	// a large-df test is far more sensitive to the statistic than the
+	// statistic's own rounding (at df = 99999 a relative error of 1e-12 in
+	// chi2 moves p by about 1e-11).
+	sum, comp := 0.0, 0.0
 	for i := range observed {
 		if expected[i] <= 0 {
 			return math.NaN(), math.NaN()
 		}
 		d := observed[i] - expected[i]
-		chiSq += (d * d) / expected[i]
+		var e float64
+		sum, e = twoSum(sum, (d*d)/expected[i])
+		comp += e
 	}
+	chiSq = sum + comp
 
 	df := float64(len(observed) - 1)
 	// p-value = upper tail of the chi-squared distribution = Q(df/2, chiSq/2),
