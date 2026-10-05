@@ -10,6 +10,8 @@
 // Muse (random generation).
 package crypto
 
+import "math/bits"
+
 // ---------------------------------------------------------------------------
 // Primality testing
 // ---------------------------------------------------------------------------
@@ -246,13 +248,39 @@ func GCD(a, b uint64) uint64 {
 
 // LCM returns the least common multiple of a and b. LCM(0, x) = 0.
 //
-// Formula: LCM(a,b) = a / GCD(a,b) * b (division first to avoid overflow).
+// Formula: LCM(a,b) = a / GCD(a,b) * b (division first, so the intermediate
+// value never exceeds the result).
+//
+// The arithmetic is uint64 and WRAPS SILENTLY: when the least common multiple
+// exceeds math.MaxUint64 the result is the true value modulo 2^64. That can
+// happen for operands as small as 2^32 (LCM(2^32, 2^32+1) = 2^64 + 2^32
+// returns 2^32). Use LCMChecked when the operands are not known to be small.
+//
 // Time complexity: O(log(min(a,b)))
 func LCM(a, b uint64) uint64 {
 	if a == 0 || b == 0 {
 		return 0
 	}
 	return a / GCD(a, b) * b
+}
+
+// LCMChecked returns the least common multiple of a and b and reports whether
+// it fits in a uint64. When the result would exceed math.MaxUint64 it returns
+// (0, false) instead of a wrapped value. LCMChecked(0, x) = (0, true).
+//
+// Formula: LCM(a,b) = a / GCD(a,b) * b, with the product formed as a full
+// 128-bit value (math/bits.Mul64), so the overflow test is exact.
+//
+// Time complexity: O(log(min(a,b)))
+func LCMChecked(a, b uint64) (lcm uint64, ok bool) {
+	if a == 0 || b == 0 {
+		return 0, true
+	}
+	hi, lo := bits.Mul64(a/GCD(a, b), b)
+	if hi != 0 {
+		return 0, false
+	}
+	return lo, true
 }
 
 // ExtendedGCD computes the GCD of a and b, and also finds the Bezout

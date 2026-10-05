@@ -68,7 +68,7 @@ crypto/
   crypto_test.go  (702 LOC) [test]
   hash.go  (87 LOC) -> FNV1a32, FNV1a64, MurmurHash3_32, ConsistentHash
   modular.go  (68 LOC) -> ModPow, ModInverse, ChineseRemainder
-  prime.go  (183 LOC) -> IsPrime, MillerRabin, PrimeFactors, NextPrime, GCD, LCM, ExtendedGCD
+  prime.go  (183 LOC) -> IsPrime, MillerRabin, PrimeFactors, NextPrime, GCD, LCM, LCMChecked, ExtendedGCD
   rng.go  (107 LOC) -> MersenneTwister, NewMersenneTwister, PCG, NewPCG, Xoshiro256, NewXoshiro256
 docs/
   STRUCTURE.md  (624 LOC)
