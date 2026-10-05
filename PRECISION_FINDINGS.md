@@ -5,33 +5,34 @@ the `Precision:` docstring claims in `github.com/davly/reality` as TESTED
 INVARIANTS — proving each bound holds, or surfacing an over-claim as an honest,
 visible finding.
 
-- **Additive only.** Test files (`*_precision_test.go`) + this doc. NO math,
-  source, or behavior code was modified. The zero-external-dependency law is
-  preserved (tests use only `testing`, `testing/quick`, `math`, `math/big`,
-  `math/cmplx`, `sort` — all Go stdlib; `go.mod` still has zero requires).
+- **The property layer is test-only.** Test files (`*_precision_test.go`) +
+  this doc. The fixes recorded below did change code; each entry says what
+  changed. The zero-external-dependency law is preserved (tests use only
+  `testing`, `testing/quick`, `math`, `math/big`, `math/cmplx`, `sort` — all
+  Go stdlib; `go.mod` still has zero requires).
 - **Two distinct test outcomes, used deliberately — do NOT conflate them:**
   - **ENFORCED invariants (fail RED).** For a bound that DEMONSTRABLY HOLDS
     today, the failure path is `t.Errorf` / `t.Fatalf`, so a *future* regression
     of that bound turns the suite RED and is caught by CI. These are genuine
     regression guards: a `t.Skip` would NOT guard a bound (a SKIP is success to
     `go test` — exit code 0 — so a regressed bound would stay invisible-green).
-    The 33 holding-bound pins (mel/sRGB/HSV/Lab round-trips, quaternion
-    isometry/identity/normalize, NormalCDF monotone, NormalQuantile lower-half,
-    StudentT, Wiener, Quantile range/monotone, bisection, LinearInterpolate, and
-    especially the chi-sq regression guard) are all ENFORCED. *Proven:* forcing
+    Every pin (mel/sRGB/HSV/Lab round-trips, quaternion isometry/identity/
+    normalize/axis-angle, NormalCDF monotone, NormalQuantile over the whole
+    range, StudentT, Wiener, Quantile range/monotone, bisection,
+    LinearInterpolate, Factorial, BinomialCoeff, and especially the chi-sq
+    regression guard) is ENFORCED. *Proven:* forcing
     any of these guards to fire yields `go test` exit code 1 (RED), not a SKIP.
-  - **DOCUMENTED over-claims (SKIP, never silent).** For the 4 bounds that
-    genuinely do NOT hold over the full claimed domain, the test `t.Skip(...)`s
-    with a precise reason (visible in `go test -v`) — surfacing the honest
-    finding without inventing a failure or silently passing. `t.Skip` is
-    reserved EXCLUSIVELY for these 4; it is never used to swallow a holding
-    bound.
-- The suite is GREEN today because every enforced bound currently holds and the
-  4 documented over-claims are the only SKIPs — but "green" here means
+  - **DOCUMENTED over-claims (SKIP, never silent).** A bound that genuinely
+    does NOT hold over its full claimed domain is `t.Skip(...)`ped with a
+    precise reason (visible in `go test -v`): an honest finding, neither a
+    manufactured failure nor a silent pass. `t.Skip` is reserved for such
+    findings and never swallows a holding bound. The four over-claims this file
+    recorded have all since been fixed (see below), so none skips today.
+- The suite is GREEN because every enforced bound holds — "green" here means
   "no regression of an enforced bound", NOT "no failing test was allowed to
   fail". An enforced bound that regresses WILL turn it red.
-- 37 new test functions across 9 packages: **33 PASS (enforced, fail-red), 4
-  SKIP (documented over-claims).**
+- 40 test functions across 8 packages: **40 PASS (enforced, fail-red), 0
+  SKIP.**
 
 Run: `go test -v ./audio/ ./geometry/ ./optim/ ./prob/ ./prob/copula/ ./combinatorics/ ./color/ ./audio/separation/`
 
@@ -59,8 +60,8 @@ protection — a `t.Skip` would not guard them).
 | `ChiSquaredTest` p-value (hypothesis.go:165) | correct CDF / monotone p | regression pin: χ²=14400 → p=0; monotone | **p=0** (gamma two-branch fix holds) |
 | `StudentTQuantile∘StudentTCDF` (prob/copula/studentt.go:53) | `~1e-10` on x | CDF round-trip, p∈[1e-6,1-1e-6], df∈[1,200] | CDF err **2.4e-10** |
 | `StudentTCDF` (studentt.go:23) | monotone + `CDF(0)=0.5` + [0,1] | quick (50k) | holds |
-| `Factorial` (combinatorics/counting.go:21) | "exact for n<=20" | bit-exact vs `big.Int`, n=0..20 | bit-exact |
-| `BinomialCoeff` (counting.go:48) | `rel err < 1e-12` for typical inputs | vs `big.Int`, n<=200 | **3.09e-13** |
+| `Factorial` (combinatorics/counting.go) | correctly rounded for n<=170; exact for n<=22 | every n=0..170 vs exact `big.Int` | 0 of 171 wrong; rel <= **1.05e-16** |
+| `BinomialCoeff` / `Permutations` (counting.go) | correctly rounded | every 0<=k<=n<=300 vs exact `big.Int`, plus overflow rows and spot checks to n=2^63-1 | 0 wrong (was 39,562 / 31,035) |
 | `BinomialCoeff` symmetry | `C(n,k)==C(n,n-k)` bit-exact | quick (20k) | bit-exact |
 | `FibonacciNumber` (counting.go:108) | "exact (integer arithmetic)" | `F_n==F_{n-1}+F_{n-2}` bit-exact, n=3..93; F_93 golden | bit-exact |
 | `SRGBToLinear`/`LinearToSRGB` (color/spaces.go:25/43) | "exact to float64" → round-trip | quick (200k) | **3.33e-16** |
@@ -71,24 +72,24 @@ protection — a `t.Skip` would not guard them).
 
 ---
 
-## OVER-CLAIMS FOUND (honest findings — DOCUMENTED via `t.Skip`, never silent)
+## OVER-CLAIMS FOUND (all four since RESOLVED)
 
-These 4 bounds do NOT hold over their full claimed domain. Each test
-`t.Skip(...)`s with a precise reason (visible in `go test -v`) — surfacing the
-over-claim honestly without manufacturing a failure or silently passing. `t.Skip`
-is used ONLY here, never to swallow a holding bound.
+These 4 bounds did not hold over their full claimed domain when this file was
+written; each was documented with a `t.Skip(...)`. All four have since been
+fixed, and their tests are ENFORCED.
 
-### 1. `Factorial` — `< 1e-15` is over-claimed for `n > 20` (counting.go:21)
+### 1. `Factorial` — `< 1e-15` was over-claimed for `n > 20` (counting.go) — RESOLVED
+- **Status: resolved.** Values now come from exact integer arithmetic, rounded
+  once: every n <= 170 returns the float64 nearest to n! (0 of 171 values
+  wrong, relative error at most 1.05e-16; it was 150 of 171). The guard is
+  `TestFactorialRelErrHalfUlp` (ENFORCED: relative error <= 2^-53).
+- **As originally found:**
 - **Claim:** "relative error < 1e-15 for n <= 170".
 - **Observed:** worst **1.30e-13 at n=166** (~130× the claim).
 - **Cause (understood):** for `n > 20` the impl uses `exp(lgamma(n+1))`. `lgamma`
   carries ~1e-15 relative error, which is AMPLIFIED by `ln(n!)` (~745 at n=166)
   when exponentiated: `exp(x(1±ε)) = result·(1 ± x·ε)`.
-- **Honest bound:** `< 1e-13` for n<=170 (this is PINNED as a PASS). The
-  `< 1e-15` figure is only true for the exact `n <= 20` path (bit-exact, also
-  pinned). Suggested doc fix: state `< 1e-13` for `21 <= n <= 170`, keep the
-  bit-exact claim scoped to `n <= 20`.
-- Test: `TestFactorialRelErr170OverClaim` (SKIP) + `TestFactorialExactSmall` (PASS).
+- Tests: `TestFactorialRelErrHalfUlp` (ENFORCED) + `TestFactorialExactSmall` (PASS).
 
 ### 2. `NormalQuantile` — RESOLVED: the upper-tail figure was an artifact of the test oracle; the real gap (~1e-9 everywhere) is closed (distributions.go)
 - **Former claim:** "maximum relative error < 1.15e-9 for p bounded away from
@@ -126,8 +127,7 @@ is used ONLY here, never to swallow a holding bound.
   has a relative angle error below 2.4e-16 from 1e-8 rad to 2π−1e-8, and the
   round-trip error over [1e-8, π−1e-8] is **1.55e-15**.
   `TestQuatAxisAngleRoundTripNearDegenerate` is now an ENFORCED guard (it fails
-  RED), no longer a SKIP; the counts at the top of this file (33 PASS / 4 SKIP)
-  predate this fix.
+  RED), no longer a SKIP.
 - **Claim (as originally found):** "Precision: 1e-12 (transcendental
   functions)" — stated unconditionally.
 - **Observed then:** worst rotation-action round-trip error **4.43e-11** for
@@ -146,7 +146,13 @@ is used ONLY here, never to swallow a holding bound.
   `TestQuatAxisAngleRoundTripWellConditioned` (PASS) +
   `TestQuatToAxisAngle_MatchesTheExactAxisAndAngle` (oracle rows, 50-digit).
 
-### 4. `BinomialCoeff` — CAVEAT: `< 1e-12` exceeded for large n (counting.go:48)
+### 4. `BinomialCoeff` — CAVEAT: `< 1e-12` was exceeded for large n (counting.go) — RESOLVED
+- **Status: resolved.** `BinomialCoeff` and `Permutations` now return the
+  float64 nearest to the exact integer, so they are exact wherever it is
+  representable: 0 wrong over every 0 <= k <= n <= 300 (it was 39,562 and
+  31,035; 242 binomials were wrong already for n <= 60, from C(49,20)).
+  `TestBinomialRelErrLargeN` is ENFORCED (relative error <= 2^-53).
+- **As originally found:**
 - **Claim:** "relative error < 1e-12 for typical inputs".
 - **Observed:** worst **2.45e-12 at C(990,86)** (large n); also ~1.1e-12 at
   C(420,12). For n <= 200 the bound holds comfortably (3.09e-13, PINNED PASS).
@@ -154,7 +160,7 @@ is used ONLY here, never to swallow a holding bound.
 - **Honest framing:** softer than the above — "for typical inputs" arguably
   scopes out n in the high hundreds. Recorded as a CAVEAT for large-n callers
   (expect ~few×1e-12), not a hard contract violation.
-- Test: `TestBinomialRelErrLargeN` (SKIP) + `TestBinomialRelErrTypical` (PASS).
+- Tests: `TestBinomialRelErrLargeN` (ENFORCED) + `TestBinomialRelErrTypical` (PASS).
 
 ---
 
