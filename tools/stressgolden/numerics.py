@@ -782,11 +782,143 @@ def portfolio_cases():
     return C
 
 
+# ---------------------------------------------------------------------------
+# optim/proximal and optim/transport
+# ---------------------------------------------------------------------------
+
+def lasso_problem(seed, m, n, xs, lam, s_off):
+    """A LASSO problem min 0.5||Ax - b||^2 + lam ||x||_1 whose optimum is known:
+    b is built so that x* = xs satisfies the KKT conditions with the given
+    off-support subgradient, rounded to float64, and the optimum of the
+    rounded problem is then solved exactly on the same support."""
+    r = SplitMix64(seed)
+    A = [[r.normal() for _ in range(n)] for _ in range(m)]
+    Am = mpm(A)
+    sub = []
+    k = 0
+    for j in range(n):
+        if xs[j] != 0:
+            sub.append(mp.sign(xs[j]))
+        else:
+            sub.append(M(s_off[k]))
+            k += 1
+    G = Am.T * Am
+    resid = Am * (G ** -1) * mp.matrix([M(lam) * v for v in sub])
+    bm = Am * mp.matrix([M(v) for v in xs]) + resid
+    b = [f64(bm[i]) for i in range(m)]
+    S = [j for j in range(n) if xs[j] != 0]
+    AS = mp.matrix([[M(A[i][j]) for j in S] for i in range(m)])
+    bvec = mp.matrix([M(v) for v in b])
+    xS = (AS.T * AS) ** -1 * (AS.T * bvec - mp.matrix([M(lam) * mp.sign(xs[j]) for j in S]))
+    x = [mp.mpf(0)] * n
+    for t, j in enumerate(S):
+        x[j] = xS[t]
+        assert mp.sign(x[j]) == mp.sign(xs[j])
+    xv = mp.matrix(x)
+    rr = Am * xv - bvec
+    corr = Am.T * rr
+    for j in range(n):
+        if j not in S:
+            assert abs(corr[j]) < M(lam) * mp.mpf("0.95"), "KKT margin"
+    Fstar = mp.fsum(rr[i] ** 2 for i in range(m)) / 2 + M(lam) * mp.fsum(abs(v) for v in x)
+    L = max(mp.eigsy(G)[0][i] for i in range(n))
+    step = f64(1 / L)
+    while M(step) > 1 / L:
+        step = math.nextafter(step, 0.0)
+    return A, b, x, Fstar, L, step
+
+
+def w_p_exact(u, v, p):
+    """Exact 1-D Wasserstein-p between empirical measures (quantile integral)."""
+    us, vs = sorted(Fraction(x) for x in u), sorted(Fraction(x) for x in v)
+    n, m = len(us), len(vs)
+    i = j = 0
+    pos = Fraction(0)
+    tot = mp.mpf(0)
+    while i < n and j < m:
+        nu, nv = Fraction(i + 1, n), Fraction(j + 1, m)
+        t = min(nu, nv)
+        w = t - pos
+        if w > 0:
+            d = abs(us[i] - vs[j])
+            tot += (M(d.numerator) / M(d.denominator)) ** p * (M(w.numerator) / M(w.denominator))
+        pos = t
+        if nu <= nv:
+            i += 1
+        if nv <= nu:
+            j += 1
+    return tot ** (mp.mpf(1) / p)
+
+
+def prox_transport_cases():
+    C = []
+
+    # Fbs (FBS and FISTA) ----------------------------------------------------------
+    lam = 0.5
+    A, b, xs, Fstar, L, step = lasso_problem(8001, 20, 8, [1.5, 0, -0.8, 0, 0, 2.0, 0, 0], lam, [0.3, -0.5, 0.2, 0.7, -0.1])
+    R2 = mp.fsum(v ** 2 for v in xs)  # ||x0 - x*||^2 with x0 = 0
+    fb = ("optim/proximal/fbs.go Fbs: 'FISTA convergence rate is O(1/k^2) on the objective; plain FBS is O(1/k).' -> the "
+          "bounds of the cited Beck & Teboulle (2009) at step 1/L: FISTA F(x_k) - F* <= 2 L ||x0 - x*||^2 / (k+1)^2 "
+          "(Thm 4.4), FBS F(x_k) - F* <= L ||x0 - x*||^2 / (2k) (Thm 3.1); LASSO with 20 x 8 A, lambda 0.5, x0 = 0, the "
+          "optimum solved exactly from the KKT conditions; scalar = F(x_k) - F*")
+    for cid, acc, k in (("fbs/fista-k20", True, 20), ("fbs/fista-k200", True, 200), ("fbs/ista-k20", False, 20), ("fbs/ista-k200", False, 200)):
+        bound = 2 * L * R2 / (k + 1) ** 2 if acc else L * R2 / (2 * k)
+        C.append(case(cid, "proximal.Fbs", {"A": [v for row in A for v in row], "m": 20, "b": b, "lambda": lam, "step": step,
+                                            "accelerate": acc, "iters": k, "fstar": f64(Fstar)},
+                      0.0, f64(bound), "abs", fb + " (k = %d: bound %.3g)" % (k, f64(bound))))
+
+    # Sinkhorn -------------------------------------------------------------------------
+    sk = ("optim/transport/sinkhorn.go Sinkhorn: 'passing maxIter <= 0 uses 200 as the default (enough for epsilon >= 0.01 * "
+          "mean(C) on well-conditioned problems)'; 'tol <= 0 falls back to 1e-7' -> with maxIter = 0 and tol = 0 the call must "
+          "succeed; scalar = 0 on success, else the iterations a run capped at 1000 needs beyond 200 (+Inf if it needs more "
+          "than 1000)")
+    for cid, n, eps_frac, shift in (("sinkhorn/n10-eps0.01", 10, 0.01, 0.0), ("sinkhorn/n50-eps0.01", 50, 0.01, 0.0),
+                                    ("sinkhorn/n50-eps0.1", 50, 0.1, 0.0), ("sinkhorn/n50-shifted-eps0.01", 50, 0.01, 0.25)):
+        xs_ = [i / (n - 1) for i in range(n)]
+        ys_ = [i / (n - 1) + shift for i in range(n)]
+        Cm = [[(xi - yj) * (xi - yj) for yj in ys_] for xi in xs_]
+        meanC = math.fsum(v for row in Cm for v in row) / (n * n)
+        a = [1.0 / n] * n
+        C.append(case(cid, "transport.Sinkhorn", {"a": a, "b": a, "cost": Cm, "epsilon": eps_frac * meanC, "measure": "default-budget"},
+                      0.0, 0.0, "abs", sk + "; uniform marginals, squared distance on a uniform grid of %d points%s, epsilon = %g * mean(C)" %
+                      (n, "" if shift == 0 else " shifted by %g" % shift, eps_frac)))
+    skr = ("optim/transport/sinkhorn.go Sinkhorn: 'Convergence is measured by the L^1 marginal deviation ||P 1 - a||_1 "
+           "against tol' -> on success the returned plan has ||P 1 - a||_1 < tol; scalar = that deviation, summed exactly")
+    n = 30
+    xs_ = [i / (n - 1) for i in range(n)]
+    Cm = [[abs(xi - yj) for yj in xs_] for xi in xs_]
+    r = SplitMix64(8101)
+    wa = [0.5 + r.uniform() for _ in range(n)]
+    wb = [0.5 + r.uniform() for _ in range(n)]
+    sa, sb = math.fsum(wa), math.fsum(wb)
+    a = [v / sa for v in wa]
+    bb = [v / sb for v in wb]
+    C.append(case("sinkhorn/residual-contract", "transport.Sinkhorn",
+                  {"a": a, "b": bb, "cost": Cm, "epsilon": 0.05, "maxIter": 1000, "tol": 1e-9, "measure": "row-residual"},
+                  0.0, 1e-9, "abs", skr + "; 30 points, |x - y| cost, epsilon 0.05, tol 1e-9"))
+
+    # Wasserstein1D --------------------------------------------------------------------
+    wd = ("optim/transport/wasserstein1d.go Wasserstein1D: 'returns the closed-form Wasserstein-p distance' (and the "
+          "'<=1e-12' cross-implementation contract) -> relative 1e-12 against the exact W_p of the samples (quantile integral "
+          "in rationals)")
+    r = SplitMix64(8201)
+    for cid, nu, nv, p, scale in (("wasserstein/equal-n50-p1", 50, 50, 1.0, 1.0), ("wasserstein/unequal-7-3-p1", 7, 3, 1.0, 1.0),
+                                  ("wasserstein/unequal-40-17-p2", 40, 17, 2.0, 1.0), ("wasserstein/p4-scale-1e-90", 2, 2, 4.0, 1e-90),
+                                  ("wasserstein/p2-scale-1e160", 3, 3, 2.0, 1e160)):
+        u = [scale * r.normal() for _ in range(nu)]
+        v = [scale * (r.normal() + 0.5) for _ in range(nv)]
+        C.append(case(cid, "transport.Wasserstein1D", {"u": u, "v": v, "p": p}, f64(w_p_exact(u, v, int(p))), 1e-12, "rel",
+                      wd + ({"wasserstein/p4-scale-1e-90": "; samples of order 1e-90 (|d|^4 underflows)",
+                             "wasserstein/p2-scale-1e160": "; samples of order 1e160 (|d|^2 overflows)"}.get(cid, ""))))
+    return C
+
+
 def main():
     C = []
     C += linalg_cases()
     C += optim_cases()
     C += portfolio_cases()
+    C += prox_transport_cases()
     ids = [c["id"] for c in C]
     assert len(ids) == len(set(ids)), "duplicate case id"
     doc = {

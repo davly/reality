@@ -13,6 +13,7 @@ package reality_test
 // promised failure (nil, false) that does not happen scores 1 against 0.
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"math/big"
@@ -21,6 +22,8 @@ import (
 	"github.com/davly/reality/optim"
 	"github.com/davly/reality/optim/hrp"
 	"github.com/davly/reality/optim/portfolio"
+	"github.com/davly/reality/optim/proximal"
+	"github.com/davly/reality/optim/transport"
 )
 
 func numVec(c precisionCase, k string) []float64 {
@@ -156,9 +159,12 @@ func numMaxRelErr(got, want []float64) float64 {
 }
 
 // numSumMinusOne returns sum(v) - 1, with the sum taken exactly.
-func numSumMinusOne(v []float64) float64 {
+func numSumMinusOne(v []float64) float64 { return numSumMinus(v, 1) }
+
+// numSumMinus returns sum(v) - t, computed exactly and rounded once.
+func numSumMinus(v []float64, t float64) float64 {
 	const prec = 4096
-	sum := new(big.Float).SetPrec(prec).SetInt64(-1)
+	sum := new(big.Float).SetPrec(prec).SetFloat64(-t)
 	for _, x := range v {
 		if math.IsNaN(x) || math.IsInf(x, 0) {
 			return math.NaN()
@@ -188,6 +194,7 @@ func init() {
 	registerLinalgEvaluators()
 	registerOptimEvaluators()
 	registerPortfolioEvaluators()
+	registerProxTransportEvaluators()
 	registerKnownPrecisionViolations(numericsKnownViolations)
 }
 
@@ -243,6 +250,13 @@ var numericsKnownViolations = map[string]string{
 	"numerics/projsimplex/magnitude-1e8-weights":                "weights off by 9.9e-9 for inputs near 1e8",
 	"numerics/projsimplex/magnitude-1e8-sum":                    "sums to 1 - 3.0e-8 for inputs near 1e8",
 	"numerics/projsimplex/magnitude-1e17-weights":               "returns (0.5, 0.5) for the projection (1, 0): cumsum - 1 loses the 1 and the uniform fallback is taken",
+
+	// optim/transport
+	"numerics/sinkhorn/n10-eps0.01":         "the default 200 iterations are not enough at epsilon = 0.01*mean(C): ErrSinkhornNonConvergent; it needs 897",
+	"numerics/sinkhorn/n50-eps0.01":         "the default 200 iterations are not enough at epsilon = 0.01*mean(C): ErrSinkhornNonConvergent; it needs 261",
+	"numerics/sinkhorn/n50-shifted-eps0.01": "does not converge even at the internal cap of 1000 iterations",
+	"numerics/wasserstein/p4-scale-1e-90":   "returns 0 for distinct samples of order 1e-90: |d|^4 underflows",
+	"numerics/wasserstein/p2-scale-1e160":   "returns +Inf for samples of order 1e160: |d|^2 overflows",
 }
 
 func registerLinalgEvaluators() {
@@ -536,5 +550,88 @@ func registerPortfolioEvaluators() {
 			return 0, err
 		}
 		return math.Abs(numSumMinusOne(w)), nil
+	})
+}
+
+func registerProxTransportEvaluators() {
+	registerPrecisionEvaluator("proximal.Fbs", func(c precisionCase) (float64, error) {
+		A, b := numVec(c, "A"), numVec(c, "b")
+		m := argI(c, "m")
+		n := len(A) / m
+		lambda := argF(c, "lambda")
+		accel, ok := c.Args["accelerate"].(bool)
+		if !ok {
+			return 0, fmt.Errorf("accelerate is not a boolean")
+		}
+		residual := func(x []float64) []float64 {
+			r := make([]float64, m)
+			for i := 0; i < m; i++ {
+				s := -b[i]
+				for j := 0; j < n; j++ {
+					s += float64(A[i*n+j] * x[j])
+				}
+				r[i] = s
+			}
+			return r
+		}
+		grad := func(x, out []float64) float64 {
+			r := residual(x)
+			for j := 0; j < n; j++ {
+				s := 0.0
+				for i := 0; i < m; i++ {
+					s += float64(A[i*n+j] * r[i])
+				}
+				out[j] = s
+			}
+			return 0
+		}
+		prox := func(v []float64, gamma float64, out []float64) { proximal.ProxL1(v, gamma*lambda, out) }
+		x := make([]float64, n)
+		work := make([]float64, n)
+		cfg := proximal.FbsConfig{Step: argF(c, "step"), MaxIter: argI(c, "iters"), AbsTol: 1e-300, Accelerate: accel}
+		if _, err := proximal.Fbs(grad, prox, x, work, cfg); err != nil {
+			return 0, err
+		}
+		obj := 0.0
+		for _, ri := range residual(x) {
+			obj += float64(ri * ri)
+		}
+		obj /= 2
+		for _, xi := range x {
+			obj += float64(lambda * math.Abs(xi))
+		}
+		return obj - argF(c, "fstar"), nil
+	})
+	registerPrecisionEvaluator("transport.Sinkhorn", func(c precisionCase) (float64, error) {
+		a, b, cost, eps := numVec(c, "a"), numVec(c, "b"), numMat(c, "cost"), argF(c, "epsilon")
+		switch numStr(c, "measure") {
+		case "default-budget":
+			_, err := transport.Sinkhorn(a, b, cost, eps, 0, 0)
+			if err == nil {
+				return 0, nil
+			}
+			if !errors.Is(err, transport.ErrSinkhornNonConvergent) {
+				return 0, err
+			}
+			res, err := transport.Sinkhorn(a, b, cost, eps, 1000, 0)
+			if err != nil {
+				return math.Inf(1), nil
+			}
+			return float64(res.Iterations - 200), nil
+		case "row-residual":
+			res, err := transport.Sinkhorn(a, b, cost, eps, argI(c, "maxIter"), argF(c, "tol"))
+			if err != nil {
+				return math.NaN(), nil
+			}
+			total := 0.0
+			for i, row := range res.Plan {
+				total += math.Abs(numSumMinus(row, a[i]))
+			}
+			return total, nil
+		}
+		return 0, fmt.Errorf("unknown measure %q", numStr(c, "measure"))
+	})
+	registerPrecisionEvaluator("transport.Wasserstein1D", func(c precisionCase) (float64, error) {
+		return transport.Wasserstein1D(numVec(c, "u"), numVec(c, "v"), argF(c, "p"))
 	})
 }
