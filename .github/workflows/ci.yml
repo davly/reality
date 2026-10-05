@@ -65,12 +65,10 @@ jobs:
   # twice, so it moves floating-point results in the last bits. The Go
   # compiler fuses on arm64 and on amd64 built with GOAMD64=v3, but not on the
   # default amd64 build the test job uses. The precision claims must hold on
-  # all three. The arm64 leg reports without failing the build until it has
-  # passed once.
+  # all three.
   fma:
     name: Test (${{ matrix.target }})
     runs-on: ${{ matrix.runner }}
-    continue-on-error: ${{ matrix.target == 'arm64' }}
     strategy:
       fail-fast: false
       matrix:
