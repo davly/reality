@@ -2,6 +2,7 @@ package graph
 
 import (
 	"math"
+	"slices"
 	"sort"
 	"testing"
 
@@ -139,6 +140,21 @@ func TestRoots_Empty(t *testing.T) {
 	roots := Roots(nil)
 	if len(roots) != 0 {
 		t.Errorf("empty roots: got %d, want 0", len(roots))
+	}
+}
+
+func TestRoots_AscendingOrder(t *testing.T) {
+	// Twelve roots listed out of order: the result must be the ascending list
+	// on every call, not merely the right set.
+	var edges []Edge
+	for _, r := range []string{"k", "c", "x", "a", "q", "m", "z", "e", "t", "b", "w", "h"} {
+		edges = append(edges, Edge{r, "sink"})
+	}
+	want := []string{"a", "b", "c", "e", "h", "k", "m", "q", "t", "w", "x", "z"}
+	for call := 0; call < 50; call++ {
+		if got := Roots(edges); !slices.Equal(got, want) {
+			t.Fatalf("call %d: Roots = %v, want %v", call, got, want)
+		}
 	}
 }
 

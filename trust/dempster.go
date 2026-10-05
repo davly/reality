@@ -38,7 +38,6 @@ func NewMassFunction(frameSize int, masses map[uint]float64) (MassFunction, erro
 	}
 	full := frameMask(frameSize)
 	cp := make(map[uint]float64, len(masses))
-	var sum float64
 	for set, m := range masses {
 		if math.IsNaN(m) || m < 0 {
 			return MassFunction{}, ErrInvalidMass
@@ -52,12 +51,18 @@ func NewMassFunction(frameSize int, masses map[uint]float64) (MassFunction, erro
 			continue // drop explicit zeros; they are the default
 		}
 		cp[set] = m
-		sum += m
+	}
+	mf := MassFunction{FrameSize: frameSize, Masses: cp}
+	// Sum in ascending set order, so a total within rounding of the
+	// tolerance is accepted or rejected the same way on every call.
+	var sum float64
+	for _, set := range mf.sortedSets() {
+		sum += cp[set]
 	}
 	if math.Abs(sum-1) > additivityTol {
 		return MassFunction{}, ErrInvalidMass
 	}
-	return MassFunction{FrameSize: frameSize, Masses: cp}, nil
+	return mf, nil
 }
 
 // Belief returns Bel(a), the total mass that necessarily supports the
@@ -69,9 +74,9 @@ func NewMassFunction(frameSize int, masses map[uint]float64) (MassFunction, erro
 // Reference: Shafer (1976), §2.
 func (mf MassFunction) Belief(a uint) float64 {
 	var bel float64
-	for set, m := range mf.Masses {
+	for _, set := range mf.sortedSets() { // a fixed order: the same rounding on every call
 		if set != 0 && set&a == set { // set ⊆ a
-			bel += m
+			bel += mf.Masses[set]
 		}
 	}
 	return bel
@@ -89,9 +94,9 @@ func (mf MassFunction) Belief(a uint) float64 {
 // Reference: Shafer (1976), §2.
 func (mf MassFunction) Plausibility(a uint) float64 {
 	var pl float64
-	for set, m := range mf.Masses {
+	for _, set := range mf.sortedSets() { // a fixed order: the same rounding on every call
 		if set&a != 0 {
-			pl += m
+			pl += mf.Masses[set]
 		}
 	}
 	return pl

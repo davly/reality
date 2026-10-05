@@ -1,6 +1,9 @@
 package graph
 
-import "slices"
+import (
+	"maps"
+	"slices"
+)
 
 // ConnectedComponents finds all connected components of an undirected graph
 // using BFS. The graph is treated as undirected: for every edge u->v in adj,
@@ -140,6 +143,12 @@ func StronglyConnected(adj IntAdjacency, n int) [][]int {
 // that yields the largest gain in modularity. It iterates until no
 // improvement is possible.
 //
+// The result is deterministic. Nodes are scanned in ascending order; on an
+// exact tie in modularity gain a node stays in its community, or else joins
+// the neighbouring community with the lowest id. If an edge carries a weight
+// in both directions, the weight of the direction met first in that scan is
+// used.
+//
 // Parameters:
 //   - adj: adjacency list (treated as undirected).
 //   - weights: edge weights keyed by [from, to]. If nil or if an edge is
@@ -178,9 +187,14 @@ func LouvainCommunities(adj IntAdjacency, weights map[[2]int]float64, n int) []i
 		return 1.0
 	}
 
+	// Nodes are visited in ascending order, so the neighbour lists, the
+	// weighted degrees and every float sum built from them are the same on
+	// each call, and an edge listed in both directions takes its weight from
+	// the direction met first.
 	totalWeight := 0.0
 	seen := make(map[[2]int]bool)
-	for u, vs := range adj {
+	for _, u := range slices.Sorted(maps.Keys(adj)) {
+		vs := adj[u]
 		for _, v := range vs {
 			if u < 0 || u >= n || v < 0 || v >= n {
 				continue
@@ -248,7 +262,10 @@ func LouvainCommunities(adj IntAdjacency, weights map[[2]int]float64, n int) []i
 			for c, kiIn := range commWeights {
 				// Modularity gain of moving i to community c.
 				gain := kiIn - sigmaTot[c]*ki[i]/m2
-				if gain > bestGain {
+				// The highest gain wins. On an exact tie i stays where it
+				// is, and otherwise joins the lowest community id, so the
+				// choice does not depend on map iteration order.
+				if gain > bestGain || (gain == bestGain && bestComm != oldComm && (c == oldComm || c < bestComm)) {
 					bestGain = gain
 					bestComm = c
 				}

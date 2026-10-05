@@ -5,9 +5,11 @@ package reality_test
 // Each function below touches maps internally and is classified
 // order-insensitive or sorted-after in testdata/determinism/map_ranges.json.
 // Here that classification is executed: 200 identical calls in one process
-// must give one bit-exact output. Functions with a measured defect
-// (known-nondeterministic) are not asserted here; TestKnownNondeterministic
-// only reports their current state so a fix can be noticed and reclassified.
+// must give one bit-exact output. Several fixtures are inputs on which an
+// earlier, map-order-dependent version measurably varied between calls: a
+// basic probability assignment whose total sits on the additivity tolerance
+// was accepted on some calls and rejected on others, and a max-flow with
+// fractional capacities returned two different values.
 
 import (
 	"fmt"
@@ -62,6 +64,50 @@ func reliabilityFixture() ([]graph.Edge, map[string]float64) {
 	return edges, avail
 }
 
+// fractionalFlowFixture builds a graph on which max-flow with fractional
+// capacities once returned different values for identical calls, because the
+// residual graph, and so the augmenting paths, followed map order.
+func fractionalFlowFixture() (graph.IntAdjacency, map[[2]int]float64, int) {
+	rng := rand.New(rand.NewSource(1))
+	n := 10 + rng.Intn(30)
+	adj := graph.IntAdjacency{}
+	for u := 0; u < n; u++ {
+		for v := 0; v < n; v++ {
+			if u != v && rng.Float64() < 0.25 {
+				adj[u] = append(adj[u], v)
+			}
+		}
+	}
+	capacity := map[[2]int]float64{}
+	for u := 0; u < n; u++ {
+		for _, v := range adj[u] {
+			capacity[[2]int{u, v}] = rng.Float64() * 10
+		}
+	}
+	return adj, capacity, n - 1
+}
+
+// boundaryMasses returns a basic probability assignment whose exact total sits
+// on the additivity tolerance (1e-9), so whether it is accepted depends on the
+// rounding of the sum. Summed in map order, the same input was accepted on 180
+// and rejected on 20 of 200 identical calls.
+func boundaryMasses() map[uint]float64 {
+	rng := rand.New(rand.NewSource(2))
+	k := 20 + rng.Intn(40)
+	vals := make([]float64, k)
+	s := 0.0
+	for i := range vals {
+		vals[i] = rng.Float64() + 0.01
+		s += vals[i]
+	}
+	scale := (1 + 1e-9) / s
+	masses := map[uint]float64{}
+	for i := range vals {
+		masses[uint(i+1)] = vals[i] * scale
+	}
+	return masses
+}
+
 func massFunction(t *testing.T, frame int, m map[uint]float64) trust.MassFunction {
 	t.Helper()
 	mf, err := trust.NewMassFunction(frame, m)
@@ -94,6 +140,23 @@ func TestDeterministic_MapTouchingFunctions(t *testing.T) {
 
 	m1 := massFunction(t, 4, map[uint]float64{1: 0.1, 2: 0.2, 3: 0.15, 4: 0.05, 5: 0.1, 6: 0.1, 7: 0.1, 9: 0.05, 15: 0.15})
 	m2 := massFunction(t, 4, map[uint]float64{1: 0.3, 3: 0.2, 6: 0.25, 12: 0.1, 15: 0.15})
+
+	// Louvain on a symmetric ring (every move is a tie) and on a weighted
+	// graph whose edges often carry different weights in the two directions.
+	ring8 := graph.IntAdjacency{}
+	for i := 0; i < 8; i++ {
+		ring8[i] = []int{(i + 1) % 8}
+	}
+	louvainWeights := map[[2]int]float64{}
+	for u := 0; u < 40; u++ {
+		for _, v := range adj[u] {
+			louvainWeights[[2]int{u, v}] = 0.5 + rng.Float64()
+		}
+	}
+
+	flowAdj, flowCap, flowSink := fractionalFlowFixture()
+	boundary := boundaryMasses()
+	overlap := graph.NewADMG([]string{"a", "b", "c", "d"}, nil, nil)
 
 	cases := []struct {
 		name string
@@ -133,61 +196,39 @@ func TestDeterministic_MapTouchingFunctions(t *testing.T) {
 			c, k, err := trust.YagerCombine(m1, m2)
 			return testutil.SortedMapBits(c.Masses) + testutil.FloatBits(k) + fmt.Sprint(err)
 		}},
-	}
-	for _, c := range cases {
-		testutil.AssertDeterministic(t, c.name, determinismCalls, c.f)
-	}
-}
-
-// TestKnownNondeterministic reports, without failing, how the measured
-// defects behave today. When one reports a single distinct output, look at it:
-// if it was fixed, reclassify its sites in testdata/determinism/map_ranges.json
-// and move it into TestDeterministic_MapTouchingFunctions.
-func TestKnownNondeterministic(t *testing.T) {
-	ring8 := graph.IntAdjacency{}
-	for i := 0; i < 8; i++ {
-		ring8[i] = []int{(i + 1) % 8}
-	}
-	rng := rand.New(rand.NewSource(1))
-	dag := randomDAGEdges(rng, 30, 0.12)
-	relEdges, avail := reliabilityFixture()
-	m1 := massFunction(t, 4, map[uint]float64{1: 0.1, 2: 0.2, 3: 0.15, 4: 0.05, 5: 0.1, 6: 0.1, 7: 0.1, 9: 0.05, 15: 0.15})
-
-	report := []struct {
-		name string
-		f    func() string
-	}{
 		{"graph.LouvainCommunities (ring of 8)", func() string { return fmt.Sprint(graph.LouvainCommunities(ring8, nil, 8)) }},
+		{"graph.LouvainCommunities (weighted)", func() string {
+			return fmt.Sprint(graph.LouvainCommunities(adj, louvainWeights, 40))
+		}},
 		{"graph.Roots", func() string { return strings.Join(graph.Roots(dag), ",") }},
+		{"graph.MaxFlow (fractional capacities)", func() string {
+			return testutil.FloatBits(graph.MaxFlow(flowAdj, flowCap, 0, flowSink))
+		}},
+		{"graph.ADMG.IdentifyEffect (overlap error)", func() string {
+			_, _, err := overlap.IdentifyEffect([]string{"a", "b", "c", "d"}, []string{"d", "c", "b"})
+			return fmt.Sprint(err)
+		}},
+		{"graph.ADMG.IdentifyEffectWithWitness (overlap error)", func() string {
+			_, _, _, err := overlap.IdentifyEffectWithWitness([]string{"a", "b", "c", "d"}, []string{"d", "c", "b"})
+			return fmt.Sprint(err)
+		}},
+		{"trust.NewMassFunction (total on the tolerance)", func() string {
+			_, err := trust.NewMassFunction(6, boundary)
+			return fmt.Sprint(err)
+		}},
 		{"trust.MassFunction.Belief(Theta)", func() string { return testutil.FloatBits(m1.Belief(15)) }},
 		{"trust.MassFunction.Plausibility", func() string { return testutil.FloatBits(m1.Plausibility(3)) }},
 		{"reliability.SystemAvailability", func() string {
 			return testutil.FloatBits(reliability.SystemAvailability(relEdges, avail, "app"))
 		}},
+		{"reliability.BirnbaumImportance", func() string {
+			return testutil.FloatBits(reliability.BirnbaumImportance(relEdges, avail, "app", "disk"))
+		}},
 		{"reliability.BirnbaumImportances", func() string {
 			return testutil.SortedMapBits(reliability.BirnbaumImportances(relEdges, avail, "app"))
 		}},
 	}
-	for _, r := range report {
-		n := testutil.DistinctOutputs(determinismCalls, r.f)
-		t.Logf("%-40s %3d distinct output(s) over %d identical calls", r.name, n, determinismCalls)
+	for _, c := range cases {
+		testutil.AssertDeterministic(t, c.name, determinismCalls, c.f)
 	}
-}
-
-// TestMaxFlowFractionalCapacities probes the one graph function whose
-// map-order dependence is unreviewed: with fractional capacities, different
-// augmenting-path orders could round differently. It reports, without failing.
-func TestMaxFlowFractionalCapacities(t *testing.T) {
-	rng := rand.New(rand.NewSource(3))
-	adj := randomIntAdjacency(rng, 24, 0.2)
-	capacity := map[[2]int]float64{}
-	for u, vs := range adj {
-		for _, v := range vs {
-			capacity[[2]int{u, v}] = rng.Float64() * 10
-		}
-	}
-	n := testutil.DistinctOutputs(determinismCalls, func() string {
-		return testutil.FloatBits(graph.MaxFlow(adj, capacity, 0, 23))
-	})
-	t.Logf("graph.MaxFlow (fractional capacities): %d distinct output(s) over %d identical calls", n, determinismCalls)
 }

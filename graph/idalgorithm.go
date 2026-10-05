@@ -92,7 +92,9 @@ func (g ADMG) IdentifyEffect(treatment, outcome []string) (expr string, identifi
 		}
 	}
 	x, y := setOf(treatment), setOf(outcome)
-	for n := range x {
+	// Report the first treatment node, in the caller's order, that is also an
+	// outcome, so the error is the same on every call.
+	for _, n := range treatment {
 		if _, ok := y[n]; ok {
 			return "", false, &idError{"treatment and outcome overlap at: " + n}
 		}
@@ -114,7 +116,9 @@ func (g ADMG) IdentifyEffectWithWitness(treatment, outcome []string) (expr strin
 		}
 	}
 	x, y := setOf(treatment), setOf(outcome)
-	for n := range x {
+	// Report the first treatment node, in the caller's order, that is also an
+	// outcome, so the error is the same on every call.
+	for _, n := range treatment {
 		if _, ok := y[n]; ok {
 			return "", false, nil, &idError{"treatment and outcome overlap at: " + n}
 		}

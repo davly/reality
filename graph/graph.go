@@ -10,6 +10,8 @@
 // across the Causal inference engine).
 package graph
 
+import "slices"
+
 // Edge represents a directed edge from Src to Dst.
 type Edge = [2]string
 
@@ -63,11 +65,10 @@ func InDegree(edges []Edge) map[string]int {
 	return deg
 }
 
-// Roots returns all nodes with in-degree 0 (no incoming edges).
-// The result is deterministic for a given input but the order of roots
-// in the returned slice is not guaranteed.
+// Roots returns all nodes with in-degree 0 (no incoming edges), in
+// ascending order.
 //
-// Time complexity: O(|E|).
+// Time complexity: O(|E| + R log R) for R roots.
 func Roots(edges []Edge) []string {
 	deg := InDegree(edges)
 	var roots []string
@@ -76,6 +77,7 @@ func Roots(edges []Edge) []string {
 			roots = append(roots, node)
 		}
 	}
+	slices.Sort(roots)
 	return roots
 }
 

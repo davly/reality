@@ -33,7 +33,9 @@
 package reliability
 
 import (
+	"maps"
 	"math"
+	"slices"
 
 	"github.com/davly/reality/graph"
 )
@@ -158,7 +160,7 @@ func AvailabilityFromMTBF(mtbf, mttr float64) float64 {
 func SystemAvailability(edges []graph.Edge, avail map[string]float64, target string) float64 {
 	adj := graph.AdjacencyList(edges)
 	closure := dependencyClosure(adj, target)
-	return productOver(closure, avail, nil)
+	return productOver(sortedNodes(closure), avail, nil)
 }
 
 // BirnbaumImportance returns the Birnbaum importance of component in the
@@ -186,8 +188,9 @@ func BirnbaumImportance(edges []graph.Edge, avail map[string]float64, target, co
 	if _, in := closure[component]; !in {
 		return 0.0
 	}
-	up := productOver(closure, avail, map[string]float64{component: 1.0})
-	down := productOver(closure, avail, map[string]float64{component: 0.0})
+	nodes := sortedNodes(closure)
+	up := productOver(nodes, avail, map[string]float64{component: 1.0})
+	down := productOver(nodes, avail, map[string]float64{component: 0.0})
 	return up - down
 }
 
@@ -201,10 +204,11 @@ func BirnbaumImportance(edges []graph.Edge, avail map[string]float64, target, co
 func BirnbaumImportances(edges []graph.Edge, avail map[string]float64, target string) map[string]float64 {
 	adj := graph.AdjacencyList(edges)
 	closure := dependencyClosure(adj, target)
+	nodes := sortedNodes(closure)
 	out := make(map[string]float64, len(closure))
-	for node := range closure {
-		up := productOver(closure, avail, map[string]float64{node: 1.0})
-		down := productOver(closure, avail, map[string]float64{node: 0.0})
+	for _, node := range nodes {
+		up := productOver(nodes, avail, map[string]float64{node: 1.0})
+		down := productOver(nodes, avail, map[string]float64{node: 0.0})
 		out[node] = up - down
 	}
 	return out
@@ -268,12 +272,13 @@ func dependencyClosure(adj map[string][]string, target string) map[string]struct
 	return seen
 }
 
-// productOver multiplies the availability of every node in the set, reading
+// productOver multiplies the availability of every node in nodes, reading
 // from override first (if present), then avail, defaulting a missing node to
-// 1.0 (the series identity).
-func productOver(set map[string]struct{}, avail, override map[string]float64) float64 {
+// 1.0 (the series identity). Callers pass the nodes in ascending order (see
+// sortedNodes), so the rounded product is the same on every call.
+func productOver(nodes []string, avail, override map[string]float64) float64 {
 	p := 1.0
-	for node := range set {
+	for _, node := range nodes {
 		if override != nil {
 			if v, ok := override[node]; ok {
 				p *= v
@@ -285,4 +290,9 @@ func productOver(set map[string]struct{}, avail, override map[string]float64) fl
 		}
 	}
 	return p
+}
+
+// sortedNodes returns the members of a node set in ascending order.
+func sortedNodes(set map[string]struct{}) []string {
+	return slices.Sorted(maps.Keys(set))
 }

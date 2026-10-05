@@ -3,7 +3,9 @@ package graph
 import (
 	"container/heap"
 	"errors"
+	"maps"
 	"math"
+	"slices"
 )
 
 // MaxFlow computes the maximum flow from source to sink in a directed
@@ -31,8 +33,11 @@ func MaxFlow(adj IntAdjacency, capacity map[[2]int]float64, source, sink int) fl
 	// Build full adjacency including reverse edges for residual graph.
 	resAdj := make(IntAdjacency, n)
 
-	for u, vs := range adj {
-		for _, v := range vs {
+	// Visit nodes in ascending order so the residual adjacency, and with it
+	// the BFS order and the augmenting paths, is the same on every call: with
+	// fractional capacities, different path orders round to different flows.
+	for _, u := range slices.Sorted(maps.Keys(adj)) {
+		for _, v := range adj[u] {
 			edge := [2]int{u, v}
 			if c, ok := capacity[edge]; ok {
 				resCap[edge] = c

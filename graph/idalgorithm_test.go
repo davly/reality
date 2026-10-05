@@ -162,3 +162,19 @@ func indexOf(s, sub string) int {
 	}
 	return -1
 }
+
+func TestIdentifyEffect_OverlapErrorNamesFirstTreatmentNode(t *testing.T) {
+	// b, c and d are all both treatment and outcome; the error must name b,
+	// the first of them in the caller's treatment order, on every call.
+	g := NewADMG([]string{"a", "b", "c", "d"}, nil, nil)
+	const want = "graph: ID: treatment and outcome overlap at: b"
+	treatment, outcome := []string{"a", "b", "c", "d"}, []string{"d", "c", "b"}
+	for call := 0; call < 50; call++ {
+		if _, _, err := g.IdentifyEffect(treatment, outcome); err == nil || err.Error() != want {
+			t.Fatalf("IdentifyEffect call %d: err = %v, want %q", call, err, want)
+		}
+		if _, _, _, err := g.IdentifyEffectWithWitness(treatment, outcome); err == nil || err.Error() != want {
+			t.Fatalf("IdentifyEffectWithWitness call %d: err = %v, want %q", call, err, want)
+		}
+	}
+}
