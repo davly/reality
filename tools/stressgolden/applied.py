@@ -41,6 +41,16 @@ Case ids are applied/<function>-<class>-<name>, with class one of: typ
 (typical), hard (hard input), extreme (an intermediate product overflows or
 underflows although the result is representable), cond (ill-conditioned:
 any float64 evaluation of the formula loses this much).
+
+How the hard inputs were chosen, so that a miss is not an accident of one
+build: a case that misses is only worth keeping if it misses by a wide margin
+and in the same way on the default amd64 build and on GOAMD64=v3 (which fuses
+multiply-adds). Where the miss is a rounding error that an exponential
+amplifies, the input is the one at which float64 rounds the exponent worst
+(worst_rounded_partner); where it is a branch decided by rounding noise (the
+CIEDE2000 hue difference of exactly 180 degrees), the pairs were found by
+scanning and are listed here. The CIEDE2000 reference is checked against the
+34 published test pairs of Sharma, Wu and Dalal on every run.
 """
 
 import json
@@ -57,6 +67,7 @@ ULP = 2.0 ** -52
 
 CASES = []
 SEEN = set()
+ORACLES = {}  # function name -> the exact reference, kept so other tools can reuse it
 
 
 # ---------------------------------------------------------------------------
@@ -130,9 +141,10 @@ def D12():
 
 def run(prefix, func, src, quote, rule, oracle, items, skip=()):
     """Add one case per (name, args) item; oracle(**args) gives the true value.
-    `skip` names items left out for this function: cases whose miss or pass is
-    within 3x of the tolerance, which a last-bit difference between builds
-    (fused multiply-add, another Go version) could flip."""
+    `skip` names items left out for this function: cases whose outcome sits
+    within 2.5x of the tolerance on the side where a compiler that fuses a
+    multiply-add differently (another Go version, arm64) could flip it."""
+    ORACLES[func] = oracle
     for name, args in items:
         if name in skip:
             continue
@@ -192,13 +204,22 @@ def acoustics():
 
     def il(I, IRef):
         return fl(10 * mp.log10(ex(I) / ex(IRef)))
+    def near(ref, delta):
+        """The float p near ref*(1+delta) at which float64 rounds the quotient p/ref worst."""
+        return worst_rounded_partner(ref, ref * (1 + delta), lambda r, p: p / r, lambda r, p: Fr(p) / Fr(r))
     items_spl = [
         ("typ-1pa", dict(p=1.0, pRef=20e-6)),
         ("typ-quiet", dict(p=3e-5, pRef=20e-6)),
-        ("hard-near-0db-above", dict(p=1.001, pRef=1.0)),
-        ("hard-near-0db-1e-10", dict(p=1.0000000001, pRef=1.0)),
-        ("hard-near-0db-below", dict(p=0.9999999999, pRef=1.0)),
+        # pRef = 1 makes p/pRef exact, so these three control cases keep the logarithm itself on trial
+        ("hard-near-0db-exact-ratio-above", dict(p=1.001, pRef=1.0)),
+        ("hard-near-0db-exact-ratio-1e-10", dict(p=1.0000000001, pRef=1.0)),
+        ("hard-near-0db-exact-ratio-below", dict(p=0.9999999999, pRef=1.0)),
         ("hard-adjacent-floats", dict(p=1.0000000000000002, pRef=1.0)),
+        # the standard 20 micropascal reference: the quotient rounds, and the level just above 0 dB keeps few digits
+        ("hard-near-0db-ref20upa-1e-3", dict(p=near(20e-6, 1e-3), pRef=20e-6)),
+        ("hard-near-0db-ref20upa-1e-6", dict(p=near(20e-6, 1e-6), pRef=20e-6)),
+        ("hard-near-0db-ref20upa-1e-10", dict(p=near(20e-6, 1e-10), pRef=20e-6)),
+        ("hard-near-0db-ref20upa-below-1e-8", dict(p=near(20e-6, -1e-8), pRef=20e-6)),
         ("hard-equal", dict(p=20e-6, pRef=20e-6)),
         ("hard-huge-ratio", dict(p=1e5, pRef=1e-300)),
         ("extreme-ratio-overflow", dict(p=1e200, pRef=1e-200)),
@@ -208,10 +229,14 @@ def acoustics():
     items_il = [
         ("typ-1e-6", dict(I=1e-6, IRef=1e-12)),
         ("typ-quiet", dict(I=3e-12, IRef=1e-12)),
-        ("hard-near-0db-above", dict(I=1.001, IRef=1.0)),
-        ("hard-near-0db-1e-10", dict(I=1.0000000001, IRef=1.0)),
-        ("hard-near-0db-below", dict(I=0.9999999999, IRef=1.0)),
+        ("hard-near-0db-exact-ratio-above", dict(I=1.001, IRef=1.0)),
+        ("hard-near-0db-exact-ratio-1e-10", dict(I=1.0000000001, IRef=1.0)),
+        ("hard-near-0db-exact-ratio-below", dict(I=0.9999999999, IRef=1.0)),
         ("hard-adjacent-floats", dict(I=1.0000000000000002, IRef=1.0)),
+        ("hard-near-0db-ref1e-12-1e-3", dict(I=near(1e-12, 1e-3), IRef=1e-12)),
+        ("hard-near-0db-ref1e-12-1e-6", dict(I=near(1e-12, 1e-6), IRef=1e-12)),
+        ("hard-near-0db-ref1e-12-1e-10", dict(I=near(1e-12, 1e-10), IRef=1e-12)),
+        ("hard-near-0db-ref1e-12-below-1e-8", dict(I=near(1e-12, -1e-8), IRef=1e-12)),
         ("hard-equal", dict(I=1e-12, IRef=1e-12)),
         ("extreme-ratio-overflow", dict(I=1e200, IRef=1e-200)),
         ("extreme-ratio-underflow", dict(I=1e-200, IRef=1e200)),
@@ -470,6 +495,7 @@ def fluids():
         ])
 
     # PipeFlowFriction
+    ORACLES["fluids.PipeFlowFriction"] = colebrook_f
     pipe = "Precision: iterative solve to ~1e-10 relative change; Swamee–Jain seed"
     pipe_rule = Rule(1e-10, "rel", "the relative change at which the iteration stops bounds its error against the exact Colebrook-White root: relative 1e-10")
     lam_rule = EXACT1()

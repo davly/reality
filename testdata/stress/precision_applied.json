@@ -146,7 +146,7 @@
    "claim": "acoustics/acoustics.go DecibelSPL: 'Precision: limited by float64 log10 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
   },
   {
-   "id": "applied/dbspl-hard-near-0db-above",
+   "id": "applied/dbspl-hard-near-0db-exact-ratio-above",
    "func": "acoustics.DecibelSPL",
    "args": {
     "p": 1.001,
@@ -158,7 +158,7 @@
    "claim": "acoustics/acoustics.go DecibelSPL: 'Precision: limited by float64 log10 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
   },
   {
-   "id": "applied/dbspl-hard-near-0db-1e-10",
+   "id": "applied/dbspl-hard-near-0db-exact-ratio-1e-10",
    "func": "acoustics.DecibelSPL",
    "args": {
     "p": 1.0000000001,
@@ -170,7 +170,7 @@
    "claim": "acoustics/acoustics.go DecibelSPL: 'Precision: limited by float64 log10 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
   },
   {
-   "id": "applied/dbspl-hard-near-0db-below",
+   "id": "applied/dbspl-hard-near-0db-exact-ratio-below",
    "func": "acoustics.DecibelSPL",
    "args": {
     "p": 0.9999999999,
@@ -189,6 +189,54 @@
     "pRef": 1.0
    },
    "want": 1.928654933106574e-15,
+   "tol": 1e-14,
+   "tol_kind": "rel",
+   "claim": "acoustics/acoustics.go DecibelSPL: 'Precision: limited by float64 log10 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
+  },
+  {
+   "id": "applied/dbspl-hard-near-0db-ref20upa-1e-3",
+   "func": "acoustics.DecibelSPL",
+   "args": {
+    "p": 2.0020000000007018e-05,
+    "pRef": 2e-05
+   },
+   "want": 0.008681549589417052,
+   "tol": 1e-14,
+   "tol_kind": "rel",
+   "claim": "acoustics/acoustics.go DecibelSPL: 'Precision: limited by float64 log10 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
+  },
+  {
+   "id": "applied/dbspl-hard-near-0db-ref20upa-1e-6",
+   "func": "acoustics.DecibelSPL",
+   "args": {
+    "p": 2.0000020000008595e-05,
+    "pRef": 2e-05
+   },
+   "want": 8.685889027316444e-06,
+   "tol": 1e-14,
+   "tol_kind": "rel",
+   "claim": "acoustics/acoustics.go DecibelSPL: 'Precision: limited by float64 log10 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
+  },
+  {
+   "id": "applied/dbspl-hard-near-0db-ref20upa-1e-10",
+   "func": "acoustics.DecibelSPL",
+   "args": {
+    "p": 2.0000000002005342e-05,
+    "pRef": 2e-05
+   },
+   "want": 8.709082431872756e-10,
+   "tol": 1e-14,
+   "tol_kind": "rel",
+   "claim": "acoustics/acoustics.go DecibelSPL: 'Precision: limited by float64 log10 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
+  },
+  {
+   "id": "applied/dbspl-hard-near-0db-ref20upa-below-1e-8",
+   "func": "acoustics.DecibelSPL",
+   "args": {
+    "p": 1.999999980001067e-05,
+    "pRef": 2e-05
+   },
+   "want": -8.685426317570303e-08,
    "tol": 1e-14,
    "tol_kind": "rel",
    "claim": "acoustics/acoustics.go DecibelSPL: 'Precision: limited by float64 log10 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
@@ -266,7 +314,7 @@
    "claim": "acoustics/acoustics.go DecibelFromIntensity: 'Precision: limited by float64 log10 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
   },
   {
-   "id": "applied/dbintensity-hard-near-0db-above",
+   "id": "applied/dbintensity-hard-near-0db-exact-ratio-above",
    "func": "acoustics.DecibelFromIntensity",
    "args": {
     "I": 1.001,
@@ -278,7 +326,7 @@
    "claim": "acoustics/acoustics.go DecibelFromIntensity: 'Precision: limited by float64 log10 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
   },
   {
-   "id": "applied/dbintensity-hard-near-0db-1e-10",
+   "id": "applied/dbintensity-hard-near-0db-exact-ratio-1e-10",
    "func": "acoustics.DecibelFromIntensity",
    "args": {
     "I": 1.0000000001,
@@ -290,7 +338,7 @@
    "claim": "acoustics/acoustics.go DecibelFromIntensity: 'Precision: limited by float64 log10 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
   },
   {
-   "id": "applied/dbintensity-hard-near-0db-below",
+   "id": "applied/dbintensity-hard-near-0db-exact-ratio-below",
    "func": "acoustics.DecibelFromIntensity",
    "args": {
     "I": 0.9999999999,
@@ -309,6 +357,54 @@
     "IRef": 1.0
    },
    "want": 9.64327466553287e-16,
+   "tol": 1e-14,
+   "tol_kind": "rel",
+   "claim": "acoustics/acoustics.go DecibelFromIntensity: 'Precision: limited by float64 log10 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
+  },
+  {
+   "id": "applied/dbintensity-hard-near-0db-ref1e-12-1e-3",
+   "func": "acoustics.DecibelFromIntensity",
+   "args": {
+    "I": 1.0010000000006481e-12,
+    "IRef": 1e-12
+   },
+   "want": 0.004340774795998471,
+   "tol": 1e-14,
+   "tol_kind": "rel",
+   "claim": "acoustics/acoustics.go DecibelFromIntensity: 'Precision: limited by float64 log10 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
+  },
+  {
+   "id": "applied/dbintensity-hard-near-0db-ref1e-12-1e-6",
+   "func": "acoustics.DecibelFromIntensity",
+   "args": {
+    "I": 1.0000010000003564e-12,
+    "IRef": 1e-12
+   },
+   "want": 4.342944195430411e-06,
+   "tol": 1e-14,
+   "tol_kind": "rel",
+   "claim": "acoustics/acoustics.go DecibelFromIntensity: 'Precision: limited by float64 log10 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
+  },
+  {
+   "id": "applied/dbintensity-hard-near-0db-ref1e-12-1e-10",
+   "func": "acoustics.DecibelFromIntensity",
+   "args": {
+    "I": 1.0000000001001393e-12,
+    "IRef": 1e-12
+   },
+   "want": 4.348996330972751e-10,
+   "tol": 1e-14,
+   "tol_kind": "rel",
+   "claim": "acoustics/acoustics.go DecibelFromIntensity: 'Precision: limited by float64 log10 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
+  },
+  {
+   "id": "applied/dbintensity-hard-near-0db-ref1e-12-below-1e-8",
+   "func": "acoustics.DecibelFromIntensity",
+   "args": {
+    "I": 9.999999900007978e-13,
+    "IRef": 1e-12
+   },
+   "want": -4.3425983555927317e-08,
    "tol": 1e-14,
    "tol_kind": "rel",
    "claim": "acoustics/acoustics.go DecibelFromIntensity: 'Precision: limited by float64 log10 (~15 significant digits)' -> '~15 significant digits' = ~1e-15 relative with the generator's 10x slack: relative 1e-14"
