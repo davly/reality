@@ -47,7 +47,7 @@ protection — a `t.Skip` would not guard them).
 |---|---|---|---|
 | `MelToHz` round-trip (audio/melscale.go:38) | `HzToMel(MelToHz(m)) <= 1e-9` over [0,8000] | quick (200k) + dense 80k grid | **9.09e-13** |
 | `HzToMel` / `MelToHz` (melscale.go:15/37) | monotonically increasing | quick monotonicity | holds |
-| `QuatToAxisAngle∘QuatFromAxisAngle` (geometry/quaternion.go:132/158) | `<= 1e-12` (well-conditioned angles) | rotation-action on basis vectors, band [0.05, π-0.05] | **4.70e-15** |
+| `QuatToAxisAngle∘QuatFromAxisAngle` (geometry/quaternion.go:132/158) | `<= 1e-12` (all angles, down to 1e-8 from 0 and π) | rotation-action on basis vectors, bands [0.05, π-0.05] and [1e-8, π-1e-8] | **1.33e-15** / **1.55e-15** |
 | `QuatRotateVec` (quaternion.go:190) | "exact" → isometry `|R(v)|==|v|` | quick (200k), unit quats | rel **1.55e-15** |
 | `QuatRotateVec(identity)` (quaternion.go:190) | "exact" → bit-exact no-op | quick (100k) bit-equality | bit-exact |
 | `QuatNormalize` (quaternion.go:47) | "exact" → unit length | quick (100k) | `|mag-1|` **3.33e-16** |
@@ -105,20 +105,31 @@ is used ONLY here, never to swallow a holding bound.
 - Test: `TestNormalQuantileValueUpperTailOverClaim` (SKIP) +
   `TestNormalQuantileValueLowerAndBulk` (PASS).
 
-### 3. `QuatToAxisAngle` round-trip — `1e-12` over-claimed near degenerate angles (quaternion.go:158)
-- **Claim:** "Precision: 1e-12 (transcendental functions)" — stated
-  unconditionally.
-- **Observed:** worst rotation-action round-trip error **4.43e-11** for angles
-  down to 1e-6 rad from 0 / π (~44× the claim).
-- **Cause (understood, NOT an impl defect):** axis-angle is intrinsically
-  ill-conditioned as `angle → 0` / `angle → π` — the axis becomes undefined and
-  `axis = (x,y,z)/sin(angle/2)` divides by a vanishing `sin`. For
-  well-conditioned angles [0.05, π−0.05] the round-trip is **4.70e-15** (PINNED
-  PASS); [0.01, π−0.01] is ~4.2e-14 (still < 1e-12).
-- **Honest framing:** the bound holds for typical angles; an honest docstring
-  would scope it to angles bounded away from 0 and π.
-- Test: `TestQuatAxisAngleRoundTripNearDegenerate` (SKIP) +
-  `TestQuatAxisAngleRoundTripWellConditioned` (PASS).
+### 3. `QuatToAxisAngle` round-trip — `1e-12` over-claimed near degenerate angles (quaternion.go:158) — RESOLVED
+- **Status: resolved.** `QuatToAxisAngle` now takes the angle as
+  `2*atan2(|v|, w)` instead of `2*acos(w)`. Measured against 50-digit values it
+  has a relative angle error below 2.4e-16 from 1e-8 rad to 2π−1e-8, and the
+  round-trip error over [1e-8, π−1e-8] is **1.55e-15**.
+  `TestQuatAxisAngleRoundTripNearDegenerate` is now an ENFORCED guard (it fails
+  RED), no longer a SKIP; the counts at the top of this file (33 PASS / 4 SKIP)
+  predate this fix.
+- **Claim (as originally found):** "Precision: 1e-12 (transcendental
+  functions)" — stated unconditionally.
+- **Observed then:** worst rotation-action round-trip error **4.43e-11** for
+  angles down to 1e-6 rad from 0 / π (~44× the claim), **9.96e-9** down to
+  1e-8 rad; below ~2e-8 rad the function returned angle 0 and the wrong axis.
+- **Cause (corrected):** this WAS an implementation defect, not only a property
+  of the representation. `w = cos(angle/2) = 1 − angle²/8` near `angle → 0`
+  (and `−1 + …` near 2π), so `acos(w)` loses all precision there: `w` rounds to
+  1 below ~2e-8 rad, and before that the absolute error is up to ~2e-16/angle
+  (6e-5 relative at 1e-6 rad). `|v| = sin(angle/2)`
+  keeps its relative precision. The original text also named `angle → π` as
+  degenerate; it is not (`w → 0` is harmless, the error there was already
+  ~1e-16). Only the axis of a rotation by nearly 0 or 2π is intrinsically
+  ill-conditioned (the vector part is tiny).
+- Test: `TestQuatAxisAngleRoundTripNearDegenerate` (PASS, enforced) +
+  `TestQuatAxisAngleRoundTripWellConditioned` (PASS) +
+  `TestQuatToAxisAngle_MatchesTheExactAxisAndAngle` (oracle rows, 50-digit).
 
 ### 4. `BinomialCoeff` — CAVEAT: `< 1e-12` exceeded for large n (counting.go:48)
 - **Claim:** "relative error < 1e-12 for typical inputs".

@@ -35,14 +35,16 @@ func unitAxisAngle(ax, ay, az, an uint64) ([3]float64, float64) {
 	return axis, angle
 }
 
-const quatRoundTripBound = 1e-12 // QuatToAxisAngle docstring (quaternion.go:158)
+// quatRoundTripBound is a conservative bound for the axis-angle round trip;
+// QuatToAxisAngle and QuatFromAxisAngle measure about 1.5e-15 over the bands
+// below.
+const quatRoundTripBound = 1e-12
 
 // quatAxisAngleWorstRotationErr returns the worst rotation-action round-trip
 // error over the angle band [loAngle, pi-loAngle] using a deterministic dense
-// sweep of axes and angles. The axis-angle representation is intrinsically
-// ill-conditioned as angle -> 0 or angle -> pi (the axis becomes undefined), so
-// the round-trip error grows near those endpoints; loAngle selects how close to
-// the degeneracy we probe.
+// sweep of axes and angles; loAngle selects how close to the degenerate
+// angles 0 and pi we probe (the axis of a rotation by nearly 0 is intrinsically
+// ill-conditioned, the vector part being tiny).
 func quatAxisAngleWorstRotationErr(loAngle float64) float64 {
 	worst := 0.0
 	const nAxis, nAngle = 211, 401
@@ -87,18 +89,18 @@ func TestQuatAxisAngleRoundTripWellConditioned(t *testing.T) {
 	t.Logf("PINNED quaternion.go:132/158 axis-angle round-trip (band [0.05, pi-0.05]): worst rotation-action error %g (bound %g)", worst, quatRoundTripBound)
 }
 
-// TestQuatAxisAngleRoundTripNearDegenerate DOCUMENTS the honest finding that the
-// 1e-12 claim is OVER-CLAIMED for near-degenerate angles (angle -> 0 / -> pi),
-// where axis extraction is intrinsically ill-conditioned. This is a property of
-// the axis-angle representation, not an implementation defect, but the docstring
-// states 1e-12 unconditionally. We surface it via Skip so the suite stays GREEN
-// while the finding is visible in `go test -v`.
+// TestQuatAxisAngleRoundTripNearDegenerate PINS the same round-trip bound for
+// near-degenerate angles (down to 1e-8 rad from 0 and from pi). It used to be a
+// documented over-claim (SKIP): QuatToAxisAngle took the angle from acos(w),
+// which loses all precision as the angle goes to 0 (round-trip error up to
+// 4.4e-11 at 1e-6 rad, and a returned angle of 0 below ~2e-8 rad). It now uses
+// atan2(|v|, w), so the bound holds and a regression turns the suite RED.
 func TestQuatAxisAngleRoundTripNearDegenerate(t *testing.T) {
-	worst := quatAxisAngleWorstRotationErr(1e-6)
+	worst := quatAxisAngleWorstRotationErr(1e-8)
 	if worst > quatRoundTripBound {
-		t.Skipf("PRECISION OVER-CLAIM: QuatToAxisAngle (quaternion.go:158) docstring claims 1e-12 unconditionally; near-degenerate angles (down to 1e-6 rad from 0/pi) give rotation-action round-trip error %g > %g — the bound holds for typical angles but the axis-angle representation is ill-conditioned at the endpoints; an honest docstring would scope the bound to angles bounded away from 0 and pi", worst, quatRoundTripBound)
+		t.Errorf("PRECISION REGRESSION: QuatToAxisAngle round-trip claims <= %g; near-degenerate angles (down to 1e-8 rad from 0/pi) give rotation-action error %g", quatRoundTripBound, worst)
 	}
-	t.Logf("near-degenerate band: worst rotation-action error %g (bound %g)", worst, quatRoundTripBound)
+	t.Logf("near-degenerate band [1e-8, pi-1e-8]: worst rotation-action error %g (bound %g)", worst, quatRoundTripBound)
 }
 
 // TestQuatRotateVecPreservesLength pins quaternion.go:190 "exact for IEEE 754

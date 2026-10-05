@@ -148,38 +148,36 @@ func QuatFromAxisAngle(axis [3]float64, angle float64) [4]float64 {
 
 // QuatToAxisAngle extracts the rotation axis and angle (radians) from a unit
 // quaternion. The returned angle is in [0, 2*pi). If the quaternion represents
-// no rotation (w ~= 1), returns axis [0, 0, 1] and angle 0.
+// no rotation (the vector part has norm below 1e-10, that is the angle is
+// within 2e-10 of 0 or 2*pi), returns axis [0, 0, 1] and angle 0.
 //
-// Definition:
+// Definition, with v = (x, y, z) the vector part and w the scalar part:
 //
-//	angle = 2 * acos(w)
-//	axis  = (x, y, z) / sin(angle/2)
+//	angle = 2 * atan2(|v|, w)
+//	axis  = v / |v|
 //
-// Precision: 1e-12 for angles bounded away from 0 and pi (validated on
-// [0.05, pi-0.05], worst observed 4.70e-15). Near-degenerate angles
-// (angle -> 0 or pi) divide by a vanishing sin(angle/2), so the axis is
-// ill-conditioned: round-trip error can reach ~4.43e-11 for angles as
-// close as 1e-6 rad from 0/pi (~44x the bound).
+// The angle is taken from |v| = sin(angle/2) and w = cos(angle/2) together,
+// not from acos(w): near angle 0 (and near 2*pi) w is 1 - angle^2/8 (-1 + ...),
+// which float64 cannot tell apart from 1 below about 2e-8 rad, so acos(w)
+// returned angle 0 there and a relative error of 6e-5 at 1e-6 rad. |v| keeps
+// its full relative precision at any size.
+//
+// Precision: the angle has a relative error of about 1e-16 (measured below
+// 2.4e-16 against 50-digit values for angles from 1e-8 to 2*pi - 1e-8), the
+// axis components an absolute error of about 1e-16, and the axis has unit
+// length to rounding. A rotation about a coordinate axis gives that axis
+// exactly. The angle is not ill-conditioned near pi (w -> 0 is harmless);
+// only the axis of a rotation by nearly 0 or 2*pi is intrinsically
+// ill-conditioned, because the vector part is then tiny.
 func QuatToAxisAngle(q [4]float64) (axis [3]float64, angle float64) {
-	// Ensure w is in [-1, 1] for acos safety.
-	w := q[0]
-	if w > 1 {
-		w = 1
-	}
-	if w < -1 {
-		w = -1
-	}
+	vn := math.Sqrt(q[1]*q[1] + q[2]*q[2] + q[3]*q[3])
 
-	angle = 2 * math.Acos(w)
-	sinHalf := math.Sin(angle * 0.5)
-
-	if sinHalf < 1e-10 {
+	if vn < 1e-10 {
 		// Near-zero rotation: axis is arbitrary, choose +Z.
 		return [3]float64{0, 0, 1}, 0
 	}
 
-	inv := 1.0 / sinHalf
-	return [3]float64{q[1] * inv, q[2] * inv, q[3] * inv}, angle
+	return [3]float64{q[1] / vn, q[2] / vn, q[3] / vn}, 2 * math.Atan2(vn, q[0])
 }
 
 // QuatRotateVec rotates a 3D vector v by unit quaternion q.
