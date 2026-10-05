@@ -45,9 +45,9 @@
     "mu0": 0.0
    },
    "want": 0.00538996406565195,
-   "tol": 1e-11,
+   "tol": 1.1e-14,
    "tol_kind": "rel",
-   "claim": "prob/hypothesis.go TTestOneSample: 'Precision: ~1e-12 for p-values' -> relative 1e-11"
+   "claim": "prob/hypothesis.go TTestOneSample: 'Given the statistic, its relative error is at most 3e-15 for p >= 1e-10; a smaller p carries an additional error proportional to |ln p|' (taken as 5e-16*|ln p|, the rate the ChiSquaredTest docstring states) 'The statistic's own rounding (a few ulp) moves p by up to min(t^2, df+1) times as much' -> relative 3e-15 + 9 * 4 ulp = 1.1e-14"
   },
   {
    "id": "ttest/tail-t20",
@@ -89,9 +89,9 @@
     "mu0": 0.0
    },
    "want": 6.749083665771295e-19,
-   "tol": 1e-11,
+   "tol": 5.5e-14,
    "tol_kind": "rel",
-   "claim": "prob/hypothesis.go TTestOneSample: 'Precision: ~1e-12 for p-values' -> relative 1e-11"
+   "claim": "prob/hypothesis.go TTestOneSample: 'Given the statistic, its relative error is at most 3e-15 for p >= 1e-10; a smaller p carries an additional error proportional to |ln p|' (taken as 5e-16*|ln p|, the rate the ChiSquaredTest docstring states) 'The statistic's own rounding (a few ulp) moves p by up to min(t^2, df+1) times as much' -> relative 3e-15 + 5e-16*|ln 6.8e-19| + 31 * 4 ulp = 5.2e-14 -> 5.5e-14"
   },
   {
    "id": "chisq/df5-tail",
@@ -102,9 +102,9 @@
     "d": 32.65986323608842
    },
    "want": 1.4597160783064539e-39,
-   "tol": 1e-11,
+   "tol": 1.1e-12,
    "tol_kind": "rel",
-   "claim": "prob/hypothesis.go ChiSquaredTest: 'Precision: ~1e-12 for p-values' -> relative 1e-11"
+   "claim": "prob/hypothesis.go ChiSquaredTest: 'the statistic is summed with compensation (relative error of a few ulp)'; 'Given the statistic, its relative error is at most 5e-15 for p >= 1e-10 and below 1e-12 for p >= 1e-300'. The statistic's rounding moves ln p by d ln Q / d ln chi2 times as much -> relative 1e-12 + (chi2/2 = 96) * 4 ulp = 1.09e-12 -> 1.1e-12"
   },
   {
    "id": "chisq/df99999",
@@ -115,9 +115,9 @@
     "d": 3.146426544510455
    },
    "want": 0.9874491341820361,
-   "tol": 1e-11,
+   "tol": 1.2e-14,
    "tol_kind": "rel",
-   "claim": "prob/hypothesis.go ChiSquaredTest: 'Precision: ~1e-12 for p-values' -> relative 1e-11"
+   "claim": "prob/hypothesis.go ChiSquaredTest: 'the statistic is summed with compensation (relative error of a few ulp)'; 'Given the statistic, its relative error is at most 5e-15 for p >= 1e-10 and below 1e-12 for p >= 1e-300'. The statistic's rounding moves ln p by d ln Q / d ln chi2 times as much -> relative 5e-15 + (chi2*f/Q = 7.2) * 4 ulp = 1.14e-14 -> 1.2e-14"
   },
   {
    "id": "poisson/small",
@@ -127,9 +127,9 @@
     "lambda": 10.0
    },
    "want": 0.06708596287903178,
-   "tol": 1e-12,
+   "tol": 7e-15,
    "tol_kind": "rel",
-   "claim": "prob/distributions.go PoissonCDF: 'Precision: accumulated float64 summation error' -> relative 1e-12 (a CDF below its own PMF, or several percent off, violates any reading)"
+   "claim": "prob/distributions.go PoissonCDF: 'relative error below 1e-12 wherever the result is at least 1e-300 (... at most 7e-15 for results >= 1e-10 ...)' -> relative 7e-15 (result >= 1e-10)"
   },
   {
    "id": "poisson/lower-tail",
@@ -141,7 +141,7 @@
    "want": 4.248354255291589e-18,
    "tol": 1e-12,
    "tol_kind": "rel",
-   "claim": "prob/distributions.go PoissonCDF: 'Precision: accumulated float64 summation error' -> relative 1e-12 (a CDF below its own PMF, or several percent off, violates any reading)"
+   "claim": "prob/distributions.go PoissonCDF: 'relative error below 1e-12 wherever the result is at least 1e-300 (... at most 7e-15 for results >= 1e-10 ...)' -> relative 1e-12 (result below 1e-10)"
   },
   {
    "id": "poisson/median-1e4",
@@ -151,9 +151,9 @@
     "lambda": 10000.0
    },
    "want": 0.5026595812190077,
-   "tol": 1e-12,
+   "tol": 7e-15,
    "tol_kind": "rel",
-   "claim": "prob/distributions.go PoissonCDF: 'Precision: accumulated float64 summation error' -> relative 1e-12 (a CDF below its own PMF, or several percent off, violates any reading)"
+   "claim": "prob/distributions.go PoissonCDF: 'relative error below 1e-12 wherever the result is at least 1e-300 (... at most 7e-15 for results >= 1e-10 ...)' -> relative 7e-15 (result >= 1e-10)"
   },
   {
    "id": "gamma/k10",
@@ -164,9 +164,9 @@
     "theta": 1.0
    },
    "want": 0.5420702855281478,
-   "tol": 1e-13,
+   "tol": 6e-15,
    "tol_kind": "rel",
-   "claim": "prob/distributions.go GammaCDF: 'Precision: ~1e-14' -> relative 1e-13"
+   "claim": "prob/distributions.go GammaCDF: 'for shapes from 1e-3 to 1e7 (the measured range), relative error at most 6e-15 for results >= 1e-10' -> relative 6e-15"
   },
   {
    "id": "gamma/k1e4",
@@ -177,9 +177,9 @@
     "theta": 1.0
    },
    "want": 0.5013298083399552,
-   "tol": 1e-13,
+   "tol": 6e-15,
    "tol_kind": "rel",
-   "claim": "prob/distributions.go GammaCDF: 'Precision: ~1e-14' -> relative 1e-13"
+   "claim": "prob/distributions.go GammaCDF: 'for shapes from 1e-3 to 1e7 (the measured range), relative error at most 6e-15 for results >= 1e-10' -> relative 6e-15"
   },
   {
    "id": "gamma/k1e5",
@@ -190,9 +190,9 @@
     "theta": 1.0
    },
    "want": 0.5004205221103651,
-   "tol": 1e-13,
+   "tol": 6e-15,
    "tol_kind": "rel",
-   "claim": "prob/distributions.go GammaCDF: 'Precision: ~1e-14' -> relative 1e-13"
+   "claim": "prob/distributions.go GammaCDF: 'for shapes from 1e-3 to 1e7 (the measured range), relative error at most 6e-15 for results >= 1e-10' -> relative 6e-15"
   },
   {
    "id": "normalq/p1e-12",
@@ -201,9 +201,9 @@
     "p": 1e-12
    },
    "want": -7.034483825301132,
-   "tol": 1.15e-09,
+   "tol": 5.551115123125783e-16,
    "tol_kind": "rel",
-   "claim": "prob/distributions.go NormalQuantile: 'maximum relative error < 1.15e-9 for p bounded away from 1' -> relative 1.15e-9"
+   "claim": "prob/distributions.go NormalQuantile: 'within 2.5 ulps of the exact quantile for every p in (0, 1)' -> relative 2.5 * 2^-52"
   },
   {
    "id": "normalq/p0.025",
@@ -212,9 +212,9 @@
     "p": 0.025
    },
    "want": -1.9599639845400543,
-   "tol": 1.15e-09,
+   "tol": 5.551115123125783e-16,
    "tol_kind": "rel",
-   "claim": "prob/distributions.go NormalQuantile: 'maximum relative error < 1.15e-9 for p bounded away from 1' -> relative 1.15e-9"
+   "claim": "prob/distributions.go NormalQuantile: 'within 2.5 ulps of the exact quantile for every p in (0, 1)' -> relative 2.5 * 2^-52"
   },
   {
    "id": "normalq/p0.3",
@@ -223,9 +223,9 @@
     "p": 0.3
    },
    "want": -0.5244005127080408,
-   "tol": 1.15e-09,
+   "tol": 5.551115123125783e-16,
    "tol_kind": "rel",
-   "claim": "prob/distributions.go NormalQuantile: 'maximum relative error < 1.15e-9 for p bounded away from 1' -> relative 1.15e-9"
+   "claim": "prob/distributions.go NormalQuantile: 'within 2.5 ulps of the exact quantile for every p in (0, 1)' -> relative 2.5 * 2^-52"
   },
   {
    "id": "normalq/p0.975",
@@ -234,9 +234,9 @@
     "p": 0.975
    },
    "want": 1.9599639845400538,
-   "tol": 1.15e-09,
+   "tol": 5.551115123125783e-16,
    "tol_kind": "rel",
-   "claim": "prob/distributions.go NormalQuantile: 'maximum relative error < 1.15e-9 for p bounded away from 1' -> relative 1.15e-9"
+   "claim": "prob/distributions.go NormalQuantile: 'within 2.5 ulps of the exact quantile for every p in (0, 1)' -> relative 2.5 * 2^-52"
   },
   {
    "id": "normalq/p0.999999",
@@ -245,9 +245,9 @@
     "p": 0.999999
    },
    "want": 4.753424308817087,
-   "tol": 1.15e-09,
+   "tol": 5.551115123125783e-16,
    "tol_kind": "rel",
-   "claim": "prob/distributions.go NormalQuantile: 'maximum relative error < 1.15e-9 for p bounded away from 1' -> relative 1.15e-9"
+   "claim": "prob/distributions.go NormalQuantile: 'within 2.5 ulps of the exact quantile for every p in (0, 1)' -> relative 2.5 * 2^-52"
   },
   {
    "id": "normalq/full-precision-claim",
@@ -256,9 +256,9 @@
     "p": 0.05
    },
    "want": -1.6448536269514726,
-   "tol": 1e-14,
+   "tol": 5.551115123125783e-16,
    "tol_kind": "rel",
-   "claim": "prob/distributions.go NormalQuantile: 'full float64 precision across the entire range (0, 1)' -> relative 1e-14 (the same docstring also states 1.15e-9; this case binds the contradiction)"
+   "claim": "prob/distributions.go NormalQuantile: 'within 2.5 ulps of the exact quantile for every p in (0, 1)' -> relative 2.5 * 2^-52 (this case once bound the docstring's 'full float64 precision' sentence, which contradicted its 1.15e-9 bound)"
   },
   {
    "id": "expq/p0.5",
@@ -268,9 +268,9 @@
     "lambda": 1.0
    },
    "want": 0.6931471805599453,
-   "tol": 1e-14,
+   "tol": 4.440892098500626e-16,
    "tol_kind": "rel",
-   "claim": "prob/distributions.go ExponentialQuantile: 'Precision: ~15 significant digits' -> relative 1e-14"
+   "claim": "prob/distributions.go ExponentialQuantile: 'within 2 ulps of the exact quantile for every p in (0, 1)' -> relative 2 * 2^-52"
   },
   {
    "id": "expq/p1e-10",
@@ -280,9 +280,9 @@
     "lambda": 1.0
    },
    "want": 1.00000000005e-10,
-   "tol": 1e-14,
+   "tol": 4.440892098500626e-16,
    "tol_kind": "rel",
-   "claim": "prob/distributions.go ExponentialQuantile: 'Precision: ~15 significant digits' -> relative 1e-14"
+   "claim": "prob/distributions.go ExponentialQuantile: 'within 2 ulps of the exact quantile for every p in (0, 1)' -> relative 2 * 2^-52"
   },
   {
    "id": "bf10/k30-n60",
@@ -292,9 +292,9 @@
     "n": 60
    },
    "want": 0.15981414117778536,
-   "tol": 1e-06,
+   "tol": 5.3e-15,
    "tol_kind": "rel",
-   "claim": "prob/bayesfactor.go ProportionBayesFactor10: 'matches a brute-force quadrature oracle to < 1e-6 relative' -> relative 1e-6"
+   "claim": "prob/bayesfactor.go ProportionBayesFactor10: 'the relative error is at most 5.3e-15 for n <= 1000' -> relative 5.3e-15"
   },
   {
    "id": "bf10/k0-n60",
@@ -304,9 +304,9 @@
     "n": 60
    },
    "want": 0.01639344262295082,
-   "tol": 1e-06,
+   "tol": 5.3e-15,
    "tol_kind": "rel",
-   "claim": "prob/bayesfactor.go ProportionBayesFactor10: 'matches a brute-force quadrature oracle to < 1e-6 relative' -> relative 1e-6"
+   "claim": "prob/bayesfactor.go ProportionBayesFactor10: 'the relative error is at most 5.3e-15 for n <= 1000' -> relative 5.3e-15"
   },
   {
    "id": "binom/50-21",
@@ -316,9 +316,9 @@
     "k": 21
    },
    "want": 67327446062800.0,
-   "tol": 1e-12,
+   "tol": 0.0,
    "tol_kind": "rel",
-   "claim": "combinatorics/counting.go BinomialCoeff: 'relative error < 1e-12 for n <= 200' -> relative 1e-12"
+   "claim": "combinatorics/counting.go BinomialCoeff: 'correctly rounded: the result is the float64 nearest to the exact integer C(n,k)' -> exact match"
   },
   {
    "id": "binom/200-100",
@@ -328,9 +328,9 @@
     "k": 100
    },
    "want": 9.054851465610328e+58,
-   "tol": 1e-12,
+   "tol": 0.0,
    "tol_kind": "rel",
-   "claim": "combinatorics/counting.go BinomialCoeff: 'relative error < 1e-12 for n <= 200' -> relative 1e-12"
+   "claim": "combinatorics/counting.go BinomialCoeff: 'correctly rounded: the result is the float64 nearest to the exact integer C(n,k)' -> exact match"
   },
   {
    "id": "factorial/20",
@@ -341,7 +341,7 @@
    "want": 2.43290200817664e+18,
    "tol": 0.0,
    "tol_kind": "rel",
-   "claim": "combinatorics/counting.go Factorial: 'exact (bit-exact) for n <= 20' -> relative 0"
+   "claim": "combinatorics/counting.go Factorial: 'correctly rounded (round to nearest, ties to even) for every n <= 170, and exact for n <= 22' -> exact match"
   },
   {
    "id": "factorial/100",
@@ -350,9 +350,9 @@
     "n": 100
    },
    "want": 9.332621544394415e+157,
-   "tol": 1e-13,
+   "tol": 0.0,
    "tol_kind": "rel",
-   "claim": "combinatorics/counting.go Factorial: 'for 21 <= n <= 170 ... relative error < 1e-13' -> relative 1e-13 (the same docstring cites a worst observed 1.30e-13 at n=166)"
+   "claim": "combinatorics/counting.go Factorial: 'correctly rounded (round to nearest, ties to even) for every n <= 170, and exact for n <= 22' -> exact match"
   },
   {
    "id": "factorial/166",
@@ -361,9 +361,9 @@
     "n": 166
    },
    "want": 9.003691705778438e+297,
-   "tol": 1e-13,
+   "tol": 0.0,
    "tol_kind": "rel",
-   "claim": "combinatorics/counting.go Factorial: 'for 21 <= n <= 170 ... relative error < 1e-13' -> relative 1e-13 (the same docstring cites a worst observed 1.30e-13 at n=166)"
+   "claim": "combinatorics/counting.go Factorial: 'correctly rounded (round to nearest, ties to even) for every n <= 170, and exact for n <= 22' -> exact match"
   },
   {
    "id": "fisher/8-2-1-5",
@@ -375,9 +375,9 @@
     "d": 5
    },
    "want": 0.03496503496503497,
-   "tol": 1e-11,
+   "tol": 7.5e-14,
    "tol_kind": "rel",
-   "claim": "prob/nonparametric.go FisherExactTest: 'Precision: ~1e-12' -> relative 1e-11"
+   "claim": "prob/nonparametric.go FisherExactTest: 'relative error at most 7.5e-14 against the exact p-value for every table with n <= 40' -> relative 7.5e-14"
   },
   {
    "id": "fisher/tie-9-11-10-10",
@@ -389,9 +389,9 @@
     "d": 10
    },
    "want": 1.0,
-   "tol": 1e-11,
+   "tol": 7.5e-14,
    "tol_kind": "rel",
-   "claim": "prob/nonparametric.go FisherExactTest: 'Precision: ~1e-12' -> relative 1e-11"
+   "claim": "prob/nonparametric.go FisherExactTest: 'relative error at most 7.5e-14 against the exact p-value for every table with n <= 40' -> relative 7.5e-14"
   },
   {
    "id": "betacdf/0.3-2-5",
@@ -402,9 +402,9 @@
     "beta": 5.0
    },
    "want": 0.5798249999999999,
-   "tol": 1e-13,
+   "tol": 2.2e-15,
    "tol_kind": "abs",
-   "claim": "prob/distributions.go BetaCDF: 'Precision: ~1e-14 absolute for typical inputs' -> absolute 1e-13"
+   "claim": "prob/distributions.go BetaCDF: 'absolute error at most 2.2e-15 (measured for parameters from 1e-3 to 1e7)' -> absolute 2.2e-15"
   },
   {
    "id": "betacdf/0.5-1e6-1e6",
@@ -415,9 +415,9 @@
     "beta": 1000000.0
    },
    "want": 0.5,
-   "tol": 1e-13,
+   "tol": 2.2e-15,
    "tol_kind": "abs",
-   "claim": "prob/distributions.go BetaCDF: 'Precision: ~1e-14 absolute for typical inputs' -> absolute 1e-13; expected value from the symmetry identity I_1/2(a, a) = 1/2"
+   "claim": "prob/distributions.go BetaCDF: 'absolute error at most 2.2e-15 (measured for parameters from 1e-3 to 1e7)' -> absolute 2.2e-15; expected value from the symmetry identity I_1/2(a, a) = 1/2"
   }
  ]
 }
