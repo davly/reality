@@ -43,7 +43,8 @@ func BisectionMethod(f func(float64) float64, a, b, tol float64) float64 {
 // iterations are exhausted.
 //
 // Definition: first-order Taylor expansion root approximation.
-// Convergence rate: quadratic (when it converges).
+// Convergence rate: quadratic near a simple root; only linear at a multiple
+// root (at a double root the error halves each step).
 //
 // Precision: depends on the function and starting point. May diverge for
 // bad initial guesses or near inflection points.

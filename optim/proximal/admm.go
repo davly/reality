@@ -45,7 +45,10 @@ type AdmmResult struct {
 //	z^{k+1} = prox_{g/rho}(x^{k+1} + u^k)
 //	u^{k+1} = u^k + x^{k+1} - z^{k+1}
 //
-// Convergence: linear under standard convexity + Slater conditions.
+// Convergence: under convexity and Slater's condition the iterates converge
+// (Boyd 2011 §3.2), but not linearly in general: for f(x) = x^4, g = 0 the
+// error decays like (rho/(8k))^(1/2). The rate is linear when f is strongly
+// convex with a Lipschitz gradient.
 //
 // Reference: Boyd S. et al. (2011). Distributed Optimization and Statistical
 // Learning via the Alternating Direction Method of Multipliers. Found.
