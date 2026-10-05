@@ -31,7 +31,7 @@ visible finding.
 - The suite is GREEN because every enforced bound holds — "green" here means
   "no regression of an enforced bound", NOT "no failing test was allowed to
   fail". An enforced bound that regresses WILL turn it red.
-- 40 test functions across 8 packages: **40 PASS (enforced, fail-red), 0
+- 41 test functions across 8 packages: **41 PASS (enforced, fail-red), 0
   SKIP.**
 
 Run: `go test -v ./audio/ ./geometry/ ./optim/ ./prob/ ./prob/copula/ ./combinatorics/ ./color/ ./audio/separation/`
@@ -64,7 +64,7 @@ protection — a `t.Skip` would not guard them).
 | `BinomialCoeff` / `Permutations` (counting.go) | correctly rounded | every 0<=k<=n<=300 vs exact `big.Int`, plus overflow rows and spot checks to n=2^63-1 | 0 wrong (was 39,562 / 31,035) |
 | `BinomialCoeff` symmetry | `C(n,k)==C(n,n-k)` bit-exact | quick (20k) | bit-exact |
 | `FibonacciNumber` (counting.go:108) | "exact (integer arithmetic)" | `F_n==F_{n-1}+F_{n-2}` bit-exact, n=3..93; F_93 golden | bit-exact |
-| `SRGBToLinear`/`LinearToSRGB` (color/spaces.go:25/43) | "exact to float64" → round-trip | quick (200k) | **3.33e-16** |
+| `SRGBToLinear`/`LinearToSRGB` (color/spaces.go) | round trip to ~1e-12 outside the standard's threshold window | quick (200k, seeded) + explicit window cases | **3.33e-16** outside; 2.96e-8 inside the window (see #5) |
 | `RGBToHSV`/`HSVToRGB` (spaces.go:157/194) | "exact to float64" → round-trip | quick (200k) | **1.33e-15** |
 | `XYZToLab`/`LabToXYZ` (spaces.go) | inverse pair round-trip | quick (200k), D65 | **1.33e-15** |
 | `WienerFilter` (audio/separation/wiener.go:37) | gain∈[0,1] ⇒ `|out|<=|in|`; boundary cases | quick (200k) + boundary asserts | holds (bit-exact pass-through / full attenuation) |
@@ -72,11 +72,12 @@ protection — a `t.Skip` would not guard them).
 
 ---
 
-## OVER-CLAIMS FOUND (all four since RESOLVED)
+## OVER-CLAIMS FOUND (four resolved, one documented)
 
-These 4 bounds did not hold over their full claimed domain when this file was
-written; each was documented with a `t.Skip(...)`. All four have since been
-fixed, and their tests are ENFORCED.
+The first 4 bounds did not hold over their full claimed domain when this file
+was written; each was documented with a `t.Skip(...)`. All four have since been
+fixed, and their tests are ENFORCED. The fifth was found later and is documented
+rather than changed, because the fix would depart from the sRGB standard.
 
 ### 1. `Factorial` — `< 1e-15` was over-claimed for `n > 20` (counting.go) — RESOLVED
 - **Status: resolved.** Values now come from exact integer arithmetic, rounded
@@ -161,6 +162,25 @@ fixed, and their tests are ENFORCED.
   scopes out n in the high hundreds. Recorded as a CAVEAT for large-n callers
   (expect ~few×1e-12), not a hard contract violation.
 - Tests: `TestBinomialRelErrLargeN` (ENFORCED) + `TestBinomialRelErrTypical` (PASS).
+
+### 5. sRGB round trip — not exact just below 0.04045 (color/spaces.go) — DOCUMENTED
+- **Claim:** both transfer functions said "exact to float64 precision", read
+  by the round-trip test as "the pair are inverses to ~1e-12".
+- **Observed:** the IEC 61966-2-1 thresholds disagree: 0.04045/12.92 =
+  0.0031308050 exceeds the inverse's 0.0031308, so every c in
+  (12.92·0.0031308, 0.04045] = (0.040449936, 0.04045] decodes on the linear
+  branch and encodes back on the power branch: the round trip is off by
+  2.85e-8 to 2.96e-8 (50-digit values). The window is 6.4e-8 wide, so the
+  unseeded random test hit it only now and then, as an intermittent failure.
+  Each function alone is also less exact than claimed: within 7.6 and 10.4
+  ulps of its formula (200,000 inputs).
+- **Resolution:** the thresholds are kept exactly as the standard states them
+  (moving the inverse's threshold to 0.04045/12.92, inside the 2.3e-9 gap
+  between the two branches, would make the round trip exact but depart from
+  the standard). The docstrings state the measured precision and the window;
+  the property test excludes the window and `TestSRGBThresholdWindow` checks
+  it explicitly. All property tests now use a fixed seed, so every run checks
+  the same inputs.
 
 ---
 

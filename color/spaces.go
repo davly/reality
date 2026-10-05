@@ -22,7 +22,9 @@ import "math"
 //	else:               linear = ((srgb + 0.055) / 1.055) ^ 2.4
 //
 // Valid range: srgb in [0, 1]
-// Precision: exact to float64 precision
+// Precision: within 8 ulps of the formula (measured worst 7.6 ulps over
+// 200,000 inputs, just above the 0.04045 break, where the rounded base
+// (srgb+0.055)/1.055 is raised to the power 2.4)
 // Reference: IEC 61966-2-1:1999 (sRGB standard)
 func SRGBToLinear(srgb float64) float64 {
 	if srgb <= 0.04045 {
@@ -40,7 +42,17 @@ func SRGBToLinear(srgb float64) float64 {
 //	else:                   srgb = 1.055 * linear^(1/2.4) - 0.055
 //
 // Valid range: linear in [0, 1]
-// Precision: exact to float64 precision
+// Precision: within 11 ulps of the formula (measured worst 10.4 ulps over
+// 200,000 inputs, just above the 0.0031308 break, where subtracting 0.055
+// magnifies the error of the power)
+//
+// Round trip: the standard's two thresholds do not quite agree
+// (0.04045/12.92 = 0.0031308050 exceeds 0.0031308). An sRGB value c in
+// (12.92*0.0031308, 0.04045] = (0.040449936, 0.04045] decodes on the
+// linear branch but encodes back on the power branch, so
+// LinearToSRGB(SRGBToLinear(c)) differs from c by 2.85e-8 to 2.96e-8 there;
+// everywhere else the round trip is exact to within a few ulps. The
+// thresholds are kept exactly as the standard states them.
 // Reference: IEC 61966-2-1:1999 (sRGB standard)
 func LinearToSRGB(linear float64) float64 {
 	if linear <= 0.0031308 {

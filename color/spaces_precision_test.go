@@ -4,10 +4,11 @@ package color
 // invariants. Pure Go stdlib (testing/quick + math); ADDITIVE, zero math
 // change.
 //
-// Claims pinned ("Precision: exact to float64 precision" — interpreted as the
-// mathematically-exact inverse pair round-trips to float64 precision):
-//   - spaces.go:25/43  SRGBToLinear / LinearToSRGB are inverses: round-trip a
-//     channel and recover it to ~1e-12.
+// Claims pinned:
+//   - SRGBToLinear / LinearToSRGB round-trip a channel to ~1e-12, except in
+//     the window (0.040449936, 0.04045] where the standard's thresholds
+//     disagree and the round trip is off by up to 2.96e-8 (documented on
+//     LinearToSRGB; checked separately below).
 //   - spaces.go:157/194 RGBToHSV / HSVToRGB are inverses over the in-gamut
 //     cube: round-trip recovers (r,g,b) to ~1e-12.
 //   - spaces.go (XYZToLab/LabToXYZ): inverse pair round-trips to ~1e-10.
@@ -28,6 +29,9 @@ func TestSRGBLinearRoundTrip(t *testing.T) {
 	var worst, worstAt float64
 	prop := func(u uint64) bool {
 		c := unit01(u)
+		if c > srgbWindowLo && c <= srgbWindowHi {
+			return true // the documented threshold window, checked in TestSRGBThresholdWindow
+		}
 		back := LinearToSRGB(SRGBToLinear(c))
 		err := math.Abs(back - c)
 		if err > worst {
@@ -39,6 +43,29 @@ func TestSRGBLinearRoundTrip(t *testing.T) {
 		t.Errorf("PRECISION REGRESSION: SRGBToLinear/LinearToSRGB claim 'exact to float64', round-trip error %g at c=%g exceeds %g", worst, worstAt, bound)
 	}
 	t.Logf("PINNED spaces.go:25/43 sRGB<->linear round-trip: worst error %g at c=%g (< %g)", worst, worstAt, bound)
+}
+
+// The sRGB thresholds disagree: 0.04045/12.92 exceeds 0.0031308, so the
+// values in (12.92*0.0031308, 0.04045] decode on the linear branch and encode
+// back on the power branch.
+const srgbWindowLo, srgbWindowHi = 12.92 * 0.0031308, 0.04045
+
+// TestSRGBThresholdWindow checks the documented round-trip error inside the
+// threshold window (2.85e-8 to 2.96e-8 at 50 digits) and that just outside
+// it the round trip is exact to float64 precision again.
+func TestSRGBThresholdWindow(t *testing.T) {
+	inside := []float64{math.Nextafter(srgbWindowLo, 1), (srgbWindowLo + srgbWindowHi) / 2, srgbWindowHi}
+	for _, c := range inside {
+		if err := math.Abs(LinearToSRGB(SRGBToLinear(c)) - c); err > 3e-8 {
+			t.Errorf("c = %.17g in the threshold window: round-trip error %g exceeds the documented 2.96e-8", c, err)
+		}
+	}
+	outside := []float64{math.Nextafter(srgbWindowLo, 0), math.Nextafter(srgbWindowHi, 1), 0.02, 0.06}
+	for _, c := range outside {
+		if err := math.Abs(LinearToSRGB(SRGBToLinear(c)) - c); err > 1e-12 {
+			t.Errorf("c = %.17g outside the threshold window: round-trip error %g exceeds 1e-12", c, err)
+		}
+	}
 }
 
 // TestRGBHSVRoundTrip pins spaces.go:157/194 — RGB<->HSV inverse over the
