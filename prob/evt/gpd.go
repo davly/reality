@@ -124,18 +124,38 @@ func Exceedances(data []float64, threshold float64) []float64 {
 	return out
 }
 
-// ThresholdAtRate returns the data value at the upper tail fraction rate,
-// i.e. a threshold u such that approximately rate*len(data) observations lie
-// strictly above it.  rate in (0,1); the u chosen is the (1-rate) empirical
-// quantile using the sorted order statistic just below the tail.
+// tailCountSnap is the relative distance within which a tail count is taken to
+// be an integer, see ThresholdAtRate.
+const tailCountSnap = 1e-9
+
+// ThresholdAtRate returns the data value at the upper tail fraction rate: a
+// threshold u such that the top ceil(rate*n) observations (n = len(data)) lie
+// above it.  rate in (0,1); u is the sorted order statistic just below that
+// tail, so with distinct values exactly ceil(rate*n) observations lie
+// strictly above u (with ties, fewer may).
+//
+// The count rate*n is computed in floating point, so a product that is an
+// integer in exact decimal arithmetic can land a few ulp above or below it
+// (0.07 * 100 = 7.000000000000001, 0.29 * 100 = 28.999999999999996, and
+// 100 * (1 - 0.99) = 1.0000000000000009).  A count within 1e-9 (relative) of
+// an integer is therefore taken to be that integer, so the ceiling neither
+// jumps up nor drops an observation.
+//
+// The tail size is clamped to [1, n-1], so the threshold is always one of the
+// data values.  Returns NaN if data is empty or rate is not in (0,1),
+// including a NaN rate.
 func ThresholdAtRate(data []float64, rate float64) float64 {
-	if len(data) == 0 || rate <= 0 || rate >= 1 {
+	if len(data) == 0 || !(rate > 0 && rate < 1) {
 		return math.NaN()
 	}
 	sorted := append([]float64(nil), data...)
 	sort.Float64s(sorted)
-	// Index of the smallest tail element: the top ceil(rate*n) values are the tail.
-	k := int(float64(len(sorted)) * rate)
+	// The top k = ceil(rate*n) values are the tail.
+	x := float64(len(sorted)) * rate
+	k := int(math.Ceil(x))
+	if r := math.Round(x); math.Abs(x-r) <= tailCountSnap*math.Max(1, x) {
+		k = int(r)
+	}
 	if k < 1 {
 		k = 1
 	}
