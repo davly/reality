@@ -34,11 +34,6 @@ import (
 // listed. Remove an entry in the same change that fixes it.
 var knownPrecisionViolations = map[string]string{
 	"ttest/tail-t20":               "p = 0 for t = 20, df = 30 (true 6.75e-19): computed as 2*(1-CDF)",
-	"chisq/df99999":                "p = 0.98829 vs 0.98745 (rel 8.6e-4): incomplete-gamma iteration cap at large shape",
-	"poisson/lower-tail":           "CDF(0; 40) = 0 below its own PMF (true 4.25e-18): computed as 1-P",
-	"poisson/median-1e4":           "0.52488 vs 0.50266 (rel 4.4e-2): incomplete-gamma iteration cap",
-	"gamma/k1e4":                   "0.47858 vs 0.50133 (rel 4.5e-2): series capped at 200 iterations",
-	"gamma/k1e5":                   "0.23749 vs 0.50042 (rel 0.53): series capped at 200 iterations",
 	"normalq/full-precision-claim": "rel 1.1e-9: the docstring claims full float64 precision and 1.15e-9",
 	"expq/p1e-10":                  "rel 8.3e-8: -log(1-p) instead of -log1p(-p)",
 	"bf10/k0-n60":                  "0 with ok = true vs exactly 1/61: 1 - I_0.5 cancels to 0",
