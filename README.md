@@ -11,14 +11,14 @@ Reality is the foundational math and science library for the Limitless ecosystem
 **License:** Apache 2.0
 **Go version:** 1.24+
 **External dependencies:** None (only Go stdlib)
-**Packages:** 70 importable (41 top-level + 29 sub-packages under audio/finance/info/optim/prob/timeseries/topology) — via `GO111MODULE=on go list ./...`, excluding the repo-root package (`honesty_test.go` only, no importable source)
-**Public functions:** 809 exported — via `git ls-files '*.go' | grep -v '_test\.go' | xargs grep -hE '^func ([A-Z][A-Za-z0-9_]*(\[[^]]*\])?\(|\([a-zA-Z0-9_]+ \*?[A-Za-z0-9_.\[\]]+\) [A-Z][A-Za-z0-9_]*\()' | wc -l`
-**Tests:** 3,008 top-level `--- PASS` (4,372 invocations including subtests; all passing under Go 1.24, zero failures)
-**Golden-file fixtures:** 138 JSON files under `testdata/` — via `find . -name "*.json" -path "*testdata*" | wc -l`
+**Packages:** 71 importable (41 top-level + 30 sub-packages under audio/finance/info/optim/prob/timeseries/topology) plus the `cmd/reality-compute` command — via `GO111MODULE=on go list ./...`, excluding the repo-root package (`honesty_test.go` only, no importable source)
+**Public functions:** 810 exported — via `git ls-files '*.go' | grep -v '_test\.go' | xargs grep -hE '^func ([A-Z][A-Za-z0-9_]*(\[[^]]*\])?\(|\([a-zA-Z0-9_]+ \*?[A-Za-z0-9_.\[\]]+\) [A-Z][A-Za-z0-9_]*\()' | wc -l`
+**Tests:** 3,165 top-level `--- PASS` (4,618 invocations including subtests; all passing under Go 1.24, zero failures, zero skips)
+**Golden-file fixtures:** 140 JSON files under `testdata/` — via `find . -name "*.json" -path "*testdata*" | wc -l`
 
 > **Note on package count:** The v1.0 design target was 22 core domain packages. Reality has shipped additively past that target through Sessions 22-26, the S55-S60 cohort work (audio cohort, autodiff, infogeo, copula/conformal, timeseries, topology, zkmark, forge, info/{lz,mdl}), and the 2026-06/07 Wave 2 (`w2-reality-*`) and Wave 3/4 (`w34-*`) landings (causal, evidence, fairness, finance/taxlot, forge, moments, optim/{hrp,portfolio}, prob/{evt,hmm,risk}, reliability, retrymath, setsim, slo, spc, timeseries, timeseries/statespace). CONTEXT.md §11 is the historical (Session-25-frozen) inventory; this file is regenerated directly from the repo. The table below lists all 70 packages as of 2026-07-05.
 
-## Packages (70)
+## Packages (71)
 
 ### Core math and structure
 
@@ -68,6 +68,7 @@ Reality is the foundational math and science library for the Limitless ecosystem
 | `audio` | Mel filterbank (Slaney 1998), MFCC (DCT-II), Welford fingerprint, DegradationTracker |
 | `audio/beat` | Beat tracking |
 | `audio/cqt` | Constant-Q transform |
+| `audio/idbench` | Evaluation-only harness: how well `audio.Fingerprint` tells individual sources apart (not a production path) |
 | `audio/onset` | Onset detection (energy, spectral flux, complex domain, SuperFlux) |
 | `audio/pitch` | Pitch estimators (autocorrelation, YIN, McLeod, subharmonic summation) |
 | `audio/segmentation` | Audio event segmentation (VAD, onset-offset, silence-based) |
@@ -116,6 +117,7 @@ Wave 2 (`w2-reality-*` commits) added functions to four already-tabled packages 
 | `optim/portfolio` | Composed Black-Litterman posterior + mean-variance/continuous-Kelly weight maps (He-Litterman 1999) |
 | `prob/evt` | Extreme Value Theory: GEV/GPD, L-moment/PWM/Hill/MLE, peaks-over-threshold, EVT VaR/ES |
 | `prob/hmm` | Hidden Markov models: Forward-Backward, Viterbi, Baum-Welch (Rabiner tutorial) |
+| `prob/numclaim` | Numeric-claim consistency: whether a stated number equals one of a set of ground-truth numbers under explicit value-preserving rewrites |
 | `prob/risk` | Convention-arbitrated risk/performance suite: VaR/CVaR/Sortino/drawdown/Calmar/Omega/beta |
 | `reliability` | Reliability-block-diagram (RBD) availability composition + Birnbaum importance |
 | `retrymath` | Retry-storm load-amplification calculus + stability predicate (composes `reality/queue`) |
@@ -135,7 +137,7 @@ go build ./...
 ## Testing
 
 ```bash
-# Run all tests (3,008 top-level PASS)
+# Run all tests (3,165 top-level PASS)
 go test ./...
 
 # Run with verbose output
@@ -187,7 +189,8 @@ aicore imports reality. reality imports nothing.
 4. **Pure functions only.** No global state, no goroutines, numbers in / numbers out.
 5. **No allocations in hot paths.** Functions accept output buffers. Pistachio calls these at 60 FPS.
 6. **Every function cites its mathematical origin.** Three sentences of provenance per function.
-7. **Precision documented, not assumed.** Valid input range, numerical precision, and failure modes stated per function.
+7. **Precision documented, not assumed.** Valid input range, numerical precision, and failure modes stated per function. Precision claims are checked at the inputs where they are hardest to keep against values computed with mpmath (`testdata/stress`, `precision_test.go`); a measured violation is listed and the list can only shrink.
+8. **Deterministic per build.** The same input gives a bit-identical result on every call. A static test classifies every `range` over a map in non-test code and accepts only loops whose result cannot depend on the order or whose output is sorted (`determinism_test.go`); a dynamic test repeats map-touching functions 200 times and requires one output. Across platforms results can differ in the last bits: the Go compiler fuses multiply-adds on arm64 and on amd64 built with `GOAMD64=v3`, rounding once where separate operations round twice. CI runs the tests on default amd64, on `GOAMD64=v3` and on arm64.
 
 ## Security
 
