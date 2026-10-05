@@ -74,14 +74,17 @@ func Emit(ctx context.Context, e Event) {
 		e.Timestamp = time.Now().UTC().Format(time.RFC3339)
 	}
 
+	// Resolve the destination now, at call time. Reading it inside the
+	// goroutine let an event be delivered to whatever configuration was
+	// current whenever the goroutine happened to run.
+	url := os.Getenv("CONDUIT_URL")
+	if url == "" {
+		url = DefaultURL
+	}
+
 	go func() { // #nosec G118 -- fire-and-forget by design: the emit must not be cancelled with the caller's context; it has its own 100 ms timeout
 		ctx2, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 		defer cancel()
-
-		url := os.Getenv("CONDUIT_URL")
-		if url == "" {
-			url = DefaultURL
-		}
 
 		body, err := json.Marshal(e)
 		if err != nil {
