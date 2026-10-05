@@ -33,13 +33,11 @@ import (
 // knownPrecisionViolations maps a case id to its measured state when it was
 // listed. Remove an entry in the same change that fixes it.
 var knownPrecisionViolations = map[string]string{
-	"ttest/tail-t20":               "p = 0 for t = 20, df = 30 (true 6.75e-19): computed as 2*(1-CDF)",
 	"normalq/full-precision-claim": "rel 1.1e-9: the docstring claims full float64 precision and 1.15e-9",
 	"expq/p1e-10":                  "rel 8.3e-8: -log(1-p) instead of -log1p(-p)",
 	"bf10/k0-n60":                  "0 with ok = true vs exactly 1/61: 1 - I_0.5 cancels to 0",
 	"factorial/166":                "rel 1.30e-13 > the documented 1e-13 (exp(lgamma) path)",
 	"fisher/tie-9-11-10-10":        "0.76363 vs exactly 1: an absolute 1e-14 tie tolerance drops an equally likely table",
-	"betacdf/0.5-1e6-1e6":          "0.500313 vs exactly 1/2 (abs 3.1e-4): continued fraction capped at 200 iterations",
 }
 
 type precisionCase struct {
