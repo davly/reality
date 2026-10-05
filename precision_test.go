@@ -39,7 +39,6 @@ var knownPrecisionViolations = map[string]string{
 	"poisson/median-1e4":    "0.52488 vs 0.50266 (rel 4.4e-2): incomplete-gamma iteration cap",
 	"gamma/k1e4":            "0.47858 vs 0.50133 (rel 4.5e-2): series capped at 200 iterations",
 	"gamma/k1e5":            "0.23749 vs 0.50042 (rel 0.53): series capped at 200 iterations",
-	"bf10/k0-n60":           "0 with ok = true vs exactly 1/61: 1 - I_0.5 cancels to 0",
 	"fisher/tie-9-11-10-10": "0.76363 vs exactly 1: an absolute 1e-14 tie tolerance drops an equally likely table",
 	"betacdf/0.5-1e6-1e6":   "0.500313 vs exactly 1/2 (abs 3.1e-4): continued fraction capped at 200 iterations",
 }
