@@ -12,14 +12,23 @@ import (
 
 // moduleRoot returns the reality module root (this file lives at
 // <root>/testutil/purity_test.go). runtime.Caller embeds the path at compile
-// time, so it resolves correctly under any checkout, including CI.
+// time, so it resolves correctly under any checkout, including CI. Under
+// -trimpath that path is module-relative instead; go test then runs this
+// binary in <root>/testutil, so the root is the working directory's parent.
 func moduleRoot(t *testing.T) string {
 	t.Helper()
 	_, file, _, ok := runtime.Caller(0)
 	if !ok {
 		t.Fatal("runtime.Caller failed")
 	}
-	return filepath.Dir(filepath.Dir(file))
+	if dir := filepath.Dir(file); filepath.IsAbs(dir) {
+		return filepath.Dir(dir)
+	}
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("resolving the module root under -trimpath: %v", err)
+	}
+	return filepath.Dir(wd)
 }
 
 // allowedImport reports whether an import path is permitted under reality's

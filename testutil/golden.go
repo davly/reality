@@ -75,6 +75,16 @@ func LoadGolden(t *testing.T, path string) GoldenFile {
 		t.Fatal("testutil.LoadGolden: unable to determine caller file path")
 	}
 	callerDir := filepath.Dir(callerFile)
+	if !filepath.IsAbs(callerDir) {
+		// Built with -trimpath: the compile-time path is module-relative
+		// (for example github.com/davly/reality/prob). go test runs each test
+		// binary in its package directory, which is the caller's directory.
+		wd, err := os.Getwd()
+		if err != nil {
+			t.Fatalf("testutil.LoadGolden: resolving %s under -trimpath: %v", path, err)
+		}
+		callerDir = wd
+	}
 	absPath := filepath.Join(callerDir, path)
 
 	data, err := os.ReadFile(absPath) // #nosec G304 -- test helper: reads golden files from the calling test's own testdata
