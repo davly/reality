@@ -36,6 +36,7 @@ import (
 	"go/types"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -121,6 +122,16 @@ type mapRangeSite struct {
 // scanMapRanges returns every range-over-map site in non-test code, keyed.
 func scanMapRanges(t *testing.T, root string) []mapRangeSite {
 	t.Helper()
+	if build.Default.GOROOT == "" {
+		// A test binary built with -trimpath carries no GOROOT, so go/build
+		// cannot find the standard library. go test puts the go command on
+		// PATH; ask it.
+		out, err := exec.Command("go", "env", "GOROOT").Output()
+		if err != nil {
+			t.Fatalf("locating GOROOT for the type checker: %v", err)
+		}
+		build.Default.GOROOT = strings.TrimSpace(string(out))
+	}
 	fset := token.NewFileSet()
 	m := &moduleImporter{
 		root:  root,
