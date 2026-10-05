@@ -42,7 +42,8 @@
 //
 //	Maximum likelihood (deterministic; L-moment/PWM start, optim.LBFGS refine):
 //	  GEVLogLik / GPDLogLik    — log-likelihoods (-Inf outside the support)
-//	  FitGEVMLE / FitGPDMLE    — MLE, never worse than the closed-form start
+//	  FitGEVMLE / FitGPDMLE    — MLE where an interior maximum exists, else the
+//	                             closed-form start; never zero likelihood on the data
 //
 //	Peaks-over-threshold + tail risk (McNeil-Frey / Coles):
 //	  Exceedances / ThresholdAtRate / FitPOT           — build a POTModel
