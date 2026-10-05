@@ -71,7 +71,11 @@ func UpdateFingerprint(fp *Fingerprint, x []float64) {
 		delta := x[i] - fp.Mean[i]
 		fp.Mean[i] += delta / nF
 		delta2 := x[i] - fp.Mean[i]
-		fp.M2[i] += delta * delta2
+		// The explicit conversion rounds the product before the add, so
+		// the compiler cannot fuse them into one multiply-add (as it does
+		// on arm64). The other-language implementations round twice, and
+		// the parity golden requires bit-identical results everywhere.
+		fp.M2[i] += float64(delta * delta2)
 	}
 }
 
