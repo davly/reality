@@ -8,22 +8,25 @@ package reality_test
 // that hazard in documentation does not stop the next instance; this test
 // does. It type-checks every package in the module and inventories each
 // `range` over a map-typed expression in non-test code. Every site must be
-// classified in testdata/determinism/map_ranges.json:
+// classified in testdata/determinism/map_ranges.json as one of:
 //
-//   - order-insensitive       the result cannot depend on iteration order
-//   - sorted-after            the loop's output is sorted before it is used
-//   - known-nondeterministic  a measured defect, fixed later (ratchet)
-//   - unreviewed              present when this inventory was created and
-//     not yet reviewed; review it, then reclassify
+//   - order-insensitive  the result cannot depend on iteration order
+//   - sorted-after       the loop's output is sorted before it is used
 //
 // A new, unclassified site fails the test, and so does a stale entry whose
 // site no longer exists. Site keys are <package>.<function>#<k>, where k
 // counts map ranges within that function in source order, so line-number
 // churn does not invalidate them.
 //
-// To add new sites as "unreviewed" (then classify them by hand):
+// To record new sites as "unreviewed", then classify each by hand:
 //
 //	REALITY_UPDATE_MAP_RANGES=1 go test -run TestMapRangeInventory .
+//
+// An "unreviewed" entry fails the test until it is reclassified. Measured
+// defects were once listed as "known-nondeterministic" while their fixes were
+// pending; every one has since been fixed, so that class is no longer
+// accepted: make the loop deterministic (iterate in sorted order, break ties
+// totally, or sort the output) instead of listing it.
 
 import (
 	"encoding/json"
@@ -48,11 +51,10 @@ const (
 	mapRangeLedger   = "testdata/determinism/map_ranges.json"
 )
 
+// mapRangeClasses are the accepted classifications.
 var mapRangeClasses = map[string]bool{
-	"order-insensitive":      true,
-	"sorted-after":           true,
-	"known-nondeterministic": true,
-	"unreviewed":             true,
+	"order-insensitive": true,
+	"sorted-after":      true,
 }
 
 type mapRangeEntry struct {
@@ -316,6 +318,7 @@ func TestMapRangeInventory(t *testing.T) {
 			len(stale), mapRangeLedger, strings.Join(stale, "\n  "))
 	}
 	if len(badClass) > 0 {
-		t.Errorf("unknown classes in %s:\n  %s", mapRangeLedger, strings.Join(badClass, "\n  "))
+		t.Errorf("%d site(s) in %s are not classified order-insensitive or sorted-after. Review an \"unreviewed\" site and reclassify it; a nondeterministic loop must be fixed, not listed:\n  %s",
+			len(badClass), mapRangeLedger, strings.Join(badClass, "\n  "))
 	}
 }
