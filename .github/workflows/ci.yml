@@ -61,6 +61,38 @@ jobs:
             exit 1
           fi
 
+  # Fused multiply-add rounds once where a separate multiply and add round
+  # twice, so it moves floating-point results in the last bits. The Go
+  # compiler fuses on arm64 and on amd64 built with GOAMD64=v3, but not on the
+  # default amd64 build the test job uses. The precision claims must hold on
+  # all three. The arm64 leg reports without failing the build until it has
+  # passed once.
+  fma:
+    name: Test (${{ matrix.target }})
+    runs-on: ${{ matrix.runner }}
+    continue-on-error: ${{ matrix.target == 'arm64' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: amd64 GOAMD64=v3
+            runner: ubuntu-latest
+            goamd64: v3
+          - target: arm64
+            runner: ubuntu-24.04-arm
+            goamd64: ''
+    env:
+      GOAMD64: ${{ matrix.goamd64 }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.26'
+
+      - name: Test
+        run: go test -count=1 ./...
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
