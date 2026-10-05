@@ -77,7 +77,7 @@ func LoadGolden(t *testing.T, path string) GoldenFile {
 	callerDir := filepath.Dir(callerFile)
 	absPath := filepath.Join(callerDir, path)
 
-	data, err := os.ReadFile(absPath)
+	data, err := os.ReadFile(absPath) // #nosec G304 -- test helper: reads golden files from the calling test's own testdata
 	if err != nil {
 		t.Fatalf("testutil.LoadGolden: failed to read %s: %v", absPath, err)
 	}

@@ -69,16 +69,16 @@ func ModInverse(a, mod uint64) (uint64, bool) {
 	// the full uint64 range (the package doc advertises RSA/DH-style use with no
 	// <2^63 restriction).
 	if a < 1<<63 && mod < 1<<63 {
-		gcd, x, _ := ExtendedGCD(int64(a), int64(mod))
+		gcd, x, _ := ExtendedGCD(int64(a), int64(mod)) // #nosec G115 -- a, mod < 2^63 checked above
 		if gcd != 1 {
 			return 0, false
 		}
 		// x may be negative; bring it into [0, mod).
-		result := x % int64(mod)
+		result := x % int64(mod) // #nosec G115 -- mod < 2^63 checked above
 		if result < 0 {
-			result += int64(mod)
+			result += int64(mod) // #nosec G115 -- mod < 2^63 checked above
 		}
-		return uint64(result), true
+		return uint64(result), true // #nosec G115 -- result is in [0, mod) after the adjustment above
 	}
 
 	inv := new(big.Int).ModInverse(new(big.Int).SetUint64(a), new(big.Int).SetUint64(mod))

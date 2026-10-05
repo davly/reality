@@ -32,7 +32,7 @@ func main() {
 
 	srv := buildServer(serviceToken, os.Getenv(envPort))
 
-	log.Printf("reality-compute: listening on %s (capability: %s)", srv.Addr, toolConformalInterval)
+	log.Printf("reality-compute: listening on %s (capability: %s)", srv.Addr, toolConformalInterval) // #nosec G706 -- the address comes from operator configuration (PORT), logged once at startup
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("reality-compute: server error: %v", err)
 	}

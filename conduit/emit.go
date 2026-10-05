@@ -74,7 +74,7 @@ func Emit(ctx context.Context, e Event) {
 		e.Timestamp = time.Now().UTC().Format(time.RFC3339)
 	}
 
-	go func() {
+	go func() { // #nosec G118 -- fire-and-forget by design: the emit must not be cancelled with the caller's context; it has its own 100 ms timeout
 		ctx2, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 		defer cancel()
 
@@ -87,13 +87,13 @@ func Emit(ctx context.Context, e Event) {
 		if err != nil {
 			return
 		}
-		req, err := http.NewRequestWithContext(ctx2, http.MethodPost, url, bytes.NewReader(body))
+		req, err := http.NewRequestWithContext(ctx2, http.MethodPost, url, bytes.NewReader(body)) // #nosec G704 -- the URL is operator configuration (environment), not request input
 		if err != nil {
 			return
 		}
 		req.Header.Set("Content-Type", "application/json")
 
-		resp, err := http.DefaultClient.Do(req)
+		resp, err := http.DefaultClient.Do(req) // #nosec G704 -- the URL is operator configuration (environment), not request input
 		if err != nil || resp == nil {
 			return
 		}
@@ -103,12 +103,20 @@ func Emit(ctx context.Context, e Event) {
 
 // EmitSampled publishes the event only on every Nth call (default
 // SampleRate). Use this from hot-path math primitives to avoid flooding
-// the Conduit bus while still keeping cross-pollination observable.
+// the event bus while still keeping usage observable.
+//
+// A SampleRate of zero or less disables sampled emission. (Zero used to
+// panic with an integer divide by zero, and a negative rate silently became
+// a huge modulus.)
 func EmitSampled(ctx context.Context, e Event) {
-	n := sampleCounter.Add(1)
-	if n%uint64(SampleRate) != 0 {
+	rate := SampleRate
+	if rate <= 0 {
 		return
 	}
-	e.ObservationCount = int(n)
+	n := sampleCounter.Add(1)
+	if n%uint64(rate) != 0 { // #nosec G115 -- rate > 0 checked above
+		return
+	}
+	e.ObservationCount = int(n) // #nosec G115 -- a call counter; it would need 2^63 calls to overflow
 	Emit(ctx, e)
 }

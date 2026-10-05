@@ -296,7 +296,7 @@ func BackdoorATEWithRefutation(edges []graph.Edge, treatment, outcome string, da
 	if opts.PlaceboTolerance == 0 {
 		opts.PlaceboTolerance = 0.05
 	}
-	rng := rand.New(rand.NewSource(opts.Seed))
+	rng := rand.New(rand.NewSource(opts.Seed)) // #nosec G404 -- seeded for reproducible resampling, not security
 
 	z := res.AdjustmentSet // graph-derived; reuse, do not re-identify
 

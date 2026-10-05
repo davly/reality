@@ -122,7 +122,7 @@ func SeedFromCanonical(payload any) (int64, string, error) {
 		return 0, "", fmt.Errorf("combinatorics: seed payload not canonicalizable: %w", err)
 	}
 	h := sha256.Sum256(b)
-	return int64(binary.BigEndian.Uint64(h[:8])), fmt.Sprintf("%x", h[:8]), nil
+	return int64(binary.BigEndian.Uint64(h[:8])), fmt.Sprintf("%x", h[:8]), nil // #nosec G115 -- deliberate reinterpretation of 64 hash bits as a seed
 }
 
 // BuildBlocked builds the blocked-edge matrix for ConstrainedDerangement:

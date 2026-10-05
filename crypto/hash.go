@@ -103,7 +103,7 @@ func MurmurHash3_32(data []byte, seed uint32) uint32 {
 	}
 
 	// Finalization mix (fmix32).
-	h ^= uint32(length)
+	h ^= uint32(length) // #nosec G115 -- MurmurHash3 x86_32 mixes the length as uint32 by specification
 	h = fmix32(h)
 
 	return h

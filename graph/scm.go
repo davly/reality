@@ -33,7 +33,7 @@ type DiscreteSCM struct {
 // observed node gets a random Bernoulli CPT entry per parent configuration. The
 // seed makes it deterministic.
 func RandomSCM(g ADMG, seed int64) DiscreteSCM {
-	rng := rand.New(rand.NewSource(seed))
+	rng := rand.New(rand.NewSource(seed)) // #nosec G404 -- seeded for reproducible simulation, not security
 	scm := DiscreteSCM{
 		observed: append([]string{}, g.nodes...),
 		parents:  map[string][]string{},

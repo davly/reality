@@ -116,7 +116,7 @@ func (p *PCG) Uint32() uint32 {
 	p.state = oldState*6364136223846793005 + p.inc
 
 	// XSH-RR output function.
-	xorShifted := uint32(((oldState >> 18) ^ oldState) >> 27)
+	xorShifted := uint32(((oldState >> 18) ^ oldState) >> 27) // #nosec G115 -- PCG XSH-RR truncates to 32 bits by definition
 	rot := uint32(oldState >> 59)
 	return (xorShifted >> rot) | (xorShifted << ((-rot) & 31))
 }

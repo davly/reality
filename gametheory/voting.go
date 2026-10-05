@@ -201,7 +201,7 @@ func shapleySampled(n int, charFunc func(coalition []bool) float64, iterations i
 			perm[i] = i
 		}
 		for i := n - 1; i > 0; i-- {
-			j := int(lcgNext() % uint64(i+1))
+			j := int(lcgNext() % uint64(i+1)) // #nosec G115 -- the value is < i+1 <= n, so it fits in int
 			perm[i], perm[j] = perm[j], perm[i]
 		}
 
