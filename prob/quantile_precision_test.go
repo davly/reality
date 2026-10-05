@@ -68,3 +68,71 @@ func TestExponentialQuantileLog1p(t *testing.T) {
 		}
 	}
 }
+
+// TestNormalQuantileNearlyExact checks NormalQuantile against the exact
+// quantile mu + sigma*Phi^{-1}(p) from mpmath at 50 significant digits
+// (Newton's method on log Phi(x) = log p with mpmath's erfc, cross-checked
+// against sqrt(2)*erfinv(2p-1) evaluated with enough digits for 2p-1 to be
+// exact; the two agree to 1e-45), at the exact binary64 p, rounded to
+// float64. Acklam's rational approximation alone is accurate only to about
+// 1e-9 relative, millions of ulps.
+func TestNormalQuantileNearlyExact(t *testing.T) {
+	cases := []struct{ p, mu, sigma, want float64 }{
+		{5e-324, 0.0, 1.0, -38.467405617144344},
+		{1e-320, 0.0, 1.0, -38.26912534303265},
+		{1e-310, 0.0, 1.0, -37.663060331949524},
+		{2.2250738585072014e-308, 0.0, 1.0, -37.5193793471445},
+		{1e-300, 0.0, 1.0, -37.0470962993612},
+		{1e-200, 0.0, 1.0, -30.20559417957964},
+		{1e-100, 0.0, 1.0, -21.273453560965326},
+		{1e-50, 0.0, 1.0, -14.933337534788489},
+		{1e-20, 0.0, 1.0, -9.262340089798407},
+		{1e-12, 0.0, 1.0, -7.034483825301132},
+		{1e-06, 0.0, 1.0, -4.753424308822899},
+		{0.001, 0.0, 1.0, -3.0902323061678136},
+		{0.02425, 0.0, 1.0, -1.972961051311885},
+		{0.025, 0.0, 1.0, -1.9599639845400543},
+		{0.05, 0.0, 1.0, -1.6448536269514726},
+		{0.1, 0.0, 1.0, -1.2815515655446004},
+		{0.2, 0.0, 1.0, -0.8416212335729142},
+		{0.25, 0.0, 1.0, -0.6744897501960817},
+		{0.3, 0.0, 1.0, -0.5244005127080408},
+		{0.4, 0.0, 1.0, -0.2533471031357997},
+		{0.45, 0.0, 1.0, -0.12566134685507402},
+		{0.49, 0.0, 1.0, -0.025068908258711057},
+		{0.4999999999, 0.0, 1.0, -2.506628482030354e-10},
+		{0.5, 0.0, 1.0, 0.0},
+		{0.5000000001, 0.0, 1.0, 2.506628482030354e-10},
+		{0.6, 0.0, 1.0, 0.2533471031357997},
+		{0.75, 0.0, 1.0, 0.6744897501960817},
+		{0.8, 0.0, 1.0, 0.8416212335729144},
+		{0.9, 0.0, 1.0, 1.2815515655446006},
+		{0.97575, 0.0, 1.0, 1.972961051311885},
+		{0.975, 0.0, 1.0, 1.9599639845400538},
+		{0.99, 0.0, 1.0, 2.3263478740408408},
+		{0.999999, 0.0, 1.0, 4.753424308817087},
+		{0.9999999999, 0.0, 1.0, 6.361340889697422},
+		{0.999999999999, 0.0, 1.0, 7.0344869100478356},
+		{0.999999999999999, 0.0, 1.0, 7.941444487415978},
+		{0.9999999999999999, 0.0, 1.0, 8.209536151601387},
+		{0.975, 10.0, 3.0, 15.879891953620161},
+		{0.05, -2.5, 0.01, -2.5164485362695146},
+		{1e-12, 100.0, 15.0, -5.517257379516979},
+		{0.999999, 0.0, 1e+300, 4.753424308817088e+300},
+	}
+	for _, c := range cases {
+		got := NormalQuantile(c.p, c.mu, c.sigma)
+		if c.mu == 0 && c.sigma == 1 {
+			if d := ulpsBetween(got, c.want); d > 2 {
+				t.Errorf("NormalQuantile(%v) = %v, want %v (%d ulps apart)", c.p, got, c.want, d)
+			}
+			continue
+		}
+		// mu + sigma*z adds two roundings, and cancellation between mu and
+		// sigma*z magnifies the error of z relative to the result.
+		bound := 4 * 0x1p-52 * (math.Abs(c.mu) + math.Abs(c.want-c.mu))
+		if diff := math.Abs(got - c.want); diff > bound {
+			t.Errorf("NormalQuantile(%v, %v, %v) = %v, want %v (error %.3g > %.3g)", c.p, c.mu, c.sigma, got, c.want, diff, bound)
+		}
+	}
+}
