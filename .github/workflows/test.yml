@@ -32,3 +32,8 @@ jobs:
 
       - name: go test (race + count=1)
         run: go test ./... -race -count=1
+
+      # Golden files and the module root are located through compile-time
+      # source paths; this leg proves that still works when they are trimmed.
+      - name: go test (-trimpath)
+        run: go test ./... -trimpath -count=1
