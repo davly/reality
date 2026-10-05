@@ -171,37 +171,18 @@ func isStdlib(importPath string) bool {
 //     exists in the repo, the over-claim is backed and the test passes.
 //   - If NONE exist, the README must NOT assert that those languages have
 //     implementations that USE/validate the golden files.
+//
+// Development-time generators under the top-level tools/ directory (for
+// example the mpmath stress-golden generator) PRODUCE golden values; they are
+// not implementations of the library. They do not count, or adding any
+// generator would make this test pass vacuously.
 func TestNoUnbackedCrossLanguageClaim(t *testing.T) {
 	root, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("getwd: %v", err)
 	}
 
-	nonGoExts := map[string]bool{
-		".py":  true,
-		".cpp": true,
-		".cc":  true,
-		".cxx": true,
-		".cs":  true,
-	}
-
-	var nonGoImpls []string
-	walkErr := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() {
-			if d.Name() == ".git" || d.Name() == "vendor" {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-		if nonGoExts[strings.ToLower(filepath.Ext(path))] {
-			rel, _ := filepath.Rel(root, path)
-			nonGoImpls = append(nonGoImpls, filepath.ToSlash(rel))
-		}
-		return nil
-	})
+	nonGoImpls, walkErr := nonGoImplementations(root)
 	if walkErr != nil {
 		t.Fatalf("walking module tree: %v", walkErr)
 	}
@@ -240,5 +221,70 @@ func TestNoUnbackedCrossLanguageClaim(t *testing.T) {
 				"exist on disk. State that only the Go implementation ships here today.",
 				phrase)
 		}
+	}
+}
+
+// nonGoImplementations lists non-Go implementation sources under root,
+// skipping VCS metadata, vendor/ and the top-level tools/ directory of
+// development-time generators.
+func nonGoImplementations(root string) ([]string, error) {
+	nonGoExts := map[string]bool{
+		".py":  true,
+		".cpp": true,
+		".cc":  true,
+		".cxx": true,
+		".cs":  true,
+	}
+	toolsDir := filepath.Join(root, "tools")
+	var out []string
+	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			if d.Name() == ".git" || d.Name() == "vendor" || path == toolsDir {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if nonGoExts[strings.ToLower(filepath.Ext(path))] {
+			rel, _ := filepath.Rel(root, path)
+			out = append(out, filepath.ToSlash(rel))
+		}
+		return nil
+	})
+	return out, err
+}
+
+// TestNonGoImplementations_GeneratorsDoNotCount proves both directions of
+// the scoping: a generator under tools/ is not an implementation, and a
+// non-Go source anywhere else still is.
+func TestNonGoImplementations_GeneratorsDoNotCount(t *testing.T) {
+	root := t.TempDir()
+	write := func(rel string) {
+		p := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(p), 0o750); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte("x"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write("tools/gen/generate.py")
+	got, err := nonGoImplementations(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 0 {
+		t.Fatalf("a generator under tools/ was counted as an implementation: %v", got)
+	}
+	write("port/reality.py")
+	write("nested/tools/impl.cpp") // only the top-level tools/ is exempt
+	got, err = nonGoImplementations(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("non-Go implementations outside tools/ must be found, got %v", got)
 	}
 }
