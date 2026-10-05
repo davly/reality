@@ -7,7 +7,10 @@
 // Zero external dependencies.
 package combinatorics
 
-import "math"
+import (
+	"math"
+	"math/bits"
+)
 
 // ---------------------------------------------------------------------------
 // Counting Functions
@@ -211,51 +214,177 @@ var factorialTable = [171]float64{
 	7.257415615307999e+306,  // 170!
 }
 
-// BinomialCoeff returns C(n,k) = n! / (k! * (n-k)!) via log-gamma for
-// numerical stability. Returns 0 if k < 0 or k > n.
+// BinomialCoeff returns C(n,k) = n! / (k! * (n-k)!), the number of k-element
+// subsets of an n-element set. Returns 0 if k < 0 or k > n.
 //
-// Formula: exp(lgamma(n+1) - lgamma(k+1) - lgamma(n-k+1))
+// Formula: C(n,k) = prod_{i=1..k} (n-k+i) / i with k replaced by min(k, n-k),
+// evaluated in exact integer arithmetic: every partial product C(n-k+i, i)
+// is an integer, so each division is exact.
 // Valid range: 0 <= k <= n
-// Precision: relative error < 1e-12 for n <= 200 (worst observed 3.09e-13).
-// For large n in the high hundreds the accumulated lgamma error can exceed
-// this bound (worst observed 2.45e-12 at C(990,86)) — "typical inputs"
-// scopes out that large-n regime.
-// Reference: Knuth, TAOCP vol. 1; using log-gamma avoids intermediate
-// overflow that direct factorial computation would cause for large n.
+// Precision: correctly rounded: the result is the float64 nearest to the
+// exact integer C(n,k) (ties to even), and therefore exact whenever C(n,k) is
+// representable, in particular whenever C(n,k) <= 2^53. Returns +Inf when the
+// exact value rounds beyond math.MaxFloat64 (C(1029,514) is finite,
+// C(1030,515) is +Inf).
+// Cost: O(min(k, n-k)) word operations on a fixed-size integer, without
+// allocation. The running product never decreases and at least doubles with
+// each factor, so the work stops after at most 1025 factors once it passes
+// 2^1024, where every result is +Inf.
+// Reference: Knuth, TAOCP vol. 1, Section 1.2.6.
 func BinomialCoeff(n, k int) float64 {
-	if k < 0 || k > n {
+	if n < 0 || k < 0 || k > n {
 		return 0
 	}
-	if k == 0 || k == n {
-		return 1
+	nn, kk := uint64(n), uint64(k)
+	// Symmetry: C(n,k) = C(n, n-k). Use the smaller k for fewer terms.
+	kk = min(kk, nn-kk)
+	var x exactUint
+	x.setOne()
+	for i := uint64(1); i <= kk; {
+		// Group consecutive factors while both products fit in 64 bits:
+		// C(n-k+j, j) = C(n-k+i-1, i-1) * prod_{t=i..j} (n-k+t) / prod_{t=i..j} t
+		// is an integer for every j, so one exact division covers a group.
+		num, den := nn-kk+i, i
+		for i++; i <= kk; i++ {
+			hn, ln := bits.Mul64(num, nn-kk+i)
+			hd, ld := bits.Mul64(den, i)
+			if hn != 0 || hd != 0 {
+				break
+			}
+			num, den = ln, ld
+		}
+		x.mulWord(num)
+		x.divExact(den)
+		if x.bitLen() > 1024 {
+			return math.Inf(1)
+		}
 	}
-	// Symmetry: C(n,k) = C(n, n-k). Use smaller k for fewer terms.
-	if k > n-k {
-		k = n - k
-	}
-	lgn, _ := math.Lgamma(float64(n + 1))
-	lgk, _ := math.Lgamma(float64(k + 1))
-	lgnk, _ := math.Lgamma(float64(n - k + 1))
-	return math.Round(math.Exp(lgn - lgk - lgnk))
+	return x.nearestFloat64()
 }
 
 // Permutations returns P(n,k) = n! / (n-k)!, the number of k-permutations
 // of n elements. Returns 0 if k < 0 or k > n.
 //
-// Formula: n * (n-1) * ... * (n-k+1)
+// Formula: n * (n-1) * ... * (n-k+1), evaluated in exact integer arithmetic
 // Valid range: 0 <= k <= n
-// Precision: exact for small n; float64 mantissa limits for large n.
+// Precision: correctly rounded: the result is the float64 nearest to the
+// exact integer P(n,k) (ties to even), and therefore exact whenever P(n,k) is
+// representable. Returns +Inf when the exact value rounds beyond
+// math.MaxFloat64; P(n,n) equals Factorial(n).
+// Cost: O(k) word operations on a fixed-size integer, without allocation;
+// the first j factors multiply to at least j!, so the work stops within 171
+// factors once the product passes 2^1024, where every result is +Inf.
 // Reference: fundamental counting principle
 func Permutations(n, k int) float64 {
-	if k < 0 || k > n {
+	if n < 0 || k < 0 || k > n {
 		return 0
 	}
-	if k == 0 {
-		return 1
+	nn, kk := uint64(n), uint64(k)
+	var x exactUint
+	x.setOne()
+	for i := uint64(0); i < kk; {
+		// Group consecutive factors while their product fits in 64 bits.
+		f := nn - i
+		for i++; i < kk; i++ {
+			hi, lo := bits.Mul64(f, nn-i)
+			if hi != 0 {
+				break
+			}
+			f = lo
+		}
+		x.mulWord(f)
+		if x.bitLen() > 1024 {
+			return math.Inf(1)
+		}
 	}
-	lgn, _ := math.Lgamma(float64(n + 1))
-	lgnk, _ := math.Lgamma(float64(n - k + 1))
-	return math.Round(math.Exp(lgn - lgnk))
+	return x.nearestFloat64()
+}
+
+// exactUint is a positive integer of up to 17 little-endian 64-bit words:
+// any value below 2^1024 multiplied by one 64-bit factor fits. BinomialCoeff
+// and Permutations use it to form exact results without allocating.
+type exactUint struct {
+	w [17]uint64
+	n int // words in use; w[n-1] != 0
+}
+
+func (x *exactUint) setOne() {
+	x.w[0], x.n = 1, 1
+}
+
+func (x *exactUint) bitLen() int {
+	return (x.n-1)*64 + bits.Len64(x.w[x.n-1])
+}
+
+// mulWord sets x = x * m for m >= 1. The caller keeps x below 2^1024
+// beforehand, so the product fits in 17 words.
+func (x *exactUint) mulWord(m uint64) {
+	var carry uint64
+	for i := 0; i < x.n; i++ {
+		hi, lo := bits.Mul64(x.w[i], m)
+		var c uint64
+		x.w[i], c = bits.Add64(lo, carry, 0)
+		carry = hi + c // cannot overflow: hi <= 2^64 - 2
+	}
+	if carry != 0 {
+		x.w[x.n] = carry
+		x.n++
+	}
+}
+
+// divExact sets x = x / d for a d >= 1 that divides x exactly. The power of
+// two in d is removed by a shift and the odd part by Hensel (exact) division:
+// multiplying by the inverse of the odd part modulo 2^64, from the least
+// significant word up, with no hardware division (Jebelean, 1993).
+func (x *exactUint) divExact(d uint64) {
+	if s := uint(bits.TrailingZeros64(d)); s > 0 {
+		for i := 0; i < x.n-1; i++ {
+			x.w[i] = x.w[i]>>s | x.w[i+1]<<(64-s)
+		}
+		x.w[x.n-1] >>= s
+		d >>= s
+	}
+	if d > 1 {
+		// Newton's iteration for the inverse modulo 2^64. inv = d is correct
+		// to 3 bits (d*d = 1 mod 8 for odd d); each step doubles that.
+		inv := d
+		for i := 0; i < 5; i++ {
+			inv *= 2 - d*inv
+		}
+		var borrow uint64
+		for i := 0; i < x.n; i++ {
+			s, b := bits.Sub64(x.w[i], borrow, 0)
+			q := s * inv // q*d = s (mod 2^64)
+			x.w[i] = q
+			hi, _ := bits.Mul64(q, d)
+			borrow = hi + b // hi <= d-1, so this cannot overflow
+		}
+	}
+	for x.n > 1 && x.w[x.n-1] == 0 {
+		x.n--
+	}
+}
+
+// nearestFloat64 returns the float64 nearest to x (ties to even), or +Inf
+// when x rounds beyond math.MaxFloat64. The top 64 bits are converted with
+// the bits below them folded into the lowest bit (a sticky bit), which
+// leaves the rounding decision of the conversion exactly as for x itself;
+// the scaling by a power of two is then exact.
+func (x *exactUint) nearestFloat64() float64 {
+	if x.n == 1 {
+		return float64(x.w[0]) // correctly rounded conversion
+	}
+	top := x.w[x.n-1]
+	lz := uint(bits.LeadingZeros64(top))
+	m := top<<lz | x.w[x.n-2]>>(64-lz) // the 64 most significant bits
+	sticky := x.w[x.n-2]<<lz != 0
+	for i := 0; i < x.n-2 && !sticky; i++ {
+		sticky = x.w[i] != 0
+	}
+	if sticky {
+		m |= 1
+	}
+	return math.Ldexp(float64(m), (x.n-1)*64-int(lz))
 }
 
 // CatalanNumber returns the nth Catalan number C_n = C(2n,n) / (n+1).
