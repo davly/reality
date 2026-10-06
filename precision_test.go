@@ -30,6 +30,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/davly/reality/combinatorics"
@@ -80,6 +81,34 @@ func registerPrecisionEvaluator(name string, f func(precisionCase) (float64, err
 
 // registerKnownPrecisionViolations adds an area's measured violations to
 // knownPrecisionViolations. Call it from init; a duplicate id panics.
+// buildDependentPrefix marks a listed violation whose outcome differs between
+// supported builds: it meets its claim on some targets and misses on others,
+// because fused multiply-adds (GOAMD64=v3, arm64) round intermediates
+// differently from the default amd64 build. A single test run cannot tell
+// whether such a case has started meeting its claim everywhere, so for a
+// listed case whose reason starts with this prefix both outcomes are accepted
+// and the outcome is always logged, never silent. The reason must name the
+// builds measured on each side. The way out of this state is to make the
+// function build-independent, then drop the prefix so the ratchet bites again.
+const buildDependentPrefix = "build-dependent:"
+
+// precisionOutcome is the ratchet's verdict for one case, kept pure so both
+// polarities of every state can be tested without a second build target.
+// It returns "" when the case needs no action, otherwise the defect:
+// "meets-listed" (remove the listing), "violates-unlisted" (list it or fix
+// the code) or "build-dependent" (accepted, but reported).
+func precisionOutcome(meets, listed bool, why string) string {
+	switch {
+	case listed && strings.HasPrefix(why, buildDependentPrefix):
+		return "build-dependent"
+	case meets && listed:
+		return "meets-listed"
+	case !meets && !listed:
+		return "violates-unlisted"
+	}
+	return ""
+}
+
 func registerKnownPrecisionViolations(m map[string]string) {
 	for id, why := range m {
 		if _, dup := knownPrecisionViolations[id]; dup {
@@ -214,7 +243,7 @@ func TestPrecisionClaims(t *testing.T) {
 		}
 		e := precisionError(c, got)
 		meets := e <= c.Tol
-		_, listed := knownPrecisionViolations[c.ID]
+		why, listed := knownPrecisionViolations[c.ID]
 		if report {
 			status := "meets claim"
 			if !meets {
@@ -222,10 +251,16 @@ func TestPrecisionClaims(t *testing.T) {
 			}
 			t.Logf("%-30s %-15s got %-24.17g want %-24.17g %s err %.3g (tol %.3g)", c.ID, status, got, c.Want, c.TolKind, e, c.Tol)
 		}
-		switch {
-		case meets && listed:
+		switch precisionOutcome(meets, listed, why) {
+		case "build-dependent":
+			outcome := "violates"
+			if meets {
+				outcome = "meets"
+			}
+			t.Logf("%s is build-dependent and %s its claim on this build (%s err %.3g, tol %.3g): %s", c.ID, outcome, c.TolKind, e, c.Tol, why)
+		case "meets-listed":
 			t.Errorf("%s now meets its claim (%s err %.3g <= %.3g): remove it from knownPrecisionViolations", c.ID, c.TolKind, e, c.Tol)
-		case !meets && !listed:
+		case "violates-unlisted":
 			t.Errorf("%s violates its documented precision: got %.17g, want %.17g (%s err %.3g > %.3g)\n  claim: %s", c.ID, got, c.Want, c.TolKind, e, c.Tol, c.Claim)
 		}
 	}
@@ -262,4 +297,28 @@ func TestPrecisionRegistryRejectsDuplicates(t *testing.T) {
 	mustPanic("listed violation", func() {
 		registerKnownPrecisionViolations(map[string]string{id: "registered twice"})
 	})
+}
+
+// TestPrecisionOutcomePolarity proves each ratchet state in both directions,
+// including that the build-dependent marker accepts either outcome and that a
+// plain reason still demands the listing be removed once the case meets.
+func TestPrecisionOutcomePolarity(t *testing.T) {
+	cases := []struct {
+		name          string
+		meets, listed bool
+		why, want     string
+	}{
+		{"unlisted and meets", true, false, "", ""},
+		{"listed and violates", false, true, "measured 3e-9 against 1e-12", ""},
+		{"listed and meets", true, true, "measured 3e-9 against 1e-12", "meets-listed"},
+		{"unlisted and violates", false, false, "", "violates-unlisted"},
+		{"build-dependent and meets", true, true, buildDependentPrefix + " meets on amd64, violates on arm64", "build-dependent"},
+		{"build-dependent and violates", false, true, buildDependentPrefix + " meets on amd64, violates on arm64", "build-dependent"},
+		{"prefix without a listing is ignored", false, false, buildDependentPrefix + " not registered", "violates-unlisted"},
+	}
+	for _, c := range cases {
+		if got := precisionOutcome(c.meets, c.listed, c.why); got != c.want {
+			t.Errorf("%s: got %q, want %q", c.name, got, c.want)
+		}
+	}
 }
