@@ -26,10 +26,10 @@ package reality_test
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"math"
 	"os"
 	"path/filepath"
-	"io/fs"
 	"runtime"
 	"sort"
 	"strings"
