@@ -50,7 +50,19 @@ jobs:
         run: go build ./...
 
       - name: Test with coverage
+        env:
+          # The precision ratchet records every case's outcome on this build so
+          # the precision-join job can compare builds (see precision_test.go).
+          REALITY_PRECISION_OUTCOMES: precision-outcomes-go${{ matrix.go-version }}.jsonl
+          REALITY_BUILD_TARGET: amd64-go${{ matrix.go-version }}
         run: go test -race -coverprofile=coverage.out -covermode=atomic -count=1 ./...
+
+      - name: Upload precision outcomes
+        uses: actions/upload-artifact@v4
+        with:
+          name: precision-outcomes-go${{ matrix.go-version }}
+          path: precision-outcomes-*.jsonl
+          if-no-files-found: error
 
       - name: Coverage gate
         run: |
@@ -76,11 +88,15 @@ jobs:
           - target: amd64 GOAMD64=v3
             runner: ubuntu-latest
             goamd64: v3
+            label: amd64-v3
           - target: arm64
             runner: ubuntu-24.04-arm
             goamd64: ''
+            label: arm64
     env:
       GOAMD64: ${{ matrix.goamd64 }}
+      REALITY_PRECISION_OUTCOMES: precision-outcomes-${{ matrix.label }}.jsonl
+      REALITY_BUILD_TARGET: ${{ matrix.label }}
     steps:
       - uses: actions/checkout@v7
 
@@ -90,6 +106,40 @@ jobs:
 
       - name: Test
         run: go test -count=1 ./...
+
+      - name: Upload precision outcomes
+        uses: actions/upload-artifact@v4
+        with:
+          name: precision-outcomes-${{ matrix.label }}
+          path: precision-outcomes-*.jsonl
+          if-no-files-found: error
+
+  # The part of the precision ratchet a single build cannot run: a listed
+  # case tagged build-dependent must really differ between builds, and every
+  # other case must agree across them. Joins the outcome files the test and
+  # fma legs uploaded.
+  precision-join:
+    name: Precision cross-build join
+    runs-on: ubuntu-latest
+    needs: [test, fma]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.26'
+
+      - name: Download every build's outcomes
+        uses: actions/download-artifact@v4
+        with:
+          pattern: precision-outcomes-*
+          path: precision-join
+          merge-multiple: true
+
+      - name: Join
+        env:
+          REALITY_PRECISION_JOIN_DIR: precision-join
+        run: go test -count=1 -run TestPrecisionBuildDependentJoin -v .
 
   lint:
     name: Lint

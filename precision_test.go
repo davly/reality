@@ -29,6 +29,8 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"io/fs"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -227,6 +229,8 @@ func TestPrecisionClaims(t *testing.T) {
 	}
 
 	report := os.Getenv("REALITY_PRECISION_REPORT") != ""
+	outcomes := newOutcomeWriter(t)
+	defer outcomes.close(t)
 	seen := map[string]bool{}
 	for _, c := range cases {
 		if seen[c.ID] {
@@ -251,6 +255,7 @@ func TestPrecisionClaims(t *testing.T) {
 			}
 			t.Logf("%-30s %-15s got %-24.17g want %-24.17g %s err %.3g (tol %.3g)", c.ID, status, got, c.Want, c.TolKind, e, c.Tol)
 		}
+		outcomes.record(t, c.ID, meets, listed, strings.HasPrefix(why, buildDependentPrefix))
 		switch precisionOutcome(meets, listed, why) {
 		case "build-dependent":
 			outcome := "violates"
@@ -319,6 +324,189 @@ func TestPrecisionOutcomePolarity(t *testing.T) {
 	for _, c := range cases {
 		if got := precisionOutcome(c.meets, c.listed, c.why); got != c.want {
 			t.Errorf("%s: got %q, want %q", c.name, got, c.want)
+		}
+	}
+}
+
+// precisionOutcomeRecord is one case's outcome on one build target. CI writes
+// one file per target (REALITY_PRECISION_OUTCOMES names the file,
+// REALITY_BUILD_TARGET labels the build) and a final job joins them with
+// TestPrecisionBuildDependentJoin. Without the join, a build-dependent listing
+// could only grow: nothing would notice a case that has started meeting its
+// claim on every build, or one that violates everywhere and belongs in the
+// plain list.
+type precisionOutcomeRecord struct {
+	ID             string `json:"id"`
+	Target         string `json:"target"`
+	Meets          bool   `json:"meets"`
+	Listed         bool   `json:"listed"`
+	BuildDependent bool   `json:"build_dependent"`
+}
+
+type outcomeWriter struct {
+	f      *os.File
+	target string
+}
+
+func newOutcomeWriter(t *testing.T) *outcomeWriter {
+	t.Helper()
+	path := os.Getenv("REALITY_PRECISION_OUTCOMES")
+	if path == "" {
+		return &outcomeWriter{}
+	}
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatalf("REALITY_PRECISION_OUTCOMES: %v", err)
+	}
+	target := os.Getenv("REALITY_BUILD_TARGET")
+	if target == "" {
+		target = runtime.GOOS + "/" + runtime.GOARCH
+	}
+	return &outcomeWriter{f: f, target: target}
+}
+
+func (w *outcomeWriter) record(t *testing.T, id string, meets, listed, buildDependent bool) {
+	if w.f == nil {
+		return
+	}
+	b, err := json.Marshal(precisionOutcomeRecord{ID: id, Target: w.target, Meets: meets, Listed: listed, BuildDependent: buildDependent})
+	if err != nil {
+		t.Fatalf("outcome record: %v", err)
+	}
+	if _, err := w.f.Write(append(b, '\n')); err != nil {
+		t.Fatalf("outcome record: %v", err)
+	}
+}
+
+func (w *outcomeWriter) close(t *testing.T) {
+	if w.f != nil {
+		if err := w.f.Close(); err != nil {
+			t.Errorf("outcome file: %v", err)
+		}
+	}
+}
+
+// joinPrecisionOutcomes is the pure core of the cross-build join. For every
+// case it returns a defect line, or nothing when the records are consistent:
+//   - a build-dependent case must meet its claim on at least one target AND
+//     violate it on at least one other (otherwise the prefix no longer tells
+//     the truth: drop it, and list or unlist the case);
+//   - every other case must have the same outcome on every target (otherwise
+//     it is build-dependent and must say so);
+//   - fewer than two targets is not a join; that is reported, never passed.
+func joinPrecisionOutcomes(records []precisionOutcomeRecord) []string {
+	targets := map[string]bool{}
+	type agg struct {
+		meets, violates []string
+		buildDependent  bool
+	}
+	byID := map[string]*agg{}
+	for _, r := range records {
+		targets[r.Target] = true
+		a := byID[r.ID]
+		if a == nil {
+			a = &agg{}
+			byID[r.ID] = a
+		}
+		if r.Meets {
+			a.meets = append(a.meets, r.Target)
+		} else {
+			a.violates = append(a.violates, r.Target)
+		}
+		a.buildDependent = a.buildDependent || r.BuildDependent
+	}
+	if len(targets) < 2 {
+		return []string{fmt.Sprintf("the join needs outcomes from at least two build targets, got %d", len(targets))}
+	}
+	ids := make([]string, 0, len(byID))
+	for id := range byID {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	var defects []string
+	for _, id := range ids {
+		a := byID[id]
+		sort.Strings(a.meets)
+		sort.Strings(a.violates)
+		switch {
+		case a.buildDependent && len(a.meets) == 0:
+			defects = append(defects, fmt.Sprintf("%s is listed build-dependent but violates its claim on every target %v: list it plainly", id, a.violates))
+		case a.buildDependent && len(a.violates) == 0:
+			defects = append(defects, fmt.Sprintf("%s is listed build-dependent but meets its claim on every target %v: drop the listing", id, a.meets))
+		case !a.buildDependent && len(a.meets) > 0 && len(a.violates) > 0:
+			defects = append(defects, fmt.Sprintf("%s differs between builds (meets on %v, violates on %v): list it as build-dependent", id, a.meets, a.violates))
+		}
+	}
+	return defects
+}
+
+// TestPrecisionBuildDependentJoin runs only in the CI join job, where
+// REALITY_PRECISION_JOIN_DIR holds one outcome file per build target. It is
+// the part of the ratchet a single build cannot run.
+func TestPrecisionBuildDependentJoin(t *testing.T) {
+	dir := os.Getenv("REALITY_PRECISION_JOIN_DIR")
+	if dir == "" {
+		t.Skip("REALITY_PRECISION_JOIN_DIR not set: the cross-build join runs in CI")
+	}
+	var records []precisionOutcomeRecord
+	var files int
+	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() || !strings.HasSuffix(path, ".jsonl") {
+			return nil
+		}
+		files++
+		b, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		for _, line := range strings.Split(string(b), "\n") {
+			if strings.TrimSpace(line) == "" {
+				continue
+			}
+			var r precisionOutcomeRecord
+			if err := json.Unmarshal([]byte(line), &r); err != nil {
+				return fmt.Errorf("%s: %v", path, err)
+			}
+			records = append(records, r)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("reading outcome files: %v", err)
+	}
+	if files == 0 {
+		t.Fatalf("no outcome files under %s: the join could not look", dir)
+	}
+	for _, d := range joinPrecisionOutcomes(records) {
+		t.Error(d)
+	}
+	t.Logf("joined %d records from %d files", len(records), files)
+}
+
+// TestPrecisionJoinPolarity proves the join in both directions without CI.
+func TestPrecisionJoinPolarity(t *testing.T) {
+	rec := func(id, target string, meets, bd bool) precisionOutcomeRecord {
+		return precisionOutcomeRecord{ID: id, Target: target, Meets: meets, Listed: !meets || bd, BuildDependent: bd}
+	}
+	cases := []struct {
+		name    string
+		records []precisionOutcomeRecord
+		defects int
+	}{
+		{"consistent: plain case meets everywhere", []precisionOutcomeRecord{rec("a", "x", true, false), rec("a", "y", true, false)}, 0},
+		{"consistent: plain listed case violates everywhere", []precisionOutcomeRecord{rec("a", "x", false, false), rec("a", "y", false, false)}, 0},
+		{"consistent: build-dependent case differs", []precisionOutcomeRecord{rec("a", "x", true, true), rec("a", "y", false, true)}, 0},
+		{"defect: build-dependent case meets everywhere", []precisionOutcomeRecord{rec("a", "x", true, true), rec("a", "y", true, true)}, 1},
+		{"defect: build-dependent case violates everywhere", []precisionOutcomeRecord{rec("a", "x", false, true), rec("a", "y", false, true)}, 1},
+		{"defect: plain case differs between builds", []precisionOutcomeRecord{rec("a", "x", true, false), rec("a", "y", false, false)}, 1},
+		{"defect: one target is not a join", []precisionOutcomeRecord{rec("a", "x", true, true)}, 1},
+	}
+	for _, c := range cases {
+		if got := len(joinPrecisionOutcomes(c.records)); got != c.defects {
+			t.Errorf("%s: %d defect(s), want %d: %v", c.name, got, c.defects, joinPrecisionOutcomes(c.records))
 		}
 	}
 }
