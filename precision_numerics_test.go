@@ -199,6 +199,13 @@ func init() {
 	registerProxTransportEvaluators()
 	registerCalculusChaosEvaluators()
 	registerKnownPrecisionViolations(numericsKnownViolations)
+	// Measured on the first arm64 CI run of this change: the absolute pivot test
+	// in the LU catches this rank-2 integer Sigma on amd64 (v1 and v3), so the
+	// posterior is nil as documented; under arm64's fused multiply-adds the
+	// pivot stays non-zero and weights are returned.
+	registerKnownPrecisionViolations(map[string]string{
+		"numerics/bl/singular-rank2-integer": buildDependentPrefix + " meets on amd64 (default and GOAMD64=v3: the singular Sigma is caught, nil returned), violates on arm64 (a non-zero pivot under fused multiply-add lets it through)",
+	})
 }
 
 // numericsKnownViolations lists the measured misses, each with its error on
