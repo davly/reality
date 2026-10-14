@@ -58,7 +58,7 @@ jobs:
         run: go test -race -coverprofile=coverage.out -covermode=atomic -count=1 ./...
 
       - name: Upload precision outcomes
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: precision-outcomes-go${{ matrix.go-version }}
           path: precision-outcomes-*.jsonl
@@ -108,7 +108,7 @@ jobs:
         run: go test -count=1 ./...
 
       - name: Upload precision outcomes
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: precision-outcomes-${{ matrix.label }}
           path: precision-outcomes-*.jsonl
