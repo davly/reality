@@ -19,9 +19,10 @@ import "math"
 // Precision: measured against an 800-digit mpmath table of 101 cases
 // (testdata/stress/beta_quantile.json: shapes 0.01 to 20000, p from 1e-300
 // to 0.999), with the same results on default and fused multiply-add amd64
-// builds: relative error at most 3.8e-15 for a, b in [0.5, 100] and p in
-// [1e-6, 0.999], and at most 6.1e-14 over the whole table. The quantile
-// inherits the error of I_x itself: a relative error d in the tail
+// builds: relative error at most 4e-15 for a, b in [0.5, 100] and p in
+// [1e-6, 0.999], and at most 7e-14 over the whole table (measured maxima
+// 3.8e-15 and 6.1e-14; testdata/stress/precision_beta.json holds these
+// claims). The quantile inherits the error of I_x itself: a relative error d in the tail
 // probability moves x by about d/a in the lower tail, so the largest
 // errors are at shapes 0.1 and 0.01, and in the far tails, where
 // RegularizedBetaInc's own error grows with |ln I|. A result near 1 is
@@ -54,9 +55,9 @@ func BetaQuantile(a, b, p float64) float64 {
 // Precision: as for BetaQuantile with the shapes exchanged, since
 // 1 - I_x(a, b) = I_{1-x}(b, a). Against the same table, read with the
 // shapes swapped (BetaQuantileComplement(b, a, p) against 1 - x), the
-// relative error is at most 2.2e-13; the largest are at the shape 0.01,
-// where p as a double differs from the table's decimal p and that
-// difference is amplified about 100 times. A result near 1 is accurate in
+// relative error is at most 2.5e-13 (measured 2.2e-13); the largest are
+// at the shape 0.01, where p as a double differs from the table's decimal
+// p and that difference is amplified about 100 times. A result near 1 is accurate in
 // absolute terms only.
 // Reference: see BetaQuantile
 func BetaQuantileComplement(a, b, q float64) float64 {
@@ -68,18 +69,19 @@ func BetaQuantileComplement(a, b, q float64) float64 {
 // each to full relative accuracy. Near x = 1 the value x rounds to 1 and
 // only y still carries the quantile: for example BetaQuantileXY(5, 0.01,
 // 0.999) returns x = 1 and y = 1.2539904511230927e-301 (exact:
-// 1.2539904511228198e-301 for p = 0.999; the difference is the rounding of
-// 0.999 to a double, amplified 100 times by the shape 0.01). The names follow
-// RegularizedBetaInc's x and y = 1 - x.
+// 1.2539904511228198e-301 for p = 0.999; the difference is the rounding
+// of 0.999 to a double, amplified 100 times by the shape 0.01). The names
+// follow RegularizedBetaInc's x and y = 1 - x.
 //
 // Valid range and NaN cases: as for BetaQuantile; both results are NaN
 // together.
-// Precision: x as for BetaQuantile. y has relative error at most 2.2e-15
-// over the core range of BetaQuantile and at most 2.2e-13 over the whole
-// table, including where y is below 1e-300; the largest errors are at the
-// shape 0.01 with p = 0.95 and 0.999, where y solves 1 - I = 1 - p and the
-// double nearest 0.999 differs from 0.999 by 8.9e-16 relative in 1 - p, an
-// error the shape 0.01 amplifies about 100 times.
+// Precision: x as for BetaQuantile. y has relative error at most 3e-15
+// over the core range of BetaQuantile and at most 2.5e-13 over the whole
+// table (measured 2.2e-15 and 2.2e-13), including where y is below 1e-300.
+// The largest errors are at the shape 0.01 with p = 0.95 and 0.999, where y
+// solves 1 - I = 1 - p and the double nearest 0.999 differs from 0.999 by
+// 8.9e-16 relative in 1 - p, an error the shape 0.01 amplifies about 100
+// times.
 // Reference: see BetaQuantile
 func BetaQuantileXY(a, b, p float64) (x, y float64) {
 	return betaQuantile(a, b, p, false)
